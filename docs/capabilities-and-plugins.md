@@ -1,8 +1,11 @@
-# Capabilities and Plugins
+# Capabilities and plugins
 
-Vela separates **Capabilities** (non-UI system APIs) from **Native Components**
-(UI-bearing surfaces that create Layers). Both are permission-gated; default is
-**deny**.
+> **Type**: Conceptual  
+> **Status**: Current  
+> **Audience**: App authors | Host implementers  
+> **SoT**: `packages/api/src/capability/*`, `component/define.ts`, `protocol/bridge.ts`; ADR 0001 § D5–D7
+
+Vela separates **Capabilities** (non-UI system APIs) from **Native Components** (UI-bearing surfaces that create Layers). Both are permission-gated; default is **deny**.
 
 Types:
 
@@ -10,12 +13,9 @@ Types:
 - `packages/api/src/component/define.ts`
 - Preload: `packages/api/src/protocol/bridge.ts`
 
-Decisions: [ADR 0001 § D5–D7](adr/0001-composition-hit-material.md).
+Decisions: [ADR 0001 § D5 - D7](adr/0001-composition-hit-material.md).
 
-Security vocabulary is intentionally close to **Tauri 2** (permissions,
-scopes, capability grants bound to windows/profiles, runtime enforcement).
-Vela is not Tauri; see [Tauri comparison](tauri-comparison.md) for the map and
-divergences (layer-insert gates, signed native UI plugins).
+Security vocabulary is intentionally close to **Tauri 2** (permissions, scopes, capability grants bound to windows/profiles, runtime enforcement). Vela is not Tauri; see [Tauri comparison](research/tauri-comparison.md) for the map and divergences (layer-insert gates, signed native UI plugins).
 
 ## Capability model
 
@@ -76,14 +76,11 @@ Windows and WebViews select a **preload profile** that maps to a grant:
 }
 ```
 
-Runtime: host validates every `vela.call(method, args)` and every sensitive
-layer insert against the active profile.
+Runtime: host validates every `vela.call(method, args)` and every sensitive layer insert against the active profile.
 
 ## Preload bridge (web → host)
 
-Safe surface only — **no Node, no FFI, no arbitrary require**. Traffic is
-**asynchronous message passing** (same safety property as Tauri Commands/Events:
-the host may discard malicious requests). Do not model this as FFI.
+Safe surface only - **no Node, no FFI, no arbitrary require**. Traffic is **asynchronous message passing** (same safety property as Tauri Commands/Events: the host may discard malicious requests). Do not model this as FFI.
 
 | Bridge API | Role | Tauri analogue |
 |------------|------|----------------|
@@ -104,14 +101,11 @@ interface VelaPreloadBridge {
 // injected as window.vela
 ```
 
-`call` args and results must be structured-clone / JSON-serializable.
-Sensitive **layer inserts** re-check permissions even if the page already
-obtained a handle via other means.
+`call` args and results must be structured-clone / JSON-serializable. Sensitive **layer inserts** re-check permissions even if the page already obtained a handle via other means.
 
 ## Native components
 
-UI-bearing system features register as **Native Components** and create
-`kind: "native"` layers.
+UI-bearing system features register as **Native Components** and create `kind: "native"` layers.
 
 ```ts
 defineNativeComponent({
@@ -135,7 +129,7 @@ Rules:
 - Shell / plugins register factories at host startup.
 - Creating a sensitive layer requires matching permissions.
 - Apps may ship **signed** external modules (`ExternalNativeModule`): library
-  path, factory symbol, permissions, `requiresSignature: true`.
+path, factory symbol, permissions, `requiresSignature: true`.
 - Bun must **never** `dlopen` arbitrary code from page JS.
 
 ## Plugin boundary (planned)
@@ -151,10 +145,9 @@ When packaging plugins (Phase 5+), prefer:
 - Explicit permission ids (`plugin:command` style)
 - A documented **default** set plus tighter subsets
 - Platform arrays on definitions (desktop vs mobile)
-- No ambient global APIs on the page — only bridge methods
+- No ambient global APIs on the page - only bridge methods
 
-Follow-up ADRs (planned): IPC / typed RPC (**0002**); plugin ABI and signing
-(**0003**).
+Follow-up ADRs: IPC / typed RPC - **[ADR 0002](adr/0002-ipc-privilege.md)** (Proposed); plugin ABI and signing (**0003**, planned).
 
 ## Security defaults
 
@@ -164,7 +157,7 @@ Follow-up ADRs (planned): IPC / typed RPC (**0002**); plugin ABI and signing
 4. Enforce on **both** Bun host and Shell (defense in depth).
 5. Keep secrets and high-value logic out of WebView content.
 6. Treat third-party frontend deps as part of the attack surface (optional
-   isolation interceptor is future work under ADR 0002).
+isolation interceptor is future work under ADR 0002).
 
 ## Acceptance checklist
 

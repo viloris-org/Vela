@@ -1,10 +1,13 @@
-# Input and Hit Testing
+# Input and hit testing
 
-Vela splits input into **two levels**. Conflating them causes wrong product
-behavior (annotator tools vs map-under-web holes).
+> **Type**: Conceptual  
+> **Status**: Current  
+> **Audience**: App authors | Host implementers  
+> **SoT**: `packages/api/src/hit/policy.ts`; [ADR 0001](adr/0001-composition-hit-material.md) § D2–D3
 
-Types: `packages/api/src/hit/policy.ts`.
-Decisions: [ADR 0001 § D2–D3](adr/0001-composition-hit-material.md).
+Vela splits input into **two levels**. Conflating them causes wrong product behavior (annotator tools vs map-under-web holes).
+
+Types: `packages/api/src/hit/policy.ts`. Decisions: [ADR 0001 § D2 - D3](adr/0001-composition-hit-material.md).
 
 ## Two levels
 
@@ -17,7 +20,7 @@ Examples:
 
 - Annotator-style “hole to desktop” → `WindowInputMode`
 - “Web UI with hole to map underlay” → `HitPolicy` on the web (and maybe
-  intermediate) layers
+intermediate) layers
 
 ## WindowInputMode
 
@@ -47,18 +50,23 @@ Set via `CreateWindowOptions.inputMode` or `VelaWindow.setInputMode`.
 
 ## Hit order algorithm (v1 intent)
 
+Canonical executable description for macOS (view tree, `hitTest` ownership): [macOS spike architecture](macos-spike-architecture.md).
+
 1. If `WindowInputMode` says the point is through to the OS → target is
-   `os-desktop` (or equivalent); stop.
+`os-desktop` (or equivalent); stop.
 2. Walk layers by **descending `zIndex`** among visible layers whose bounds
-   (after optional transform) contain the point.
+(after optional transform) contain the point.
 3. For each layer, apply `hitPolicy` (+ `clip` if set).
 4. First accepting layer wins → `HitTarget` with `kind`, optional `layerId`,
-   `localPoint`.
+`localPoint`.
 5. Shell delivers the event **once** to that target. No dual delivery to WebView
-   and overlay native.
+and overlay native.
 
-`HitTargetKind`: `os-desktop` | `window-background` | `chrome` | `webview` |
-`native` | `material`.
+`HitTargetKind`: `os-desktop` | `window-background` | `chrome` | `webview` | `native` | `material`.
+
+**Contract gap:** a pure `resolveHit(...)` helper should live in `@vela/api` so hosts mirror one algorithm (see [design gaps](design-gaps.md) G-P0-1). Until then, hosts must follow this section and the spike doc exactly.
+
+**Coordinates:** logical window content, origin top-left, y down. Platform APIs that use a different origin (e.g. AppKit) convert **once** at the Shell boundary.
 
 ## Web-shaped workflow
 
@@ -79,30 +87,30 @@ vela.hit.setMainOpaqueRegions(region);
 ```
 
 3. Points outside opaque regions fall through to lower layers (map, video,
-   native slot, material chrome underlay, etc.).
+native slot, material chrome underlay, etc.).
 
-Optional future: `WebShapePointQuery` for Shell-driven point probes when region
-updates are too coarse.
+**Defaults for dogfood (Phase 1):** a new `webview` layer starts as `web-shaped` with **empty** opaque regions until the page reports UI, so underlay holes work immediately. Production apps should push regions for all interactive chrome on load.
+
+**Stale updates:** if `generation` is present, Shell keeps `lastAcceptedGeneration` and **drops** updates with a smaller generation (`generation.stale` when RPC exists). Prefer always sending monotonic generations in dogfood.
+
+Optional future: `WebShapePointQuery` for Shell-driven point probes when region updates are too coarse.
 
 ## Region and geometry
 
 Logical pixels, window content coordinates, origin top-left, y down.
 
-`Region` is a **union of primitives** (v1 — no arbitrary paths):
+`Region` is a **union of primitives** (v1 - no arbitrary paths):
 
 - `rect`
 - `roundedRect` + `CornerRadius`
 - `capsule` (from rect)
 - `circle` (center + radius)
 
-Helpers: `regionFromRect`, `regionFromRoundedRect`, `regionUnion`,
-`rectContains`.
+Helpers: `regionFromRect`, `regionFromRoundedRect`, `regionUnion`, `rectContains`.
 
 ## Chrome and system buttons
 
-`chrome` layers with roles `drag-region` / `system-buttons` / `titlebar` must
-participate in hit order so OS chrome behavior (move window, traffic lights)
-works without the main WebView swallowing those hits.
+`chrome` layers with roles `drag-region` / `system-buttons` / `titlebar` must participate in hit order so OS chrome behavior (move window, traffic lights) works without the main WebView swallowing those hits.
 
 ## Qt-class parallels (brief)
 
@@ -113,16 +121,18 @@ works without the main WebView swallowing those hits.
 | Custom shape without full alpha | `containmentMask`, region masks | `mask` / `callback` / `web-shaped` |
 | Foreign surface input | `createWindowContainer` focus fights | Shell single `HitTarget` |
 
-Details: [Qt composition notes](qt-composition-notes.md). Host gates: [Testing and acceptance](testing-and-acceptance.md).
+Details: [Qt composition notes](research/qt-composition-notes.md). Host gates: [Testing and acceptance](testing-and-acceptance.md).
 
 ## Platform pitfalls
 
 | Platform | Risk | Shell duty |
 |----------|------|------------|
-| macOS WKWebView + NSView siblings | Double event delivery | Single hit router; suppress secondary path |
+| macOS WKWebView + NSView siblings | Double event delivery; parent `hitTest` swallowing WebView | Single `VelaHitRootView` policy; WebView as **sibling** of overlays - see [macOS spike](macos-spike-architecture.md) |
+| macOS custom canvas parent | Framework canvas returns `self` from hitTest → dead clicks in child WKWebView | Do not parent WebView under such canvases |
 | Windows WebView2 + composition | Hit-test order vs visual order | Align with zIndex truth |
 | Linux (WebKitGTK / etc.) | Weaker material + shaped window support | Degrade cleanly; document Tier |
 | Any OS click-through flag | Sticky OS input-transparent after unset (Qt-class footgun) | Track `WindowInputMode` independently of layer `HitPolicy` |
+| Electron-class window ignore-mouse | Whole-window (or forward-move) APIs ≠ in-app layer holes | Never implement `HitPolicy` via OS-only ignore flags alone |
 
 ## Acceptance checklist (host)
 

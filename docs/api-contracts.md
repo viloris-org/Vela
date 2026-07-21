@@ -1,10 +1,13 @@
-# API Contracts (`@vela/api`)
+# API contracts (`@vela/api`)
 
-`@vela/api` is the **shared TypeScript contract package**. It is usable today:
-types + pure helpers, no host implementation.
+> **Type**: Reference  
+> **Status**: Current  
+> **Audience**: App authors | Host implementers  
+> **SoT**: `packages/api/` (`@vela/api`)
 
-Package: `packages/api/`  
-Entry: `packages/api/src/index.ts`
+`@vela/api` is the **shared TypeScript contract package**. It is usable today: types + pure helpers, no host implementation.
+
+Package: `packages/api/` Entry: `packages/api/src/index.ts`
 
 ## Package rules
 
@@ -39,8 +42,7 @@ Helpers: `regionFromRect`, `regionFromRoundedRect`, `regionUnion`, `rectContains
 
 See [Composition and layers](composition-and-layers.md).
 
-Core types: `Layer`, `InsertLayerSpec`, `LayerPatch`, `LayerKind`,
-`defaultHitPolicyForKind`.
+Core types: `Layer`, `InsertLayerSpec`, `LayerPatch`, `LayerKind`, `defaultHitPolicyForKind`.
 
 ## Hit / window input
 
@@ -105,7 +107,7 @@ import {
 
 ```bash
 bun install
-bun test          # packages/api tests
+bun test # packages/api tests
 bun run typecheck
 ```
 
@@ -118,8 +120,12 @@ bun run typecheck
 
 ## Planned contract expansions
 
-Tracked as follow-up ADRs (not yet written):
+| Item | Status | Doc |
+|------|--------|-----|
+| IPC / typed RPC envelopes + error codes | ADR Proposed; types not in package yet | [ADR 0002](adr/0002-ipc-privilege.md) |
+| Pure `resolveHit` helper | Design locked; implement next | [input-and-hit-testing](input-and-hit-testing.md), [design gaps](design-gaps.md) |
+| Plugin ABI + signing | Planned ADR 0003 | [tauri-comparison](research/tauri-comparison.md) |
+| Event catalog (`material.degraded`, …) | Planned | design gaps G-P1-3 |
+| `HitPolicy.callback` payloads | Planned | design gaps G-P1-1 |
 
-1. **IPC / typed RPC** — method schemas, versioning, privilege boundaries
-2. **Plugin ABI + signing** — native module load protocol
-3. **Event channels** — formal event catalog beyond free-form `subscribe`
+Full register: [design gaps](design-gaps.md).

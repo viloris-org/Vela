@@ -1,7 +1,11 @@
-# Platform Support
+# Platform support
 
-Platform support must be explicit: WebView, materials, hit-testing, and
-capability surfaces differ enough to affect architecture and acceptance.
+> **Type**: Reference  
+> **Status**: Current  
+> **Audience**: App authors | Host implementers  
+> **SoT**: Platform tiers and feature matrix (intent until hosts ship)
+
+Platform support must be explicit: WebView, materials, hit-testing, and capability surfaces differ enough to affect architecture and acceptance.
 
 ## Support tiers
 
@@ -36,8 +40,7 @@ Tier 2 must fail loudly when required capabilities are missing.
 | iOS | Native (Swift) | WebView + layers |
 | Android | Native (Kotlin) | WebView + layers |
 
-Bun is used for tooling/bundles, not as the full mobile in-process runtime.
-Shared surface: `@vela/api` Layer / Capability / bridge protocol.
+Bun is used for tooling/bundles, not as the full mobile in-process runtime. Shared surface: `@vela/api` Layer / Capability / bridge protocol.
 
 ### Non-targets (unless roadmap promotes them)
 
@@ -78,6 +81,6 @@ Hosts should report:
 - [Materials](materials.md)
 - [Input and hit testing](input-and-hit-testing.md)
 - [Testing and acceptance](testing-and-acceptance.md)
-- [Qt composition notes](qt-composition-notes.md)
+- [Qt composition notes](research/qt-composition-notes.md)
 - [Roadmap](roadmap.md)
 - [Doc index](README.md)

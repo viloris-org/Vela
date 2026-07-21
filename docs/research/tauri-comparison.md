@@ -1,20 +1,15 @@
 # Tauri as a reference (not a runtime)
 
-This document records what **Vela** deliberately borrows from
-[Tauri 2](https://v2.tauri.app/) architecture and security docs, and where Vela
-**diverges**. Tauri is a production WebView shell with a Rust core; Vela is a
-Bun-orchestrated, **composition-first** shell. We do not embed Tauri at runtime.
+> **Type**: Research  
+> **Status**: Current  
+> **Audience**: Host implementers | Maintainers  
+> **SoT**: Study only; product contracts live in `@vela/api` and Accepted ADRs
 
-> Primary sources (Tauri 2): [Architecture](https://v2.tauri.app/concept/architecture/),
-> [Process model](https://v2.tauri.app/concept/process-model/),
-> [IPC](https://v2.tauri.app/concept/inter-process-communication/),
-> [Security](https://v2.tauri.app/security/),
-> [Capabilities](https://v2.tauri.app/security/capabilities/),
-> [Permissions](https://v2.tauri.app/security/permissions/),
-> [Plugins](https://v2.tauri.app/develop/plugins/).
+This document records what **Vela** deliberately borrows from [Tauri 2](https://v2.tauri.app/) architecture and security docs, and where Vela **diverges**. Tauri is a production WebView shell with a Rust core; Vela is a Bun-orchestrated, **composition-first** shell. We do not embed Tauri at runtime.
 
-Qt-class composition remains documented in
-[Qt composition notes](qt-composition-notes.md). Use **both** references:
+> Primary sources (Tauri 2): [Architecture](https://v2.tauri.app/concept/architecture/), [Process model](https://v2.tauri.app/concept/process-model/), [IPC](https://v2.tauri.app/concept/inter-process-communication/), [Security](https://v2.tauri.app/security/), [Capabilities](https://v2.tauri.app/security/capabilities/), [Permissions](https://v2.tauri.app/security/permissions/), [Plugins](https://v2.tauri.app/develop/plugins/).
+
+Qt-class composition remains documented in [Qt composition notes](qt-composition-notes.md). Use **both** references:
 
 | Reference | What we take |
 |-----------|----------------|
@@ -37,31 +32,30 @@ Qt-class composition remains documented in
 ### Tauri (summary)
 
 - **Core process**: sole OS-privileged entry; windowing, tray, notifications,
-  global state; **all IPC routes through Core** so messages can be filtered.
+global state; **all IPC routes through Core** so messages can be filtered.
 - **WebView process(es)**: OS WebView runs untrusted UI; no full OS access.
 - Motivation: least privilege, crash isolation, multi-core (see Tauri process
-  model docs).
+model docs).
 
 ### Vela mapping
 
-Vela has **three** privilege tiers on desktop (mobile folds Bun into the native
-host):
+Vela has **three** privilege tiers on desktop (mobile folds Bun into the native host):
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ WebView content (untrusted)                                 │
-│   only window.vela — call / layers / hit / events           │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ preload bridge (message pass)
-┌───────────────────────────▼─────────────────────────────────┐
-│ Bun host (desktop orchestration)                            │
-│   lifecycle, capability enforcement, plugins, packaging     │
-└───────────────────────────┬─────────────────────────────────┘
-                            │ typed RPC (ADR 0002)
-┌───────────────────────────▼─────────────────────────────────┐
-│ Native Shell (window / WebView embed / layer tree / hit)    │
-│   materials, signed native factories, platform backends     │
-└─────────────────────────────────────────────────────────────┘
++-------------------------------------------------------------+
+| WebView content (untrusted)                                 |
+| only window.vela - call / layers / hit / events             |
++-----------------------------+-------------------------------+
+                              | preload bridge (message pass)
++-----------------------------v-------------------------------+
+| Bun host (desktop orchestration)                            |
+| lifecycle, capability enforcement, plugins, packaging       |
++-----------------------------+-------------------------------+
+                              | typed RPC (ADR 0002)
++-----------------------------v-------------------------------+
+| Native Shell (window / WebView embed / layer tree / hit)    |
+| materials, signed native factories, platform backends       |
++-------------------------------------------------------------+
 ```
 
 | Tauri idea | Vela analogue |
@@ -71,10 +65,7 @@ host):
 | IPC hub | Bun host for `call` / capability; Shell for layers / hit / paint |
 | No secrets in frontend | Same: business secrets and privileged I/O stay off the page |
 
-**Why split Bun and Shell?** Composition (layers, hit router, Liquid Glass /
-Mica) is hard to own from a pure JS host. Bun owns app/plugin lifecycle and
-capability catalog; Shell owns drawing and input. Both **must** re-check
-permissions (defense in depth), same spirit as Tauri Core filtering every IPC.
+**Why split Bun and Shell?** Composition (layers, hit router, Liquid Glass / Mica) is hard to own from a pure JS host. Bun owns app/plugin lifecycle and capability catalog; Shell owns drawing and input. Both **must** re-check permissions (defense in depth), same spirit as Tauri Core filtering every IPC.
 
 ## IPC primitives
 
@@ -86,8 +77,7 @@ permissions (defense in depth), same spirit as Tauri Core filtering every IPC.
 | **Events** | Fire-and-forget, either direction | Lifecycle / state |
 | Patterns | Brownfield vs Isolation (sandboxed interceptor) | Hardening |
 
-Message passing is preferred over shared memory / raw FFI so the privileged side
-can **reject** malicious traffic.
+Message passing is preferred over shared memory / raw FFI so the privileged side can **reject** malicious traffic.
 
 ### Vela (`window.vela`)
 
@@ -100,15 +90,14 @@ can **reject** malicious traffic.
 
 Rules (aligned with Tauri IPC safety):
 
-1. **Async message passing only** between WebView and host — never Node
-   integration, never raw FFI from page JS.
+1. **Async message passing only** between WebView and host - never Node
+integration, never raw FFI from page JS.
 2. Args/results must be **structured-clone / JSON-serializable** for `call`.
 3. Recipient may **deny** (missing capability, bad scope, unsigned module).
 4. Isolation-style interception (optional hardening layer between page and
-   privilege) is **future** — record under ADR 0002 if adopted.
+privilege) is **future** - see [ADR 0002](../adr/0002-ipc-privilege.md) D7.
 
-Detailed bridge: [Capabilities and plugins](capabilities-and-plugins.md).
-IPC transport (Bun ↔ Shell): planned **ADR 0002**.
+Detailed bridge: [Capabilities and plugins](../capabilities-and-plugins.md). IPC transport (Bun ↔ Shell): **[ADR 0002](../adr/0002-ipc-privilege.md)** (Proposed).
 
 ## Security model
 
@@ -123,8 +112,7 @@ IPC transport (Bun ↔ Shell): planned **ADR 0002**.
 | **CSP / asset protocol** | Contain WebView attack surface |
 | **Trust boundary** | Core (full OS) vs WebView (IPC only) |
 
-Default posture: least privilege; system WebView (not bundled Chromium) so OS
-updates patch the renderer faster on average.
+Default posture: least privilege; system WebView (not bundled Chromium) so OS updates patch the renderer faster on average.
 
 ### Vela mapping
 
@@ -142,8 +130,8 @@ updates patch the renderer faster on average.
 Extra Vela surface (beyond typical Tauri command gates):
 
 - **Sensitive layers** (camera, materials, unsigned native) require matching
-  permissions at **insert** time, not only at `call` time.
-- **Signed native modules** — Shell loads factories; page never `dlopen`s.
+permissions at **insert** time, not only at `call` time.
+- **Signed native modules** - Shell loads factories; page never `dlopen`s.
 
 ## Plugins
 
@@ -160,28 +148,27 @@ Extra Vela surface (beyond typical Tauri command gates):
 |------|---------|----------------|
 | Capability plugin | Methods behind `vela.call` + permission ids | Command plugin + permissions |
 | Native UI plugin | `defineNativeComponent` + signed module | Mobile native plugin + UI surface |
-| Material backend | Platform paint for `MaterialId` | (no direct peer — composition-specific) |
+| Material backend | Platform paint for `MaterialId` | (no direct peer - composition-specific) |
 
 Naming/layout guidance when packages appear:
 
 - Prefer explicit ids (`fs:app-read`, `camera:preview`) over ambient globals.
 - Ship a **default** permission set and narrower allow sets (Tauri
-  `:default` / `allow-*` style).
+`:default` / `allow-*` style).
 - Document risk level in the capability catalog (Vela already models risk).
 
 ABI and signing: **ADR 0003**.
 
 ## Multi-window / multi-WebView
 
-Tauri: Core manages many windows/WebViews; capabilities can target labels
-(`windows: ["main"]`) and platforms.
+Tauri: Core manages many windows/WebViews; capabilities can target labels (`windows: ["main"]`) and platforms.
 
 Vela intent:
 
 - Each window has its own **layer tree** (ADR 0001).
 - Each WebView layer may use a different **capability profile**.
-- Multi-WebView is a first-class layer kind, not a side path — see
-  [Composition and layers](composition-and-layers.md).
+- Multi-WebView is a first-class layer kind, not a side path - see
+[Composition and layers](../composition-and-layers.md).
 
 ## Packaging and assets
 
@@ -195,16 +182,16 @@ Vela intent:
 
 ## What we deliberately do **not** copy
 
-1. **Rust-only Core as the only host language** — desktop orchestration is
-   **Bun**; Shell language is open (Swift / Win / TBD).
-2. **Command-only product surface** — Vela’s differentiator is **layers,
-   materials, regional hit**, not a thinner Tauri clone.
-3. **WRY/TAO as mandatory window stack** — Shell may use platform-native
-   toolkits; abstraction is contracts, not a single crate.
-4. **Assuming single content WebView per window** — multi-layer composition is
-   the core ADR.
-5. **Replacing Qt mapping** — hit/mask philosophy still comes from Qt-class
-   APIs, not Tauri.
+1. **Rust-only Core as the only host language** - desktop orchestration is
+**Bun**; Shell language is open (Swift / Win / TBD).
+2. **Command-only product surface** - Vela’s differentiator is **layers,
+materials, regional hit**, not a thinner Tauri clone.
+3. **WRY/TAO as mandatory window stack** - Shell may use platform-native
+toolkits; abstraction is contracts, not a single crate.
+4. **Assuming single content WebView per window** - multi-layer composition is
+the core ADR.
+5. **Replacing Qt mapping** - hit/mask philosophy still comes from Qt-class
+APIs, not Tauri.
 
 ## Checklist for authors
 
@@ -218,9 +205,10 @@ When extending Vela docs or hosts, ask:
 
 ## Related
 
-- [Architecture](architecture.md) — process split and security spine  
-- [Capabilities and plugins](capabilities-and-plugins.md) — grants and bridge  
-- [Technology stack](technology-stack.md) — stack choices  
-- [Qt composition notes](qt-composition-notes.md) — composition reference  
-- [ADR 0001](adr/0001-composition-hit-material.md) — composition decisions  
-- Planned: ADR 0002 (IPC), ADR 0003 (plugin ABI)
+- [Architecture](../architecture.md) - process split and security spine
+- [Capabilities and plugins](../capabilities-and-plugins.md) - grants and bridge
+- [Technology stack](../technology-stack.md) - stack choices
+- [Qt composition notes](qt-composition-notes.md) - composition reference
+- [ADR 0001](../adr/0001-composition-hit-material.md) - composition decisions
+- [ADR 0002](../adr/0002-ipc-privilege.md) - IPC / privilege (Proposed)
+- Planned: ADR 0003 (plugin ABI)

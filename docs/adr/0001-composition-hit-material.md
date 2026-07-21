@@ -1,4 +1,9 @@
-# ADR 0001: Composition Tree, Hit Testing, and Material Layers
+# ADR 0001: Composition tree, hit testing, and material layers
+
+> **Type**: Decision  
+> **Status**: Accepted decision (doc current)  
+> **Audience**: Maintainers | Host implementers  
+> **SoT**: Accepted product decisions for composition, hit, materials
 
 - **Status**: Accepted
 - **Date**: 2026-07-21
@@ -18,7 +23,7 @@ Flutter desktop often exposes whole-window mouse ignore / click-through. Electro
 
 ## Decisions
 
-### D1 — Layer tree is the composition truth
+### D1 - Layer tree is the composition truth
 
 Each window owns a **Layer tree**. A WebView is **one layer kind**, not the sole content root.
 
@@ -38,7 +43,7 @@ Window
 
 **Draw order** and **default hit order** both follow `zIndex` (higher first for hit-test).
 
-### D2 — Two-level input model
+### D2 - Two-level input model
 
 | Level | Type | Purpose |
 |-------|------|---------|
@@ -47,25 +52,25 @@ Window
 
 These must not be conflated. Annotator-style “hole to desktop” uses `WindowInputMode`. “Web UI with hole to map underlay” uses `HitPolicy`.
 
-### D3 — HitPolicy modes (v1)
+### D3 - HitPolicy modes (v1)
 
 Supported in v1:
 
-- `opaque` — full bounds receive hits
-- `transparent` — layer ignored for hit-test
-- `mask` — only `Region` (rect unions / rounded rects) receives hits
-- `web-shaped` — Web layer reports opaque regions (or point queries); rest passes through
+- `opaque` - full bounds receive hits
+- `transparent` - layer ignored for hit-test
+- `mask` - only `Region` (rect unions / rounded rects) receives hits
+- `web-shaped` - Web layer reports opaque regions (or point queries); rest passes through
 
 Deferred:
 
 - per-pixel `alpha` threshold (expensive)
-- arbitrary CSS transform–driven native hitching
+- arbitrary CSS transform - driven native hitching
 
 **v1 placement constraints**: native/material slots are axis-aligned; no list-cell-per-row native embedding; scroll-linked slots are Phase 2.
 
 Shell **must** own hit routing and **must not double-deliver** events to WebView and overlay native views (known WKWebView + NSView pitfalls).
 
-### D4 — Material layers are first-class
+### D4 - Material layers are first-class
 
 System materials (Apple Liquid Glass, Windows Mica/Acrylic, etc.) are `kind: "material"`, not ad-hoc hacks.
 
@@ -76,14 +81,14 @@ System materials (Apple Liquid Glass, Windows Mica/Acrylic, etc.) are `kind: "ma
 
 HIG note (Apple): prefer materials on the **functional** layer (chrome, toolbars, transient controls), not dense document content.
 
-### D5 — Native components and plugins
+### D5 - Native components and plugins
 
 - UI-bearing system features register as **Native Components** → create Layers.
 - Non-UI features are **Capabilities** only (fs, notify, keyring, …).
 - Apps/plugins may ship **signed** native factories (e.g. extra Swift views) loaded by the Shell; Bun never `dlopen`s arbitrary code from page JS.
-- Preload exposes a **whitelist bridge** only (`call`, `layers`, `events`) — no Node integration, no raw FFI from the Web.
+- Preload exposes a **whitelist bridge** only (`call`, `layers`, `events`) - no Node integration, no raw FFI from the Web.
 
-### D6 — Runtime split
+### D6 - Runtime split
 
 | Role | Desktop | Mobile |
 |------|---------|--------|
@@ -94,7 +99,7 @@ HIG note (Apple): prefer materials on the **functional** layer (chrome, toolbars
 
 Bun is **not** the in-process JS engine on iOS/Android for the full app runtime. Mobile runs a native host + shared Capability/Layer protocol; bundles are produced with Bun on CI/dev machines.
 
-### D7 — Security defaults
+### D7 - Security defaults
 
 - Capabilities default **deny**; granted via app manifest.
 - Creating a sensitive native layer (e.g. camera) requires matching permissions.
@@ -119,24 +124,22 @@ Bun is **not** the in-process JS engine on iOS/Android for the full app runtime.
 
 ### Follow-ups
 
-- ADR 0002: IPC / typed RPC and privilege boundaries
+- [ADR 0002](0002-ipc-privilege.md): IPC / typed RPC and privilege boundaries (Proposed)
 - ADR 0003: Plugin ABI and signing
-- Spike: macOS demo — WebView + Liquid Glass toolbar + hole hit-test
+- Spike: macOS demo - WebView + Liquid Glass toolbar + hole hit-test - [macos-spike-architecture.md](../macos-spike-architecture.md)
 
 ## References
 
 - Project design threads: WebView-first, strong control, local native, composition/hit, Liquid Glass
 - Apple: Adopting Liquid Glass; Applying Liquid Glass to custom views (SwiftUI `glassEffect`, `GlassEffectContainer`)
 - Qt (public Qt 6 docs; local tree may be `../qt6` with empty submodules until `init-repository`):
-  - `QWidget::setMask` / `QWindow::setMask`
-  - `Qt::WA_TransparentForMouseEvents`, `Qt::WA_NoMousePropagation`
-  - `Qt::WindowTransparentForInput` (top-level → OS; distinct from child hit policy)
-  - `QQuickItem::z`, `contains`, `containmentMask`
-  - `QWidget::createWindowContainer` (foreign / Quick-in-Widgets surfaces)
-- Expanded mapping: [Qt composition notes](../qt-composition-notes.md)
-- Shell security / IPC vocabulary (reference only): [Tauri comparison](../tauri-comparison.md),
-  Tauri 2 [process model](https://v2.tauri.app/concept/process-model/),
-  [IPC](https://v2.tauri.app/concept/inter-process-communication/),
-  [capabilities](https://v2.tauri.app/security/capabilities/)
+ - `QWidget::setMask` / `QWindow::setMask`
+ - `Qt::WA_TransparentForMouseEvents`, `Qt::WA_NoMousePropagation`
+ - `Qt::WindowTransparentForInput` (top-level → OS; distinct from child hit policy)
+ - `QQuickItem::z`, `contains`, `containmentMask`
+ - `QWidget::createWindowContainer` (foreign / Quick-in-Widgets surfaces)
+- Expanded mapping: [Qt composition notes](../research/qt-composition-notes.md)
+- Shell security / IPC vocabulary (reference only): [Tauri comparison](../research/tauri-comparison.md),
+Tauri 2 [process model](https://v2.tauri.app/concept/process-model/), [IPC](https://v2.tauri.app/concept/inter-process-communication/), [capabilities](https://v2.tauri.app/security/capabilities/)
 - Acceptance checklists: [Testing and acceptance](../testing-and-acceptance.md)
 - Contrast: Flutter desktop whole-window ignore-mouse patterns

@@ -1,8 +1,11 @@
-# Technology Stack
+# Technology stack
 
-Preferred stack for New_Vela and the main alternatives. Goal: reinforce
-WebView-first UI, Qt-class composition, Bun desktop host, and portable
-contracts.
+> **Type**: Reference  
+> **Status**: Current  
+> **Audience**: Host implementers | Maintainers  
+> **SoT**: Stack choices; open decisions listed in this page and ADRs
+
+Preferred stack for New_Vela and the main alternatives. Goal: reinforce WebView-first UI, Qt-class composition, Bun desktop host, and portable contracts.
 
 ## Selection rules
 
@@ -12,7 +15,7 @@ contracts.
 - Prefer active maintenance, clear licensing, and explicit platform support.
 - Missing OS capabilities must produce diagnostics, not silent failure.
 - Avoid forcing a full Chromium+Node surface when a system WebView + Bun host
-  is enough for the product class.
+is enough for the product class.
 
 ## Current repository stack
 
@@ -69,20 +72,15 @@ contracts.
 
 ### Full Electron
 
-Pros: mature ecosystem. Cons: heavy; weak true multi-native sibling composition;
-does not match Bun-first orchestration goal as cleanly. Bundled Chromium means
-app vendors own WebView patch lag (Tauri documents the opposite choice).
+Pros: mature ecosystem. Cons: heavy; weak true multi-native sibling composition; does not match Bun-first orchestration goal as cleanly. Bundled Chromium means app vendors own WebView patch lag (Tauri documents the opposite choice).
 
 ### Pure Flutter / pure Qt
 
-Pros: strong native composition (masks, stacking, foreign windows — see
-[Qt composition notes](qt-composition-notes.md)). Cons: not WebView-first;
-different authoring model than the intended product class.
+Pros: strong native composition (masks, stacking, foreign windows - see [Qt composition notes](research/qt-composition-notes.md)). Cons: not WebView-first; different authoring model than the intended product class.
 
 ### Sibling Rust `Vela` (wgpu retained GUI)
 
-Different product: no WebView core, GPU-heavy tool UIs. Useful as documentation
-structure and GUI-quality bar, not as the runtime.
+Different product: no WebView core, GPU-heavy tool UIs. Useful as documentation structure and GUI-quality bar, not as the runtime.
 
 ### Tauri 2
 
@@ -96,20 +94,20 @@ structure and GUI-quality bar, not as the runtime.
 | Permissions → capabilities → runtime check | Default-deny, scoped grants |
 | Plugin packaging with permission files | Extensible without bloating core |
 
-**Do not adopt as product shape:** Rust-only Core, command-bridge-only UI, or
-WRY/TAO as mandatory window stack. Vela’s differentiators remain layers,
-materials, and regional hit. Full map: [Tauri comparison](tauri-comparison.md).
+**Do not adopt as product shape:** Rust-only Core, command-bridge-only UI, or WRY/TAO as mandatory window stack. Vela’s differentiators remain layers, materials, and regional hit. Full map: [Tauri comparison](research/tauri-comparison.md).
 
 ## Dependencies policy (contracts package)
 
-`@vela/api` remains **dep-free** at runtime. Hosts and plugins may add Zod,
-platform SDKs, etc., behind their own package boundaries.
+`@vela/api` remains **dep-free** at runtime. Hosts and plugins may add Zod, platform SDKs, etc., behind their own package boundaries.
 
 ## Open stack decisions (record when fixed)
 
-- [ ] Shell implementation language(s) per OS (Swift-only macOS vs shared Rust core)
-- [ ] Exact Bun ↔ Shell IPC transport (stdio, unix socket, embedded) — ADR 0002
-- [ ] Whether to add an isolation-style interceptor between page and privilege
+- [x] Phase 1 macOS Shell language: **Swift** (AppKit + SwiftUI hosting for glass) - [macos-spike-architecture.md](macos-spike-architecture.md)
+- [x] Bun ↔ Shell IPC transport (Phase 2): **Unix domain socket / Windows named pipe + JSON envelopes** - [ADR 0002](adr/0002-ipc-privilege.md)
+- [x] Page → privilege: **message pass only** (no FFI from page) - ADR 0002 D1
+- [x] Phase 1 process topology: **single Shell process allowed**; Bun split is Phase 2 - ADR 0002 D2
+- [ ] Shared Rust core for multi-OS Shell vs per-OS native (Windows/Linux language TBD)
+- [ ] Isolation-style interceptor between page and privilege (optional Phase 2+; ADR 0002 D7)
 - [ ] Linux WebView + blur stack baseline
 - [ ] Android host packaging (Activity / WebView integration pattern)
 - [ ] Packaging format and custom scheme asset pipeline (Phase 2)

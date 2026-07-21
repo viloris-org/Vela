@@ -1,10 +1,13 @@
-# Composition and Layers
+# Composition and layers
 
-The **Layer tree** is the composition source of truth for each window. A WebView
-is one layer kind among several — not the only content root.
+> **Type**: Conceptual  
+> **Status**: Current  
+> **Audience**: App authors | Host implementers  
+> **SoT**: `packages/api/src/layer/types.ts`; [ADR 0001](adr/0001-composition-hit-material.md)
 
-Accepted decisions: [ADR 0001](adr/0001-composition-hit-material.md).
-Types: `packages/api/src/layer/types.ts` (`Layer`, `InsertLayerSpec`, …).
+The **Layer tree** is the composition source of truth for each window. A WebView is one layer kind among several - not the only content root.
+
+Accepted decisions: [ADR 0001](adr/0001-composition-hit-material.md). Types: `packages/api/src/layer/types.ts` (`Layer`, `InsertLayerSpec`, …).
 
 ## Canonical stack (example)
 
@@ -20,9 +23,7 @@ Window
     └── chrome            (drag regions, system button hits)
 ```
 
-**Draw order** and **default hit order** both follow `zIndex` (higher first for
-hit-test). The Shell must not double-deliver the same pointer event to a WebView
-and a sibling native view.
+**Draw order** and **default hit order** both follow `zIndex` (higher first for hit-test). The Shell must not double-deliver the same pointer event to a WebView and a sibling native view. macOS view parenting and hit root: [macOS spike architecture](macos-spike-architecture.md).
 
 ## Layer kinds
 
@@ -56,27 +57,27 @@ Every layer shares:
 
 ### WebView
 
-- `url?` — content URL
-- `preloadProfile?` — capability profile name from app manifest
-- `capabilities?` — extra permission ids for this web content
+- `url?` - content URL
+- `preloadProfile?` - capability profile name from app manifest
+- `capabilities?` - extra permission ids for this web content
 
 ### Native
 
-- `component` — registered name, e.g. `"camera.preview"`
-- `props?` — component-specific props (validated by host/plugin schema)
+- `component` - registered name, e.g. `"camera.preview"`
+- `props?` - component-specific props (validated by host/plugin schema)
 
 ### Material
 
-- `material` — `MaterialId` (see [Materials](materials.md))
-- `shape` — axis-aligned shape (`rect` / `roundedRect` / `capsule` / `circle`)
-- `samples` — `BackdropSource` (`layers-below` | specific layer | window content)
-- `variant` — `regular` | `clear`
-- `tint?` — optional color
-- `interactive` — pointer-reactive glass where supported
+- `material` - `MaterialId` (see [Materials](materials.md))
+- `shape` - axis-aligned shape (`rect` / `roundedRect` / `capsule` / `circle`)
+- `samples` - `BackdropSource` (`layers-below` | specific layer | window content)
+- `variant` - `regular` | `clear`
+- `tint?` - optional color
+- `interactive` - pointer-reactive glass where supported
 
 ### Chrome
 
-- `role` — `titlebar` | `drag-region` | `system-buttons` | `custom`
+- `role` - `titlebar` | `drag-region` | `system-buttons` | `custom`
 
 ### Passthrough
 
@@ -86,8 +87,7 @@ No extra fields. Useful for reserving a hole or coordinating layout without pain
 
 **Insert** (`InsertLayerSpec`): create a layer. `id` optional until Shell assigns.
 
-**Patch** (`LayerPatch`): partial update of bounds, zIndex, visibility, opacity,
-hitPolicy, clip, props, url.
+**Patch** (`LayerPatch`): partial update of bounds, zIndex, visibility, opacity, hitPolicy, clip, props, url.
 
 Host contract (`VelaWindow`):
 
@@ -97,7 +97,7 @@ updateLayer(id: LayerId, patch: LayerPatch): void | Promise<void>
 removeLayer(id: LayerId): void | Promise<void>
 listLayers(): readonly Layer[] | Promise<readonly Layer[]>
 reorderLayer(id: LayerId, zIndex: number): void | Promise<void>
-mountChild?(parentId, nativeSpec): Layer | Promise<Layer>  // material/native children
+mountChild?(parentId, nativeSpec): Layer | Promise<Layer> // material/native children
 ```
 
 From web content, the preload bridge exposes a subset:
@@ -159,4 +159,4 @@ const mainWeb: InsertLayerSpec = {
 | `createWindowContainer` / foreign window | `kind: "native"` components |
 | Child widgets of a container | `mountChild` under material/native |
 
-Full mapping, pitfalls, and local `../qt6` notes: [Qt composition notes](qt-composition-notes.md).
+Full mapping, pitfalls, and local `../qt6` notes: [Qt composition notes](research/qt-composition-notes.md).

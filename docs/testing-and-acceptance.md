@@ -1,12 +1,13 @@
-# Testing and Acceptance
+# Testing and acceptance
 
-How we know contracts and (later) hosts meet the product bar. Until hosts exist,
-**contract tests** are the only automated gate; host checklists below are the
-target smoke suite for Phase 1+.
+> **Type**: Tracking  
+> **Status**: Current  
+> **Audience**: Host implementers | Maintainers  
+> **SoT**: Acceptance gates for contracts and hosts
 
-Related: [Roadmap](roadmap.md), [Qt composition notes](qt-composition-notes.md)
-(Qt-class criteria), [Tauri comparison](tauri-comparison.md) (capability/IPC
-security expectations), [ADR 0001](adr/0001-composition-hit-material.md).
+How we know contracts and (later) hosts meet the product bar. Until hosts exist, **contract tests** are the only automated gate; host checklists below are the target smoke suite for Phase 1+.
+
+Related: [Roadmap](roadmap.md), [macOS spike architecture](macos-spike-architecture.md), [Qt composition notes](research/qt-composition-notes.md) (Qt-class criteria), [Tauri comparison](research/tauri-comparison.md) (capability/IPC security expectations), [ADR 0001](adr/0001-composition-hit-material.md), [ADR 0002](adr/0002-ipc-privilege.md).
 
 ## Layers of verification
 
@@ -33,21 +34,21 @@ Expected coverage in `packages/api` (expand as helpers grow):
 - Materials: `resolveMaterial` degrade paths
 - Layers: `defaultHitPolicyForKind`
 - Capabilities / native component registries (test resets)
+- **Planned:** pure `resolveHit` + web-shaped generation rules ([design gaps](design-gaps.md) G-P0-1)
 
 Contracts **must not** depend on a running Shell.
 
 ## Qt-class composition acceptance (host)
 
-A host passes **Qt-class composition** when all of the following hold. These
-mirror the list in [Qt composition notes](qt-composition-notes.md).
+A host passes **Qt-class composition** when all of the following hold. These mirror the list in [Qt composition notes](research/qt-composition-notes.md).
 
-1. **Multi-kind stack** — at least web + native + material coexist in one window.
-2. **Regional in-app hit-through** — holes work inside the client area (`HitPolicy`).
-3. **Window → OS click-through** — available without breaking (2) (`WindowInputMode`).
-4. **Materials** — sample real content below or report `ResolvedMaterial.degraded`.
-5. **Single delivery** — no double-click / double-focus on WebView + native sibling.
-6. **Opacity ≠ hit** — changing visual opacity does not silently change `HitPolicy`.
-7. **Native bounds** — foreign surfaces track Shell `bounds` / `zIndex`.
+1. **Multi-kind stack** - at least web + native + material coexist in one window.
+2. **Regional in-app hit-through** - holes work inside the client area (`HitPolicy`).
+3. **Window → OS click-through** - available without breaking (2) (`WindowInputMode`).
+4. **Materials** - sample real content below or report `ResolvedMaterial.degraded`.
+5. **Single delivery** - no double-click / double-focus on WebView + native sibling.
+6. **Opacity ≠ hit** - changing visual opacity does not silently change `HitPolicy`.
+7. **Native bounds** - foreign surfaces track Shell `bounds` / `zIndex`.
 
 ### Scenario checklist (Phase 1 macOS spike)
 
@@ -66,7 +67,7 @@ mirror the list in [Qt composition notes](qt-composition-notes.md).
 | # | Scenario | Pass criteria |
 |---|----------|---------------|
 | W1 | WebView2 + Mica/Acrylic layer | Material effective id correct; degrade if unsupported |
-| W2 | Same S2–S6 as macOS | Behavioral parity, not pixel parity |
+| W2 | Same S2 - S6 as macOS | Behavioral parity, not pixel parity |
 | W3 | Missing WebView2 runtime | Loud diagnostic; no silent blank window |
 
 ## Capability acceptance
@@ -101,7 +102,7 @@ Minimum playground content (any web stack):
 5. Toggle: normal window input vs region-through annotator mode
 6. Debug overlay: last `HitTarget` kind + layer id
 
-Exit for Phase 1: short demo video covering S1–S6.
+Exit for Phase 1: short demo video covering S1 - S6.
 
 ## CI (planned)
 
@@ -110,8 +111,8 @@ Once hosts exist:
 | Job | Command / check |
 |-----|-----------------|
 | Contracts | `bun test` + `bun run typecheck` |
-| macOS smoke | Headless or UI harness for S1–S2 |
-| Windows smoke | WebView2 present; W1–W2 |
+| macOS smoke | Headless or UI harness for S1 - S2 |
+| Windows smoke | WebView2 present; W1 - W2 |
 | Linux smoke | Best-effort; materials may degrade |
 
 Do not block CI on pixel-identical materials.
