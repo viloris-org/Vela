@@ -1,0 +1,16 @@
+{
+  "name": "vela",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Bun-centered GUI framework: WebView UI, Qt-class composition, system materials & capabilities",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "typecheck": "bun run --filter @vela/api typecheck",
+    "test": "bun test packages/api",
+    "test:api": "bun test packages/api"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.8.0"
+  }
+}

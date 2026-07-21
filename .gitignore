@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+.turbo/
+.cache/
+*.tsbuildinfo
+.bun/
+.env
+.env.*
+.omo/
+.claude/
+.codex/
+./opencode/
+.codegrah/
