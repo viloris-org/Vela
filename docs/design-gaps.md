@@ -36,7 +36,7 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 | G-P1-5 | Layer tree snapshot type for Shell↔Bun sync | `LayerTreeSnapshot` | **partial** (`layer/snapshot.ts` + `toOpaqueRegionStore`; live Bun sync Phase 2) |
 | G-P1-6 | App manifest **file** schema (on-disk format) | JSON/TOML schema doc + types | open |
 | G-P1-7 | Coordinate conversion policy (AppKit y-up vs logical y-down) only implied | Explicit in spike + geometry notes | **closed** pure (`coordinates.ts`); Shell must call once at boundary |
-| G-P1-8 | Zig C ABI header + RPC endpoint skeleton | `hosts/zig-shell` + Phase 2 | open |
+| G-P1-8 | Zig C ABI header + RPC endpoint skeleton | `hosts/zig-shell` + Phase 2 | **partial** (`include/vela_shell_abi.h`, mock L4, JSON codec + dispatch + `zig build test`; UDS/Bun listen + real L4 still open) |
 | G-P1-9 | Bun capability host registration API (`handle` / plugin load) | `@vela/api` + Bun host Phase 2–3 | open |
 | G-P1-10 | Host loader + versioning for T1.5 / systems native modules (Zig ABI, `vela-sys`) | Host + plugin packaging; [ADR 0008](adr/0008-zig-systems-surface.md) | open |
 

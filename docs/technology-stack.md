@@ -177,7 +177,7 @@ proven. It must not become the public composition API or the sole window stack.
 - [x] Capability authoring default: **TypeScript on privileged Host**; desktop reference runtime Bun; native optional for T2 - [ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0007](adr/0007-typescript-full-stack-host.md)
 - [x] Performance story: **system WebView for App**; **T1.5 native for Host hot paths**; Bun not selected for server-style JS throughput - ADR 0007 D8
 - [ ] Windows L4 language (C++/WinRT vs Rust+WinRT) at Phase 4 start
-- [ ] Zig C ABI header surface (`vela_shell_*` groups) checked in with `hosts/zig-shell`
+- [~] Zig C ABI header surface (`vela_shell_*` groups) checked in with `hosts/zig-shell` (header + mock vtable + codec; UDS/real L4 open)
 - [ ] Isolation-style interceptor between page and privilege (optional Phase 2+; ADR 0002 D7)
 - [ ] Linux WebView + blur stack baseline
 - [ ] Android host packaging (Activity / WebView integration pattern)

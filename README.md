@@ -33,6 +33,7 @@ New_Vela/
   docs/               Architecture, domain guides, ADRs, research, writing guidelines
   packages/api/       @vela/api - shared contracts (usable today)
   packages/shell-core @vela/shell-core - portable Shell policy + hit/layer state (tests on Linux)
+  hosts/zig-shell     Desktop Zig interop (L2.5): C ABI + mock L4 + RPC codec skeleton
   hosts/desktop-shell Phase 1 macOS Shell scaffold (Swift on macOS; README only until Xcode)
   apps/playground     Dogfood web content (mock window.vela in browser)
   example/clock       Minimal clock App TS sample (layers + hit + mock bridge)
@@ -50,6 +51,9 @@ bun test
 bun run typecheck
 bun run playground:serve   # layout review with mock window.vela
 bun run example:clock      # minimal clock sample (http://localhost:5174)
+
+# Zig interop skeleton (requires Zig 0.16.x)
+cd hosts/zig-shell && zig build && zig build test
 ```
 
 ## Core ideas

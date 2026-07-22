@@ -202,7 +202,7 @@ Short demo video or app binary notes in PR / issue: glass toolbar + underlay + h
 
 - [ ] Bun process owns app lifecycle (launch, quit, multi-window policy as designed)
 - [ ] Typed RPC / privilege boundary (ADR 0002 decisions implemented)
-- [ ] **Zig interop layer** (`hosts/zig-shell`): RPC endpoint, dispatch, C ABI to L4 ([ADR 0005](adr/0005-zig-interop-layer.md), [G-P1-8](design-gaps.md))
+- [~] **Zig interop layer** (`hosts/zig-shell`): C ABI + mock L4 + JSON codec/dispatch skeleton ([ADR 0005](adr/0005-zig-interop-layer.md), [G-P1-8](design-gaps.md)); UDS endpoint + real L4 still open
 - [ ] macOS L4 (Swift) implements C ABI surface behind Zig (or dual-path until cutover)
 - [ ] Capability checks on `call` and sensitive layer inserts (**both** Bun and Shell — defense in depth)
 - [ ] App manifest profiles (on-disk schema — [G-P1-6](design-gaps.md))
@@ -399,7 +399,7 @@ Use this as the default work queue until Phase 2 exit.
 | Cross-platform abstraction conceptual doc | `[x]` [cross-platform-abstraction.md](cross-platform-abstraction.md) |
 | ADR 0005 Zig interop layer | `[x]` [adr/0005-zig-interop-layer.md](adr/0005-zig-interop-layer.md) |
 | ADR 0006 TypeScript-first capabilities | `[x]` [adr/0006-ts-first-capabilities.md](adr/0006-ts-first-capabilities.md) |
-| `hosts/zig-shell` skeleton (RPC + C ABI) | `[ ]` Phase 2 |
+| `hosts/zig-shell` skeleton (RPC + C ABI) | `[~]` header + mock L4 + codec/dispatch + CI; UDS/Bun still Phase 2 |
 | Bun capability host registration (TS plugins) | `[ ]` Phase 2–3 ([G-P1-9](design-gaps.md)) |
 | Testing and acceptance (host smoke) | `[x]` [testing-and-acceptance.md](testing-and-acceptance.md) |
 | Qt composition notes | `[x]` research |

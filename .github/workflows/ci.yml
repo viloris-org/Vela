@@ -1,5 +1,5 @@
-# Contract gates for @vela/api + @vela/shell-core.
-# Hosts are not in CI yet — see docs/testing-and-acceptance.md.
+# Contract gates for @vela/api + @vela/shell-core, plus zig-shell skeleton.
+# Full native L4 hosts are not in CI yet — see docs/testing-and-acceptance.md.
 name: CI
 
 on:
@@ -36,3 +36,29 @@ jobs:
 
       - name: Typecheck
         run: bun run typecheck
+
+  zig-shell:
+    name: Zig shell (build + test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+
+      - name: Build
+        working-directory: hosts/zig-shell
+        run: zig build
+
+      - name: Unit tests
+        working-directory: hosts/zig-shell
+        run: zig build test
+
+      - name: Self-test CLI
+        working-directory: hosts/zig-shell
+        run: ./zig-out/bin/vela-shell --self-test
