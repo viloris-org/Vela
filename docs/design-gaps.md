@@ -19,8 +19,8 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 
 | ID | Gap | Target | Status |
 |----|-----|--------|--------|
-| G-P0-1 | No pure `resolveHit(windowMode, layers, opaqueRegionStore, point) → HitTarget` in `@vela/api` | Shared algorithm + unit tests; Swift mirrors | open |
-| G-P0-2 | No RPC envelope / error code types | `@vela/api` protocol module; [ADR 0002](adr/0002-ipc-privilege.md) | open (ADR proposed) |
+| G-P0-1 | No pure `resolveHit(windowMode, layers, opaqueRegionStore, point) → HitTarget` in `@vela/api` | Shared algorithm + unit tests; Swift mirrors | **closed** (`hit/resolve-hit.ts` + tests; host mirror still Phase 1) |
+| G-P0-2 | No RPC envelope / error code types | `@vela/api` protocol module; [ADR 0002](adr/0002-ipc-privilege.md) | **partial** (types in `protocol/rpc.ts`; wire + Bun still Phase 2) |
 | G-P0-3 | Phase 1 view/hit architecture was prose-only | [macos-spike-architecture.md](macos-spike-architecture.md) | **closed** (doc) |
 | G-P0-4 | IPC privilege decisions unrecorded | ADR 0002 | **partial** (Proposed) |
 | G-P0-5 | web-shaped empty-default vs “block all until regions” underspecified for dogfood | Spike doc + input doc | **partial** (spike: empty until report) |
@@ -32,7 +32,7 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 | G-P1-1 | `HitPolicy.callback` has no request/response payload types | `hit/policy.ts` + Shell protocol | open |
 | G-P1-2 | `MaterialLayer.content` / GlassEffectContainer multi-child weak on runtime `Layer` type | Align `MaterialLayer` with `MaterialLayerSpec.content`; `mountChild` semantics | open |
 | G-P1-3 | No formal `material.degraded` / diagnostics event catalog | `events` channel catalog in api-contracts | open |
-| G-P1-4 | `generation` stale rules only partial in prose | Pure helper + tests; host must drop stale | partial |
+| G-P1-4 | `generation` stale rules only partial in prose | Pure helper + tests; host must drop stale | **partial** (`isGenerationStale` / `applyWebShapeUpdate` in api; host drop path remains) |
 | G-P1-5 | Layer tree snapshot type for Shell↔Bun sync | `LayerTreeSnapshot` | open |
 | G-P1-6 | App manifest **file** schema (on-disk format) | JSON/TOML schema doc + types | open |
 | G-P1-7 | Coordinate conversion policy (AppKit y-up vs logical y-down) only implied | Explicit in spike + geometry notes | partial (spike states once-at-boundary) |

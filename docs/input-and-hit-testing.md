@@ -64,7 +64,7 @@ and overlay native.
 
 `HitTargetKind`: `os-desktop` | `window-background` | `chrome` | `webview` | `native` | `material`.
 
-**Contract gap:** a pure `resolveHit(...)` helper should live in `@vela/api` so hosts mirror one algorithm (see [design gaps](design-gaps.md) G-P0-1). Until then, hosts must follow this section and the spike doc exactly.
+**Contract:** pure `resolveHit(windowMode, layers, opaqueRegionStore, point)` lives in `@vela/api` (`hit/resolve-hit.ts`). Hosts should mirror that algorithm (Swift Phase 1).
 
 **Coordinates:** logical window content, origin top-left, y down. Platform APIs that use a different origin (e.g. AppKit) convert **once** at the Shell boundary.
 

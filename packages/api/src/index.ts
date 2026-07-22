@@ -17,6 +17,8 @@ export {
   regionFromRoundedRect,
   regionUnion,
   rectContains,
+  regionPrimitiveContains,
+  regionContains,
 } from "./geometry.ts";
 
 export type {
@@ -27,6 +29,18 @@ export type {
   WebShapeUpdate,
   WebShapePointQuery,
 } from "./hit/policy.ts";
+export type {
+  OpaqueRegionEntry,
+  OpaqueRegionStore,
+  ApplyWebShapeResult,
+  ResolveHitOptions,
+} from "./hit/resolve-hit.ts";
+export {
+  createEmptyOpaqueRegionStore,
+  isGenerationStale,
+  applyWebShapeUpdate,
+  resolveHit,
+} from "./hit/resolve-hit.ts";
 
 export type {
   MaterialId,
@@ -106,3 +120,13 @@ export type {
 } from "./window/types.ts";
 
 export type { VelaPreloadBridge } from "./protocol/bridge.ts";
+
+export type {
+  VelaRpcChannel,
+  VelaRpcErrorCode,
+  VelaRpcRequest,
+  VelaRpcError,
+  VelaRpcResponse,
+  VelaEvent,
+} from "./protocol/rpc.ts";
+export { VelaRpcErrorCodes, rpcOk, rpcErr } from "./protocol/rpc.ts";

@@ -64,7 +64,7 @@ Parallel work that may start early without blocking Phase 1:
 | Phase | Name | Status | Exit (one line) |
 |-------|------|--------|-----------------|
 | 0 | Project skeleton | `[x]` | Monorepo + `@vela/api` + ADR 0001 + core docs |
-| 0.5 | Contract hardening | `[ ]` / partial | Pure hit + RPC envelopes + generation rules testable without Shell |
+| 0.5 | Contract hardening | `[~]` | Pure hit + RPC envelopes + generation rules testable without Shell |
 | 1 | macOS composition spike | `[ ]` | S1–S7 pass; demo: glass toolbar + underlay + holes |
 | 2 | Bun host + typed RPC | `[ ]` | Bun owns lifecycle; privilege boundary per ADR 0002 |
 | 3 | Capability plugins (desktop) | `[ ]` | fs / dialog / clipboard / notify + allow/deny playground |
@@ -108,7 +108,7 @@ Parallel work that may start early without blocking Phase 1:
 
 ## Phase 0.5 — Contract hardening (pre-host / concurrent with Phase 1)
 
-**Status:** `[ ]` / partial — docs name the gaps; code not complete.
+**Status:** `[~]` — pure `resolveHit` + RPC envelope types landed in `@vela/api`; host wire still open.
 
 **Goal:** Close P0 contract debt so Phase 1 Swift and later hosts share one algorithm and one RPC shape.
 
@@ -119,17 +119,17 @@ Parallel work that may start early without blocking Phase 1:
 
 | Item | Gap / link | Status |
 |------|------------|--------|
-| Pure `resolveHit(windowMode, layers, opaqueRegionStore, point) → HitTarget` + unit tests | [G-P0-1](design-gaps.md) | `[ ]` |
-| RPC envelope + structured error code types in `@vela/api` | [G-P0-2](design-gaps.md), ADR 0002 | `[ ]` |
+| Pure `resolveHit(windowMode, layers, opaqueRegionStore, point) → HitTarget` + unit tests | [G-P0-1](design-gaps.md) | `[x]` |
+| RPC envelope + structured error code types in `@vela/api` | [G-P0-2](design-gaps.md), ADR 0002 | `[x]` types; wire Phase 2 |
 | web-shaped empty-default vs block-until-report — lock for dogfood | [G-P0-5](design-gaps.md), input + spike docs | `[~]` |
-| `generation` stale rules as pure helper + tests | [G-P1-4](design-gaps.md) | `[~]` |
+| `generation` stale rules as pure helper + tests | [G-P1-4](design-gaps.md) | `[x]` helpers; host drop path remains |
 | Coordinate conversion policy (logical y-down; AppKit convert once at boundary) | [G-P1-7](design-gaps.md), spike doc | `[~]` |
 
 ### Exit criteria
 
-- [ ] `resolveHit` tests cover opaque / pass-through / web-shaped / window modes enough that Swift can mirror without reinterpretation
-- [ ] Envelope types compile and document reject/deny shapes used by ADR 0002
-- [ ] Design-gaps G-P0-1 and G-P0-2 marked closed or partial with explicit remaining host work
+- [x] `resolveHit` tests cover opaque / pass-through / web-shaped / window modes enough that Swift can mirror without reinterpretation
+- [x] Envelope types compile and document reject/deny shapes used by ADR 0002
+- [x] Design-gaps G-P0-1 and G-P0-2 marked closed or partial with explicit remaining host work
 
 ### Suggested order
 
@@ -371,8 +371,8 @@ Short demo video or app binary notes in PR / issue: glass toolbar + underlay + h
 Use this as the default work queue until Phase 2 exit.
 
 1. [x] ADR + `@vela/api` contracts (Phase 0)
-2. [ ] **Phase 0.5:** pure `resolveHit` + tests (G-P0-1)
-3. [ ] **Phase 0.5:** RPC envelopes / error codes (G-P0-2)
+2. [x] **Phase 0.5:** pure `resolveHit` + tests (G-P0-1)
+3. [x] **Phase 0.5:** RPC envelopes / error codes (G-P0-2) — types in `@vela/api`
 4. [ ] **Phase 1:** macOS spike — WebView + Liquid Glass toolbar + hole hit-test ([spike architecture](macos-spike-architecture.md), S1–S7)
 5. [ ] Accept ADR 0002 after Phase 1 channel feedback
 6. [ ] **Phase 2:** Bun host + typed RPC / preload bridge
@@ -395,7 +395,7 @@ Use this as the default work queue until Phase 2 exit.
 | Docs index | `[x]` [README.md](README.md) |
 | macOS spike architecture | `[x]` design |
 | Design gaps register | `[x]` [design-gaps.md](design-gaps.md) |
-| `@vela/api` pure `resolveHit` + RPC envelopes | `[ ]` design-gaps P0 |
+| `@vela/api` pure `resolveHit` + RPC envelopes | `[x]` resolveHit; `[~]` envelopes (types only) |
 | CI matrix once hosts exist | `[ ]` [G-P2-6](design-gaps.md) |
 | Linux WebView + blur baseline choices | `[ ]` [G-P2-3](design-gaps.md) |
 | Product vs repo naming clarity | `[~]` README partial [G-P2-7](design-gaps.md) |

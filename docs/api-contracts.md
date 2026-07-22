@@ -21,6 +21,8 @@ Package: `packages/api/` Entry: `packages/api/src/index.ts`
 |------|-------------------|
 | `geometry.ts` | `Point`, `Size`, `Rect`, `Shape`, `Region`, helpers |
 | `hit/policy.ts` | `HitPolicy`, `WindowInputMode`, `HitTarget`, web-shape payloads |
+| `hit/resolve-hit.ts` | pure `resolveHit`, opaque region store, generation helpers |
+| `protocol/rpc.ts` | `VelaRpcRequest` / `Response`, error codes, `rpcOk` / `rpcErr` |
 | `layer/types.ts` | `Layer*` variants, `InsertLayerSpec`, `LayerPatch`, defaults |
 | `material/spec.ts` | `MaterialId`, `BackdropSource`, `resolveMaterial`, … |
 | `capability/types.ts` | Permissions, grants, checks, risk |
@@ -95,11 +97,18 @@ import type {
 
 import {
   regionFromRect,
+  regionContains,
+  resolveHit,
+  createEmptyOpaqueRegionStore,
+  applyWebShapeUpdate,
   resolveMaterial,
   defaultHitPolicyForKind,
   BuiltinPermissions,
   defineNativeComponent,
   defineCapability,
+  rpcOk,
+  rpcErr,
+  VelaRpcErrorCodes,
 } from "@vela/api";
 ```
 
@@ -122,8 +131,8 @@ bun run typecheck
 
 | Item | Status | Doc |
 |------|--------|-----|
-| IPC / typed RPC envelopes + error codes | ADR Proposed; types not in package yet | [ADR 0002](adr/0002-ipc-privilege.md) |
-| Pure `resolveHit` helper | Design locked; implement next | [input-and-hit-testing](input-and-hit-testing.md), [design gaps](design-gaps.md) |
+| IPC / typed RPC envelopes + error codes | Types in `protocol/rpc.ts`; wire Phase 2 | [ADR 0002](adr/0002-ipc-privilege.md) |
+| Pure `resolveHit` helper | Landed in `hit/resolve-hit.ts` + tests | [input-and-hit-testing](input-and-hit-testing.md), [design gaps](design-gaps.md) |
 | Plugin ABI + signing | Planned ADR 0003 | [tauri-comparison](research/tauri-comparison.md) |
 | Event catalog (`material.degraded`, …) | Planned | design gaps G-P1-3 |
 | `HitPolicy.callback` payloads | Planned | design gaps G-P1-1 |
