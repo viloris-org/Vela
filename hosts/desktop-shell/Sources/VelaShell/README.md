@@ -2,16 +2,27 @@
 
 Placeholder for Phase 1 Swift sources (macOS only).
 
-Expected modules (names illustrative; implement against `@vela/api` contracts):
+Portable policy reference: **`@vela/shell-core`** (`packages/shell-core`). Do not reimplement hit algorithms — mirror pure `resolveHit` / shell-core behavior at the AppKit boundary.
 
-| Area | Responsibility |
-|------|----------------|
-| App / window bootstrap | `NSWindow`, content view = `VelaHitRootView` |
-| Hit root | Sole `hitTest` policy; `resolveHit` mirror |
-| Layer map | `LayerId` → `NSView` / hosting view |
-| WKWebView | Main web layer; inject preload for `window.vela` |
-| Material host | Capsule toolbar; Liquid Glass or degraded material |
-| Region store | `opaqueRegions` + generation for `web-shaped` |
+## Module map (Swift ↔ TS)
+
+| Swift area | Responsibility | TS counterpart |
+|------------|----------------|----------------|
+| App / window bootstrap | `NSWindow`, content view = `VelaHitRootView` | `createShellCore` + window options |
+| Hit root | Sole `hitTest` policy | `ShellCore.resolvePointer` / `pointerDown` → `@vela/api` `resolveHit` |
+| Layer map | `LayerId` → `NSView` / hosting view | `layer-tree` insert/update/remove |
+| WKWebView | Main web layer; inject preload for `window.vela` | `createPreloadBridge` / `VelaPreloadBridge` |
+| Material host | Capsule toolbar; Liquid Glass or degraded material | `resolveToolbarMaterial` + `resolveMaterial` |
+| Region store | `opaqueRegions` + generation for `web-shaped` | `web-shape-store` / `applyWebShapeUpdate` |
+| Dogfood bootstrap | underlay + main web + glass toolbar | `applyDogfoodBootstrap`, `DOGFOOD_LAYER_IDS` |
+
+## Dogfood layer ids
+
+| Id | Kind | zIndex |
+|----|------|--------|
+| `underlay-native` | native underlay | 5 |
+| `main-webview` | webview (web-shaped) | 10 |
+| `toolbar-material` | material toolbar | 30 |
 
 Add real `.swift` files only when building on a Mac with Xcode. Prefer not to commit non-compiling code.
 

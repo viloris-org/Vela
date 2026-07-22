@@ -5,9 +5,10 @@
   "description": "TypeScript-first GUI framework: WebView UI, Qt-class composition, system materials & capabilities (Bun = toolchain + desktop reference host)",
   "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "typecheck": "bun run --filter @vela/api typecheck",
-    "test": "bun test packages/api",
+    "typecheck": "bun run --filter @vela/api typecheck && bun run --filter @vela/shell-core typecheck",
+    "test": "bun test packages/api packages/shell-core",
     "test:api": "bun test packages/api",
+    "test:shell-core": "bun test packages/shell-core",
     "playground:serve": "bun run --filter @vela/playground serve"
   },
   "devDependencies": {

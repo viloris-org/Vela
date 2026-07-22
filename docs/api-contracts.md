@@ -34,6 +34,8 @@ Package: `packages/api/` Entry: `packages/api/src/index.ts`
 | `window/types.ts` | `VelaWindow`, `VelaApp`, create options |
 | `protocol/bridge.ts` | `VelaPreloadBridge`, `window.vela` typing |
 
+Related host-facing package (not app SDK): **`@vela/shell-core`** (`packages/shell-core`) — portable in-process Shell controller (layer tree, hit routing via pure helpers, dogfood bootstrap, preload bridge adapter). App authors still only use `@vela/api` / `window.vela`.
+
 ## Geometry
 
 Logical window content coordinates: origin **top-left**, **y down**.

@@ -142,7 +142,7 @@ Parallel work that may start early without blocking Phase 1:
 
 ## Phase 1 — macOS composition spike
 
-**Status:** `[~]` scaffold started (architecture design `[x]`; dogfood web + shell folder; no Swift binary).
+**Status:** `[~]` scaffold + portable Shell policy (`@vela/shell-core` tests on Linux); architecture design `[x]`; dogfood web + shell folder; no Swift binary.
 
 **Goal:** Prove Qt-class composition on one Tier 1 platform: multi-kind layers, regional hit-through, system material, single event delivery.
 
@@ -163,6 +163,7 @@ Parallel work that may start early without blocking Phase 1:
 - [x] Dogfood content: glass toolbar + map/video (or color) underlay + click holes (`apps/playground`; mock without host)
 - [x] Shell scaffold tree + checklist (`hosts/desktop-shell`; Swift sources not yet)
 - [x] Prefer pure `resolveHit` from Phase 0.5 when available; if spike lands first, port Swift logic back into `@vela/api` before Phase 2
+- [x] Portable Shell state machine (`packages/shell-core`): layer tree, web-shaped store, dogfood bootstrap, preload bridge adapter, S2/S6/S7-class tests (no toolkit paint)
 
 ### Exit criteria
 
@@ -378,7 +379,7 @@ Use this as the default work queue until Phase 2 exit.
 2. [x] **Phase 0.5:** pure `resolveHit` + tests (G-P0-1)
 3. [x] **Phase 0.5:** RPC envelopes / error codes (G-P0-2) — types in `@vela/api`
 4. [x] **Phase 0.5:** web-shaped empty default, AppKit coords, `LayerTreeSnapshot` (G-P0-5, G-P1-7, G-P1-5 pure)
-5. [~] **Phase 1:** dogfood + shell scaffold; next: Swift WebView + Liquid Glass + hole hit-test (S1–S7)
+5. [~] **Phase 1:** dogfood + shell scaffold + `@vela/shell-core` (portable policy/tests); next: Swift WebView + Liquid Glass + hole hit-test (S1–S7)
 6. [ ] Accept ADR 0002 after Phase 1 channel feedback
 7. [ ] **Phase 2:** Bun host + Zig interop + typed RPC / preload bridge
 8. [ ] **Phase 3:** Capability plugins (fs, dialog, clipboard, notify) + allow/deny playground
@@ -409,6 +410,7 @@ Use this as the default work queue until Phase 2 exit.
 | `@vela/api` pure `resolveHit` + RPC envelopes | `[x]` resolveHit; `[~]` envelopes (types only) |
 | `@vela/api` coords + web-shaped defaults + snapshot | `[x]` pure helpers; host apply remains |
 | Playground dogfood + desktop-shell scaffold | `[~]` web mock + README; no Swift binary |
+| `@vela/shell-core` portable Shell policy | `[x]` layer/hit state + bridge adapter + S-class tests; L4 still open |
 | CI matrix once hosts exist | `[ ]` [G-P2-6](design-gaps.md) |
 | Linux WebView + blur baseline choices | `[ ]` [G-P2-3](design-gaps.md) |
 | Product vs repo naming clarity | `[~]` README partial [G-P2-7](design-gaps.md) |

@@ -28,6 +28,17 @@
         "typescript": "^5.8.0",
       },
     },
+    "packages/shell-core": {
+      "name": "@vela/shell-core",
+      "version": "0.0.1",
+      "dependencies": {
+        "@vela/api": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.8.0",
+      },
+    },
   },
   "packages": {
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
@@ -37,6 +48,8 @@
     "@vela/api": ["@vela/api@workspace:packages/api"],
 
     "@vela/playground": ["@vela/playground@workspace:apps/playground"],
+
+    "@vela/shell-core": ["@vela/shell-core@workspace:packages/shell-core"],
 
     "bun-types": ["bun-types@1.3.14", "", { "dependencies": { "@types/node": "*" } }, "sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ=="],
 

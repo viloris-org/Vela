@@ -34,9 +34,15 @@ Expected coverage in `packages/api` (expand as helpers grow):
 - Materials: `resolveMaterial` degrade paths
 - Layers: `defaultHitPolicyForKind`
 - Capabilities / native component registries (test resets)
-- **Planned:** pure `resolveHit` + web-shaped generation rules ([design gaps](design-gaps.md) G-P0-1)
+- Pure `resolveHit` + web-shaped generation rules ([design gaps](design-gaps.md) G-P0-1)
 
-Contracts **must not** depend on a running Shell.
+Portable Shell policy in `packages/shell-core` (`@vela/shell-core`):
+
+- Layer tree CRUD + dogfood bootstrap stack
+- S2 hole→underlay, S6 single `lastHit`, S7 stale generation (class scenarios, not host smoke)
+- Opacity ≠ hit, material toolbar hit, region-through lite, preload bridge deny-all `call`
+
+Contracts and shell-core **must not** depend on a running native Shell. Host smoke (S1–S7 on real AppKit) remains required for Phase 1 exit.
 
 ## Qt-class composition acceptance (host)
 

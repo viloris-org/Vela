@@ -1,0 +1,24 @@
+{
+  "name": "@vela/shell-core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Portable in-process Shell policy + layer/hit state machine (Phase 1; no toolkit paint)",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@vela/api": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.8.0"
+  }
+}

@@ -7,7 +7,7 @@
 
 Executable design for **Phase 1**: prove Qt-class composition on macOS with WKWebView + system material (Liquid Glass) + **regional** hit-through, without double event delivery.
 
-Status: design - host code not shipped. Contracts: `@vela/api`. Decisions: [ADR 0001](adr/0001-composition-hit-material.md). Acceptance scenarios: [Testing and acceptance](testing-and-acceptance.md) S1 - S7.
+Status: design + portable TS Shell policy (`@vela/shell-core`); native host code not shipped. Contracts: `@vela/api`. Decisions: [ADR 0001](adr/0001-composition-hit-material.md). Acceptance scenarios: [Testing and acceptance](testing-and-acceptance.md) S1 - S7.
 
 Related research notes: [Input and hit testing](input-and-hit-testing.md), [Materials](materials.md), [Design gaps](design-gaps.md). Cross-host shape: [Cross-platform abstraction](cross-platform-abstraction.md), [ADR 0004](adr/0004-cross-platform-abstraction.md). Desktop Bun glue later: [ADR 0005](adr/0005-zig-interop-layer.md) (Zig; **not required for Phase 1 spike**).
 
@@ -205,13 +205,14 @@ Phase 1 is done when:
 
 ## Implementation checklist
 
+- [x] Pure `resolveHit` + generation helpers in `@vela/api` (Phase 0.5).
+- [x] Portable Shell state machine in `@vela/shell-core` (layer tree, region store, dogfood bootstrap, preload bridge adapter, S2/S6/S7-class tests on Linux).
 - [ ] Xcode macOS target; Swift Shell package under planned `hosts/desktop-shell` (or spike folder).
-- [ ] `VelaHitRootView` + layer → NSView map.
+- [ ] `VelaHitRootView` + layer → NSView map (mirror `@vela/shell-core` / `resolveHit`).
 - [ ] WKWebView creation, navigation, preload script injection.
 - [ ] Material host (glassEffect or visual effect fallback).
-- [ ] web-shaped region store + generation.
-- [ ] Optional: port `resolveHit` pure logic to TS tests first, then mirror in Swift.
-- [ ] Manual S1 - S6 script.
+- [ ] web-shaped region store + generation at the AppKit boundary (drop stale like shell-core).
+- [ ] Manual S1 - S6 script on a Mac.
 
 ## References
 

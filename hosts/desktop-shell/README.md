@@ -3,7 +3,8 @@
 **Phase 1 macOS spike** — native Shell process (Swift / AppKit + WKWebView).
 
 > **Status**: scaffold only. No compilable Swift app is checked in yet.  
-> **Machine note**: this monorepo is often edited on Linux; Xcode and macOS are required to build and run the Shell.
+> **Machine note**: this monorepo is often edited on Linux; Xcode and macOS are required to build and run the Shell.  
+> **Portable policy**: layer/hit state machine lives in `@vela/shell-core` (`packages/shell-core`) with S-class tests — mirror that behavior in AppKit, do not re-derive hit rules.
 
 Product contracts: `@vela/api`. Executable design: [docs/macos-spike-architecture.md](../../docs/macos-spike-architecture.md). Cross-host Shell role: [docs/cross-platform-abstraction.md](../../docs/cross-platform-abstraction.md) / [ADR 0004](../../docs/adr/0004-cross-platform-abstraction.md). Phase 2 Bun path: Zig interop ([ADR 0005](../../docs/adr/0005-zig-interop-layer.md)); this tree is the macOS **L4** backend.
 
@@ -56,14 +57,37 @@ Do not invent APIs beyond `VelaPreloadBridge` in `@vela/api`.
 
 Copy of spike doc — track progress here as work lands:
 
+- [x] Portable Shell policy in `@vela/shell-core` (TS; Linux-testable)
 - [ ] Xcode macOS target; Swift package / app under this tree
 - [ ] `VelaHitRootView` + layer → NSView map
 - [ ] WKWebView creation, navigation, preload script injection (`window.vela`)
 - [ ] Material host (`glassEffect` / `GlassEffectContainer` or `NSVisualEffectView` + `degraded`)
-- [ ] web-shaped region store + generation (drop stale updates)
-- [ ] Optional: keep pure `resolveHit` tests in `@vela/api` as the algorithm SoT; mirror in Swift
+- [ ] web-shaped region store + generation (drop stale updates; same rules as shell-core)
+- [ ] Keep pure `resolveHit` tests in `@vela/api` as the algorithm SoT; mirror in Swift
 - [ ] Manual acceptance S1–S6 ([testing-and-acceptance.md](../../docs/testing-and-acceptance.md)); S7 if generation used
 - [ ] Wire dogfood: underlay + main web + capsule toolbar; verify single delivery
+
+## Swift ↔ `@vela/shell-core` interface map
+
+When adding real Swift sources, mirror modules by responsibility (not one giant file):
+
+| Swift area (illustrative) | `@vela/shell-core` / `@vela/api` |
+|---------------------------|----------------------------------|
+| Layer tree apply | `ShellCore.insertLayer` / `updateLayer` / `removeLayer` / `listLayers` |
+| Opaque region store | `setOpaqueRegions` / `setMainOpaqueRegions` → `applyWebShapeUpdate` |
+| `VelaHitRootView.hitTest` | `resolvePointer` / `pointerDown` → pure `resolveHit` |
+| Last hit HUD | `lastHit` + `debug.hit` event |
+| Preload `window.vela` | `createPreloadBridge` shape (`VelaPreloadBridge`) |
+| Bootstrap dogfood stack | `applyDogfoodBootstrap` / `DOGFOOD_LAYER_IDS` |
+| Material resolve | `resolveToolbarMaterial` → `resolveMaterial` |
+
+Dogfood layer ids (must match playground):
+
+| Id | Role |
+|----|------|
+| `underlay-native` | Native underlay (z 5) |
+| `main-webview` | Primary WKWebView (z 10, web-shaped) |
+| `toolbar-material` | Capsule material toolbar (z 30) |
 
 ## Folder layout (scaffold)
 
