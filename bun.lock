@@ -20,6 +20,17 @@
         "typescript": "^5.8.0",
       },
     },
+    "example/clock": {
+      "name": "@vela/example-clock",
+      "version": "0.0.1",
+      "dependencies": {
+        "@vela/api": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.8.0",
+      },
+    },
     "packages/api": {
       "name": "@vela/api",
       "version": "0.0.1",
@@ -46,6 +57,8 @@
     "@types/node": ["@types/node@26.1.1", "", { "dependencies": { "undici-types": "~8.3.0" } }, "sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw=="],
 
     "@vela/api": ["@vela/api@workspace:packages/api"],
+
+    "@vela/example-clock": ["@vela/example-clock@workspace:example/clock"],
 
     "@vela/playground": ["@vela/playground@workspace:apps/playground"],
 

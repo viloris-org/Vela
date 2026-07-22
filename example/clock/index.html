@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vela example — Clock</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <!-- Native underlay stand-in for browser mock layout review. -->
+    <div id="underlay-sim" aria-hidden="true"></div>
+
+    <div id="app">
+      <!--
+        Clock card is the opaque web region.
+        Outside the card is a hole so hits fall through to the underlay.
+      -->
+      <main id="clock-card" class="clock-card" data-hit="clock" aria-live="polite">
+        <div class="clock-eyebrow">
+          <span class="brand">Vela</span>
+          <span id="mode-pill" class="mode-pill">…</span>
+        </div>
+
+        <div id="time" class="time" aria-label="Current time">--:--:--</div>
+        <div id="date" class="date">—</div>
+
+        <div class="controls" data-hit="controls">
+          <button type="button" id="btn-format" class="chip" aria-pressed="false">
+            12h
+          </button>
+          <button type="button" id="btn-push-regions" class="chip">
+            Push regions
+          </button>
+        </div>
+
+        <p class="hint">
+          Opaque card via <code>vela.hit</code>. Material glass via
+          <code>vela.layers.insert</code>. Empty space is a hit-through hole.
+        </p>
+      </main>
+
+      <div id="status" class="status" data-hit="status" aria-live="polite">
+        <div class="status-title">Status</div>
+        <div id="status-gen" class="status-line">generation: 0</div>
+        <div id="status-log" class="status-log"></div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

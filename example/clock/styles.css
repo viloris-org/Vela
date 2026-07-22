@@ -1,0 +1,187 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family:
+    "SF Pro Text",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  color: #0f172a;
+  background: transparent;
+  overflow: hidden;
+}
+
+#underlay-sim {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 20% 30%, #fbbf24 0%, transparent 55%),
+    radial-gradient(ellipse 65% 50% at 80% 70%, #f472b6 0%, transparent 50%),
+    linear-gradient(160deg, #1e1b4b 0%, #0f172a 50%, #134e4a 100%);
+  pointer-events: none;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  display: grid;
+  place-items: center;
+}
+
+.clock-card {
+  width: min(420px, calc(100% - 48px));
+  padding: 28px 28px 22px;
+  border-radius: 28px;
+  /* CSS stand-in; host inserts a real material layer behind this card. */
+  background: color-mix(in srgb, #f8fafc 78%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 45%, transparent);
+  box-shadow:
+    0 24px 64px rgb(15 23 42 / 28%),
+    inset 0 1px 0 rgb(255 255 255 / 55%);
+  backdrop-filter: blur(20px);
+  text-align: center;
+}
+
+.clock-card[data-native-material="requested"] {
+  /* Soften CSS glass once a material layer was requested from the host. */
+  background: color-mix(in srgb, #f8fafc 42%, transparent);
+}
+
+.clock-eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.brand {
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: #334155;
+}
+
+.mode-pill {
+  font-size: 11px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgb(15 23 42 / 8%);
+  color: #475569;
+}
+
+.time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 620;
+  font-size: clamp(48px, 12vw, 72px);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: #0f172a;
+}
+
+.date {
+  margin-top: 10px;
+  font-size: 15px;
+  color: #475569;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 22px;
+}
+
+.chip {
+  border: 1px solid rgb(15 23 42 / 12%);
+  background: rgb(255 255 255 / 60%);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: rgb(255 255 255 / 90%);
+}
+
+.chip[aria-pressed="true"] {
+  background: #0ea5e9;
+  border-color: transparent;
+  color: white;
+}
+
+.hint {
+  margin: 18px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.hint code {
+  font-size: 10px;
+  background: rgb(15 23 42 / 6%);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.status {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  width: min(320px, calc(100% - 32px));
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgb(15 23 42 / 82%);
+  color: #e2e8f0;
+  font-size: 12px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+}
+
+.status-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #fbbf24;
+}
+
+.status-line {
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.status-log {
+  margin-top: 6px;
+  max-height: 72px;
+  overflow: auto;
+  opacity: 0.85;
+  border-top: 1px solid rgb(148 163 184 / 25%);
+  padding-top: 6px;
+  white-space: pre-wrap;
+}
+
+.mock-region-overlay {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  border: 1.5px solid #38bdf8;
+  background: rgb(56 189 248 / 12%);
+  border-radius: 4px;
+}
+
+.mock-region-overlay[data-kind="roundedRect"] {
+  border-radius: 28px;
+}

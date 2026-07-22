@@ -35,6 +35,7 @@ New_Vela/
   packages/shell-core @vela/shell-core - portable Shell policy + hit/layer state (tests on Linux)
   hosts/desktop-shell Phase 1 macOS Shell scaffold (Swift on macOS; README only until Xcode)
   apps/playground     Dogfood web content (mock window.vela in browser)
+  example/clock       Minimal clock App TS sample (layers + hit + mock bridge)
   plugins/            (planned) camera, materials, …
 ```
 
@@ -48,6 +49,7 @@ bun install
 bun test
 bun run typecheck
 bun run playground:serve   # layout review with mock window.vela
+bun run example:clock      # minimal clock sample (http://localhost:5174)
 ```
 
 ## Core ideas

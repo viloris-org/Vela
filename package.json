@@ -3,13 +3,14 @@
   "version": "0.0.1",
   "private": true,
   "description": "TypeScript-first GUI framework: WebView UI, Qt-class composition, system materials & capabilities (Bun = toolchain + desktop reference host)",
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": ["packages/*", "apps/*", "example/*"],
   "scripts": {
     "typecheck": "bun run --filter @vela/api typecheck && bun run --filter @vela/shell-core typecheck",
     "test": "bun test packages/api packages/shell-core",
     "test:api": "bun test packages/api",
     "test:shell-core": "bun test packages/shell-core",
-    "playground:serve": "bun run --filter @vela/playground serve"
+    "playground:serve": "bun run --filter @vela/playground serve",
+    "example:clock": "bun run --filter @vela/example-clock serve"
   },
   "devDependencies": {
     "@types/bun": "latest",
