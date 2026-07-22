@@ -20,6 +20,12 @@ export {
   regionPrimitiveContains,
   regionContains,
 } from "./geometry.ts";
+export {
+  appKitPointToLogical,
+  logicalPointToAppKit,
+  appKitRectToLogical,
+  logicalRectToAppKit,
+} from "./coordinates.ts";
 
 export type {
   HitPolicy,
@@ -41,6 +47,11 @@ export {
   applyWebShapeUpdate,
   resolveHit,
 } from "./hit/resolve-hit.ts";
+export {
+  EMPTY_REGION,
+  defaultWebViewHitPolicy,
+  isWebShapedAccepting,
+} from "./hit/web-shaped-defaults.ts";
 
 export type {
   MaterialId,
@@ -74,6 +85,11 @@ export type {
   LayerPatch,
 } from "./layer/types.ts";
 export { defaultHitPolicyForKind } from "./layer/types.ts";
+export type {
+  SnapshotOpaqueRegion,
+  LayerTreeSnapshot,
+} from "./layer/snapshot.ts";
+export { toOpaqueRegionStore } from "./layer/snapshot.ts";
 
 export type {
   PermissionId,

@@ -29,9 +29,9 @@ References: [Qt composition notes](docs/research/qt-composition-notes.md) · [Ta
 New_Vela/
   docs/               Architecture, domain guides, ADRs, research, writing guidelines
   packages/api/       @vela/api - shared contracts (usable today)
-  hosts/              (planned) desktop-bun, desktop-shell, ios, android
+  hosts/desktop-shell Phase 1 macOS Shell scaffold (Swift on macOS; README only until Xcode)
+  apps/playground     Dogfood web content (mock window.vela in browser)
   plugins/            (planned) camera, materials, …
-  apps/               (planned) playground
 ```
 
 ## Quick start
@@ -43,6 +43,7 @@ cd /path/to/New_Vela
 bun install
 bun test
 bun run typecheck
+bun run playground:serve   # layout review with mock window.vela
 ```
 
 ## Core ideas
@@ -108,8 +109,8 @@ const camera: InsertLayerSpec = {
 ## Roadmap (near term)
 
 1. ~~ADR + `@vela/api` contracts~~
-2. Contract hardening: pure `resolveHit` + RPC envelopes ([design gaps](docs/design-gaps.md) P0)
-3. macOS spike: WebView + Liquid Glass toolbar + hole hit-test - [spike architecture](docs/macos-spike-architecture.md)
+2. ~~Contract hardening: `resolveHit`, RPC types, coords, web-shaped defaults, snapshot~~
+3. macOS spike (in progress scaffold): real Swift Shell + Liquid Glass + S1–S7 - [spike architecture](docs/macos-spike-architecture.md)
 4. Bun host + typed RPC / preload bridge - [ADR 0002](docs/adr/0002-ipc-privilege.md)
 5. Capability plugins (fs, dialog, clipboard, notify)
 6. Windows parity → mobile hosts (same contracts)

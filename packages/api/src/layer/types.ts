@@ -1,5 +1,6 @@
 import type { Rect, Region, Shape } from "../geometry.ts";
 import type { HitPolicy } from "../hit/policy.ts";
+import { defaultWebViewHitPolicy } from "../hit/web-shaped-defaults.ts";
 import type {
   BackdropSource,
   Color,
@@ -143,7 +144,7 @@ export function defaultHitPolicyForKind(kind: LayerKind): HitPolicy {
     case "passthrough":
       return { mode: "transparent" };
     case "webview":
-      return { mode: "web-shaped" };
+      return defaultWebViewHitPolicy();
     case "material":
     case "native":
     case "chrome":

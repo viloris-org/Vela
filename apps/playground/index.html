@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vela playground (dogfood)</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <!--
+      Underlay is native (z 0..9) in the host. In browser mock mode we paint
+      a full-client gradient so hole layout is reviewable without Swift.
+    -->
+    <div id="underlay-sim" aria-hidden="true"></div>
+
+    <div id="app">
+      <header id="toolbar-chrome" class="toolbar-chrome" data-hit="toolbar">
+        <div class="toolbar-inner">
+          <span class="brand">Vela</span>
+          <nav class="toolbar-actions">
+            <button type="button" id="btn-refresh-regions" class="chip">
+              Push regions
+            </button>
+            <button type="button" id="btn-toggle-panel" class="chip">
+              Toggle panel
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <!-- Large hole: no opaque region here → hits fall to underlay -->
+      <div id="hole" class="hole" aria-label="Hit-through hole to underlay">
+        <p class="hole-label">web-shaped hole → underlay</p>
+      </div>
+
+      <aside id="panel" class="panel" data-hit="panel">
+        <h1>Floating panel</h1>
+        <p>
+          Opaque web UI. Regions reported via
+          <code>vela.hit.setMainOpaqueRegions</code> /
+          <code>setOpaqueRegions</code>.
+        </p>
+        <label class="field">
+          <span>Note</span>
+          <input id="note-input" type="text" placeholder="Type here (web hit)" />
+        </label>
+        <button type="button" id="btn-panel-action" class="primary">
+          Panel action
+        </button>
+      </aside>
+
+      <div id="hud" class="hud" data-hit="hud" aria-live="polite">
+        <div class="hud-title">Debug HUD</div>
+        <div id="hud-mode" class="hud-line">mode: …</div>
+        <div id="hud-hit" class="hud-line">last hit: —</div>
+        <div id="hud-gen" class="hud-line">generation: 0</div>
+        <div id="hud-log" class="hud-log"></div>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

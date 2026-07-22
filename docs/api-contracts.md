@@ -20,10 +20,13 @@ Package: `packages/api/` Entry: `packages/api/src/index.ts`
 | Path | Exports (summary) |
 |------|-------------------|
 | `geometry.ts` | `Point`, `Size`, `Rect`, `Shape`, `Region`, helpers |
+| `coordinates.ts` | AppKit ↔ logical point/rect conversion (once at Shell boundary) |
 | `hit/policy.ts` | `HitPolicy`, `WindowInputMode`, `HitTarget`, web-shape payloads |
 | `hit/resolve-hit.ts` | pure `resolveHit`, opaque region store, generation helpers |
+| `hit/web-shaped-defaults.ts` | `EMPTY_REGION`, default web-shaped policy helpers |
 | `protocol/rpc.ts` | `VelaRpcRequest` / `Response`, error codes, `rpcOk` / `rpcErr` |
 | `layer/types.ts` | `Layer*` variants, `InsertLayerSpec`, `LayerPatch`, defaults |
+| `layer/snapshot.ts` | `LayerTreeSnapshot`, `toOpaqueRegionStore` |
 | `material/spec.ts` | `MaterialId`, `BackdropSource`, `resolveMaterial`, … |
 | `capability/types.ts` | Permissions, grants, checks, risk |
 | `capability/define.ts` | `defineCapability`, registry, builtins |

@@ -3,11 +3,12 @@
   "version": "0.0.1",
   "private": true,
   "description": "Bun-centered GUI framework: WebView UI, Qt-class composition, system materials & capabilities",
-  "workspaces": ["packages/*"],
+  "workspaces": ["packages/*", "apps/*"],
   "scripts": {
     "typecheck": "bun run --filter @vela/api typecheck",
     "test": "bun test packages/api",
-    "test:api": "bun test packages/api"
+    "test:api": "bun test packages/api",
+    "playground:serve": "bun run --filter @vela/playground serve"
   },
   "devDependencies": {
     "@types/bun": "latest",

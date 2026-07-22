@@ -64,7 +64,7 @@ Parallel work that may start early without blocking Phase 1:
 | Phase | Name | Status | Exit (one line) |
 |-------|------|--------|-----------------|
 | 0 | Project skeleton | `[x]` | Monorepo + `@vela/api` + ADR 0001 + core docs |
-| 0.5 | Contract hardening | `[~]` | Pure hit + RPC envelopes + generation rules testable without Shell |
+| 0.5 | Contract hardening | `[~]` | Pure hit + RPC envelopes + coords + snapshot; host wire still open |
 | 1 | macOS composition spike | `[ ]` | S1–S7 pass; demo: glass toolbar + underlay + holes |
 | 2 | Bun host + typed RPC | `[ ]` | Bun owns lifecycle; privilege boundary per ADR 0002 |
 | 3 | Capability plugins (desktop) | `[ ]` | fs / dialog / clipboard / notify + allow/deny playground |
@@ -121,9 +121,10 @@ Parallel work that may start early without blocking Phase 1:
 |------|------------|--------|
 | Pure `resolveHit(windowMode, layers, opaqueRegionStore, point) → HitTarget` + unit tests | [G-P0-1](design-gaps.md) | `[x]` |
 | RPC envelope + structured error code types in `@vela/api` | [G-P0-2](design-gaps.md), ADR 0002 | `[x]` types; wire Phase 2 |
-| web-shaped empty-default vs block-until-report — lock for dogfood | [G-P0-5](design-gaps.md), input + spike docs | `[~]` |
+| web-shaped empty-default vs block-until-report — lock for dogfood | [G-P0-5](design-gaps.md), input + spike docs | `[x]` `EMPTY_REGION` + tests; host still applies store |
 | `generation` stale rules as pure helper + tests | [G-P1-4](design-gaps.md) | `[x]` helpers; host drop path remains |
-| Coordinate conversion policy (logical y-down; AppKit convert once at boundary) | [G-P1-7](design-gaps.md), spike doc | `[~]` |
+| Coordinate conversion policy (logical y-down; AppKit convert once at boundary) | [G-P1-7](design-gaps.md), spike doc | `[x]` pure helpers in `coordinates.ts`; Shell convert-once remains |
+| `LayerTreeSnapshot` + store conversion | [G-P1-5](design-gaps.md) | `[x]` types + `toOpaqueRegionStore`; Bun sync still Phase 2 |
 
 ### Exit criteria
 
@@ -141,7 +142,7 @@ Parallel work that may start early without blocking Phase 1:
 
 ## Phase 1 — macOS composition spike
 
-**Status:** `[ ]` not started (architecture design `[x]`).
+**Status:** `[~]` scaffold started (architecture design `[x]`; dogfood web + shell folder; no Swift binary).
 
 **Goal:** Prove Qt-class composition on one Tier 1 platform: multi-kind layers, regional hit-through, system material, single event delivery.
 
@@ -159,8 +160,9 @@ Parallel work that may start early without blocking Phase 1:
 - [ ] No double event delivery WebView ↔ NSView
 - [ ] Preload inject `window.vela` subset: `layers` + `hit` (`call` / `events` stub OK)
 - [ ] Debug instrumentation: last `HitTarget` per pointer down
-- [ ] Dogfood content: glass toolbar + map/video (or color) underlay + click holes
-- [ ] Prefer pure `resolveHit` from Phase 0.5 when available; if spike lands first, port Swift logic back into `@vela/api` before Phase 2
+- [x] Dogfood content: glass toolbar + map/video (or color) underlay + click holes (`apps/playground`; mock without host)
+- [x] Shell scaffold tree + checklist (`hosts/desktop-shell`; Swift sources not yet)
+- [x] Prefer pure `resolveHit` from Phase 0.5 when available; if spike lands first, port Swift logic back into `@vela/api` before Phase 2
 
 ### Exit criteria
 
@@ -373,12 +375,13 @@ Use this as the default work queue until Phase 2 exit.
 1. [x] ADR + `@vela/api` contracts (Phase 0)
 2. [x] **Phase 0.5:** pure `resolveHit` + tests (G-P0-1)
 3. [x] **Phase 0.5:** RPC envelopes / error codes (G-P0-2) — types in `@vela/api`
-4. [ ] **Phase 1:** macOS spike — WebView + Liquid Glass toolbar + hole hit-test ([spike architecture](macos-spike-architecture.md), S1–S7)
-5. [ ] Accept ADR 0002 after Phase 1 channel feedback
-6. [ ] **Phase 2:** Bun host + typed RPC / preload bridge
-7. [ ] **Phase 3:** Capability plugins (fs, dialog, clipboard, notify) + allow/deny playground
-8. [ ] **Phase 4:** Windows WebView2 + Mica/Acrylic + hit parity
-9. [ ] **Phase 5–7:** as dependency spine allows; mobile shares contracts without blocking desktop
+4. [x] **Phase 0.5:** web-shaped empty default, AppKit coords, `LayerTreeSnapshot` (G-P0-5, G-P1-7, G-P1-5 pure)
+5. [~] **Phase 1:** dogfood + shell scaffold; next: Swift WebView + Liquid Glass + hole hit-test (S1–S7)
+6. [ ] Accept ADR 0002 after Phase 1 channel feedback
+7. [ ] **Phase 2:** Bun host + typed RPC / preload bridge
+8. [ ] **Phase 3:** Capability plugins (fs, dialog, clipboard, notify) + allow/deny playground
+9. [ ] **Phase 4:** Windows WebView2 + Mica/Acrylic + hit parity
+10. [ ] **Phase 5–7:** as dependency spine allows; mobile shares contracts without blocking desktop
 
 ---
 
@@ -396,6 +399,8 @@ Use this as the default work queue until Phase 2 exit.
 | macOS spike architecture | `[x]` design |
 | Design gaps register | `[x]` [design-gaps.md](design-gaps.md) |
 | `@vela/api` pure `resolveHit` + RPC envelopes | `[x]` resolveHit; `[~]` envelopes (types only) |
+| `@vela/api` coords + web-shaped defaults + snapshot | `[x]` pure helpers; host apply remains |
+| Playground dogfood + desktop-shell scaffold | `[~]` web mock + README; no Swift binary |
 | CI matrix once hosts exist | `[ ]` [G-P2-6](design-gaps.md) |
 | Linux WebView + blur baseline choices | `[ ]` [G-P2-3](design-gaps.md) |
 | Product vs repo naming clarity | `[~]` README partial [G-P2-7](design-gaps.md) |

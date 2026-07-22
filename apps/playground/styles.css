@@ -1,0 +1,240 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family:
+    "SF Pro Text",
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  color: #0f172a;
+  background: transparent;
+  overflow: hidden;
+}
+
+#underlay-sim {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 30% 40%, #38bdf8 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 75% 65%, #a78bfa 0%, transparent 50%),
+    linear-gradient(145deg, #0c4a6e 0%, #14532d 45%, #422006 100%);
+  pointer-events: none;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  /* Transparent document so native underlay / mock gradient shows through holes */
+  background: transparent;
+}
+
+.toolbar-chrome {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(480px, calc(100% - 32px));
+  height: 52px;
+  z-index: 5;
+  border-radius: 999px;
+  /* CSS stand-in only when material layer unavailable; host should use real glass */
+  background: color-mix(in srgb, #f8fafc 72%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 40%, transparent);
+  box-shadow:
+    0 8px 32px rgb(15 23 42 / 18%),
+    inset 0 1px 0 rgb(255 255 255 / 50%);
+  backdrop-filter: blur(16px);
+}
+
+.toolbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 18px;
+}
+
+.brand {
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  font-size: 15px;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.chip {
+  border: 1px solid rgb(15 23 42 / 12%);
+  background: rgb(255 255 255 / 55%);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: rgb(255 255 255 / 85%);
+}
+
+.hole {
+  position: absolute;
+  left: 8%;
+  top: 18%;
+  width: 52%;
+  height: 58%;
+  border: 2px dashed color-mix(in srgb, #e2e8f0 55%, transparent);
+  border-radius: 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 16px;
+  pointer-events: none;
+}
+
+.hole-label {
+  margin: 0;
+  font-size: 12px;
+  color: #f8fafc;
+  text-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+  opacity: 0.9;
+}
+
+.panel {
+  position: absolute;
+  right: 24px;
+  top: 96px;
+  width: min(320px, calc(100% - 48px));
+  padding: 20px;
+  border-radius: 16px;
+  background: rgb(248 250 252 / 94%);
+  border: 1px solid rgb(15 23 42 / 8%);
+  box-shadow: 0 16px 48px rgb(15 23 42 / 22%);
+}
+
+.panel h1 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.panel p {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #334155;
+}
+
+.panel code {
+  font-size: 11px;
+  background: #e2e8f0;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.field input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.primary {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #0ea5e9;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary:hover {
+  background: #0284c7;
+}
+
+.hud {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  width: min(340px, calc(100% - 32px));
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgb(15 23 42 / 82%);
+  color: #e2e8f0;
+  font-size: 12px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+}
+
+.hud-title {
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #7dd3fc;
+}
+
+.hud-line {
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.hud-log {
+  margin-top: 8px;
+  max-height: 88px;
+  overflow: auto;
+  opacity: 0.85;
+  border-top: 1px solid rgb(148 163 184 / 25%);
+  padding-top: 6px;
+  white-space: pre-wrap;
+}
+
+/* Mock-mode overlays for opaque regions (browser only) */
+.mock-region-overlay {
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+  border: 1.5px solid #f472b6;
+  background: rgb(244 114 182 / 12%);
+  border-radius: 4px;
+}
+
+.mock-region-overlay[data-kind="capsule"] {
+  border-radius: 999px;
+  border-color: #38bdf8;
+  background: rgb(56 189 248 / 10%);
+}
+
+.material-fallback-note {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  color: #fef3c7;
+  background: rgb(15 23 42 / 55%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  z-index: 6;
+  pointer-events: none;
+}
