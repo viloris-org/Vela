@@ -33,6 +33,7 @@ New_Vela/
   docs/               Architecture, domain guides, ADRs, research, writing guidelines
   packages/api/       @vela/api - shared contracts (usable today)
   packages/shell-core @vela/shell-core - portable Shell policy + hit/layer state (tests on Linux)
+  packages/host-core  @vela/host-core - portable Host call router + capability enforce
   hosts/zig-shell     Desktop Zig interop (L2.5): C ABI + mock L4 + RPC codec skeleton
   hosts/desktop-shell Phase 1 macOS Shell scaffold (Swift on macOS; README only until Xcode)
   apps/playground     Dogfood web content (mock window.vela in browser)
@@ -122,7 +123,7 @@ const camera: InsertLayerSpec = {
 1. ~~ADR + `@vela/api` contracts~~
 2. ~~Contract hardening: `resolveHit`, RPC types, coords, web-shaped defaults, snapshot~~
 3. macOS spike (in progress): `@vela/shell-core` policy/tests + shell scaffold; next real Swift Shell + Liquid Glass + S1–S7 - [spike architecture](docs/macos-spike-architecture.md)
-4. Desktop privileged Host (Bun reference) + typed RPC / preload bridge - [ADR 0002](docs/adr/0002-ipc-privilege.md)
+4. Host capability contracts (in progress): `@vela/host-core` + `checkCapability` / `parseAppManifest`; next Bun process + typed RPC / preload bridge - [ADR 0002](docs/adr/0002-ipc-privilege.md)
 5. Capability plugins (fs, dialog, clipboard, notify)
 6. Windows parity → mobile hosts (same contracts)
 

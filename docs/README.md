@@ -75,6 +75,8 @@ These pages map external systems. They are **not** product contracts and must no
 | Concern | Location |
 |---------|----------|
 | Types and pure helpers | `packages/api/` (`@vela/api`) |
+| Portable Shell policy | `packages/shell-core/` (`@vela/shell-core`) |
+| Portable Host call router | `packages/host-core/` (`@vela/host-core`) |
 | Binding product decisions | `docs/adr/` |
 | Qt-class composition philosophy | `docs/research/qt-composition-notes.md` + ADR 0001 |
 | Shell security / IPC vocabulary | `docs/research/tauri-comparison.md` + capabilities doc + [ADR 0002](adr/0002-ipc-privilege.md) |

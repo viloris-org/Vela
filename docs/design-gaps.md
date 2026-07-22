@@ -34,10 +34,10 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 | G-P1-3 | No formal `material.degraded` / diagnostics event catalog | `events` channel catalog in api-contracts | open |
 | G-P1-4 | `generation` stale rules only partial in prose | Pure helper + tests; host must drop stale | **partial** (`isGenerationStale` / `applyWebShapeUpdate` in api; `@vela/shell-core` drops stale; Swift L4 drop path remains) |
 | G-P1-5 | Layer tree snapshot type for Shell↔Bun sync | `LayerTreeSnapshot` | **partial** (`layer/snapshot.ts` + `toOpaqueRegionStore`; live Bun sync Phase 2) |
-| G-P1-6 | App manifest **file** schema (on-disk format) | JSON/TOML schema doc + types | open |
+| G-P1-6 | App manifest **file** schema (on-disk format) | JSON/TOML schema doc + types | **partial** (`manifest/types.ts` + `parseAppManifest` + tests; on-disk packaging / TOML convert still Phase 2) |
 | G-P1-7 | Coordinate conversion policy (AppKit y-up vs logical y-down) only implied | Explicit in spike + geometry notes | **closed** pure (`coordinates.ts`); Shell must call once at boundary |
 | G-P1-8 | Zig C ABI header + RPC endpoint skeleton | `hosts/zig-shell` + Phase 2 | **partial** (`include/vela_shell_abi.h`, mock L4, JSON codec + dispatch + `zig build test`; UDS/Bun listen + real L4 still open) |
-| G-P1-9 | Bun capability host registration API (`handle` / plugin load) | `@vela/api` + Bun host Phase 2–3 | open |
+| G-P1-9 | Bun capability host registration API (`handle` / plugin load) | `@vela/api` + Bun host Phase 2–3 | **partial** (`capability/host.ts` types + `@vela/host-core` `createCapabilityHost` / `invokeRpc`; real Bun process + plugin package load still Phase 2–3) |
 | G-P1-10 | Host loader + versioning for T1.5 / systems native modules (Zig ABI, `vela-sys`) | Host + plugin packaging; [ADR 0008](adr/0008-zig-systems-surface.md) | open |
 
 ## P2 - Later phases / polish
@@ -54,7 +54,7 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 | G-P2-11 | Full-stack TS goal, App vs Host, pluggable Host runtime, iOS indirect OS access unrecorded | [ADR 0007](adr/0007-typescript-full-stack-host.md) | **closed** (Accepted 2026-07-23) |
 | G-P2-12 | Zig systems surface / anti-scatter for capabilities unrecorded | [ADR 0008](adr/0008-zig-systems-surface.md) | **closed** (Accepted 2026-07-23; impl still open) |
 | G-P1-13 | Shared `vela-sys` (or equivalent) layout + first domain (e.g. fs/clipboard) | ADR 0008 D6/D11; libs tree | open |
-| G-P1-11 | Host plugin registration ABI + sandboxed HostAPI surface | `@vela/api` + desktop Bun host; mobile backends | open |
+| G-P1-11 | Host plugin registration ABI + sandboxed HostAPI surface | `@vela/api` + desktop Bun host; mobile backends | **partial** (`HostAPI` / `CapabilityHost` / `CallContext` in api; runtime dispatch in `@vela/host-core`; production sandbox + mobile backends still open) |
 | G-P1-12 | Second Host runtime backend (e.g. iOS JSC) running same plugin source | ADR 0007 D4–D5; mobile spike | open |
 | G-P2-5 | Isolation interceptor (Tauri-class) optional design | ADR 0002 D7 | open (deferred) |
 | G-P2-6 | CI matrix for hosts | testing-and-acceptance | open |

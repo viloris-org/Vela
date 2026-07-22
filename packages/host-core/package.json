@@ -1,0 +1,24 @@
+{
+  "name": "@vela/host-core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Portable privileged Host call router + capability enforcement (Phase 2; no OS I/O)",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@vela/api": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.8.0"
+  }
+}

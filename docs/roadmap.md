@@ -66,7 +66,7 @@ Parallel work that may start early without blocking Phase 1:
 | 0 | Project skeleton | `[x]` | Monorepo + `@vela/api` + ADR 0001 + core docs |
 | 0.5 | Contract hardening | `[~]` | Pure hit + RPC envelopes + coords + snapshot; host wire still open |
 | 1 | macOS composition spike | `[ ]` | S1–S7 pass; demo: glass toolbar + underlay + holes |
-| 2 | Bun host + typed RPC | `[ ]` | Bun owns lifecycle; privilege boundary per ADR 0002 |
+| 2 | Bun host + typed RPC | `[~]` | Host contracts + `@vela/host-core` router landed; Bun process / UDS still open |
 | 3 | Capability plugins (desktop) | `[ ]` | fs / dialog / clipboard / notify + allow/deny playground |
 | 4 | Windows materials + parity | `[ ]` | WebView2 path; W1–W3; behavioral hit parity with macOS |
 | 5 | Plugin ABI + signing | `[ ]` | ADR 0003 Accepted; unsigned load blocked by default |
@@ -191,12 +191,12 @@ Short demo video or app binary notes in PR / issue: glass toolbar + underlay + h
 
 ## Phase 2 — Bun host + typed RPC
 
-**Status:** `[ ]` not started.
+**Status:** `[~]` contracts + portable Host router; no Bun process / UDS yet.
 
 **Goal:** Bun process owns app lifecycle, plugins catalog, and capability checks; Shell owns window/WebView/layers/hit; communication is typed message-pass RPC with privilege boundaries. Desktop Shell control plane is **Zig** ([ADR 0005](adr/0005-zig-interop-layer.md)).
 
 **Depends on:** Phase 1 channel feedback; [ADR 0002](adr/0002-ipc-privilege.md) path to **Accepted**; [ADR 0005](adr/0005-zig-interop-layer.md) Zig interop.  
-**Design debt:** G-P0-2, G-P0-4, G-P1-5, G-P1-6, G-P1-8.
+**Design debt:** G-P0-2, G-P0-4, G-P1-5, G-P1-6, G-P1-8, G-P1-9, G-P1-11.
 
 ### Work items
 
@@ -204,8 +204,10 @@ Short demo video or app binary notes in PR / issue: glass toolbar + underlay + h
 - [ ] Typed RPC / privilege boundary (ADR 0002 decisions implemented)
 - [~] **Zig interop layer** (`hosts/zig-shell`): C ABI + mock L4 + JSON codec/dispatch skeleton ([ADR 0005](adr/0005-zig-interop-layer.md), [G-P1-8](design-gaps.md)); UDS endpoint + real L4 still open
 - [ ] macOS L4 (Swift) implements C ABI surface behind Zig (or dual-path until cutover)
-- [ ] Capability checks on `call` and sensitive layer inserts (**both** Bun and Shell — defense in depth)
-- [ ] App manifest profiles (on-disk schema — [G-P1-6](design-gaps.md))
+- [x] Capability check pure helpers + Host registration types (`checkCapability`, `CapabilityHost`, layer insert gates — [G-P1-9](design-gaps.md) / [G-P1-11](design-gaps.md) contract layer)
+- [x] Portable Host call router (`@vela/host-core`: `handle` / `ctx.require` / `invokeRpc` + profile isolation tests)
+- [ ] Wire capability checks on live `call` and sensitive layer inserts in Bun + Shell processes (**both** — defense in depth)
+- [x] App manifest **types** + structural `parseAppManifest` ([G-P1-6](design-gaps.md)); on-disk packaging path still open
 - [ ] Packaging hooks for web assets + custom schemes (`app://` / `asset://` intent)
 - [ ] `LayerTreeSnapshot` or equivalent Shell↔Bun sync type ([G-P1-5](design-gaps.md))
 - [ ] Preload full surface: `call` / `layers` / `hit` / `events` (whitelist only)
@@ -381,7 +383,7 @@ Use this as the default work queue until Phase 2 exit.
 4. [x] **Phase 0.5:** web-shaped empty default, AppKit coords, `LayerTreeSnapshot` (G-P0-5, G-P1-7, G-P1-5 pure)
 5. [~] **Phase 1:** dogfood + shell scaffold + `@vela/shell-core` (portable policy/tests); next: Swift WebView + Liquid Glass + hole hit-test (S1–S7)
 6. [ ] Accept ADR 0002 after Phase 1 channel feedback
-7. [ ] **Phase 2:** Bun host + Zig interop + typed RPC / preload bridge
+7. [~] **Phase 2 contracts:** `@vela/host-core` + capability/manifest pure helpers; next: Bun process + Zig UDS + typed RPC / preload bridge
 8. [ ] **Phase 3:** Capability plugins (fs, dialog, clipboard, notify) + allow/deny playground
 9. [ ] **Phase 4:** Windows WebView2 + Mica/Acrylic + hit parity
 10. [ ] **Phase 5–7:** as dependency spine allows; mobile shares contracts without blocking desktop
@@ -400,7 +402,10 @@ Use this as the default work queue until Phase 2 exit.
 | ADR 0005 Zig interop layer | `[x]` [adr/0005-zig-interop-layer.md](adr/0005-zig-interop-layer.md) |
 | ADR 0006 TypeScript-first capabilities | `[x]` [adr/0006-ts-first-capabilities.md](adr/0006-ts-first-capabilities.md) |
 | `hosts/zig-shell` skeleton (RPC + C ABI) | `[~]` header + mock L4 + codec/dispatch + CI; UDS/Bun still Phase 2 |
-| Bun capability host registration (TS plugins) | `[ ]` Phase 2–3 ([G-P1-9](design-gaps.md)) |
+| Capability check + Host registration types | `[x]` pure helpers + `CapabilityHost` / `HostAPI` in `@vela/api` |
+| App manifest parse (JSON schema v1) | `[x]` types + `parseAppManifest`; packaging path still Phase 2 |
+| `@vela/host-core` call router | `[x]` `handle` / `require` / `invokeRpc` + tests; Bun process still open |
+| Bun capability host registration (TS plugins) | `[~]` contracts + portable router; process load still Phase 2–3 ([G-P1-9](design-gaps.md)) |
 | Testing and acceptance (host smoke) | `[x]` [testing-and-acceptance.md](testing-and-acceptance.md) |
 | Qt composition notes | `[x]` research |
 | Tauri comparison | `[x]` research |

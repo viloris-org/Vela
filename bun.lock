@@ -39,6 +39,17 @@
         "typescript": "^5.8.0",
       },
     },
+    "packages/host-core": {
+      "name": "@vela/host-core",
+      "version": "0.0.1",
+      "dependencies": {
+        "@vela/api": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.8.0",
+      },
+    },
     "packages/shell-core": {
       "name": "@vela/shell-core",
       "version": "0.0.1",
@@ -59,6 +70,8 @@
     "@vela/api": ["@vela/api@workspace:packages/api"],
 
     "@vela/example-clock": ["@vela/example-clock@workspace:example/clock"],
+
+    "@vela/host-core": ["@vela/host-core@workspace:packages/host-core"],
 
     "@vela/playground": ["@vela/playground@workspace:apps/playground"],
 

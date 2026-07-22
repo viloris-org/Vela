@@ -30,11 +30,21 @@ Package: `packages/api/` Entry: `packages/api/src/index.ts`
 | `material/spec.ts` | `MaterialId`, `BackdropSource`, `resolveMaterial`, … |
 | `capability/types.ts` | Permissions, grants, checks, risk |
 | `capability/define.ts` | `defineCapability`, registry, builtins |
+| `capability/check.ts` | pure `checkCapability` / `checkProfileCapability` (default deny) |
+| `capability/match-scope.ts` | path/url scope patterns (`*`, `**`) |
+| `capability/layer-gates.ts` | insert-layer permission requirements |
+| `capability/host.ts` | `CapabilityHost`, `HostAPI`, `CallContext`, `CapabilityDeniedError` |
+| `manifest/types.ts` | `AppManifest` + `parseAppManifest` (JSON schema v1) |
 | `component/define.ts` | `defineNativeComponent`, factories, external modules |
 | `window/types.ts` | `VelaWindow`, `VelaApp`, create options |
 | `protocol/bridge.ts` | `VelaPreloadBridge`, `window.vela` typing |
 
-Related host-facing package (not app SDK): **`@vela/shell-core`** (`packages/shell-core`) — portable in-process Shell controller (layer tree, hit routing via pure helpers, dogfood bootstrap, preload bridge adapter). App authors still only use `@vela/api` / `window.vela`.
+Related host-facing packages (not app SDK):
+
+- **`@vela/shell-core`** — portable in-process Shell controller (layer tree, hit routing, dogfood bootstrap, preload bridge adapter).
+- **`@vela/host-core`** — portable privileged Host call router (`handle` / `ctx.require` / `invokeRpc`).
+
+App authors still only use `@vela/api` / `window.vela`. Host implementers use shell-core / host-core against the same contracts.
 
 ## Geometry
 
@@ -109,8 +119,13 @@ import {
   resolveMaterial,
   defaultHitPolicyForKind,
   BuiltinPermissions,
-  defineNativeComponent,
   defineCapability,
+  checkCapability,
+  checkProfileCapability,
+  permissionsForInsertLayer,
+  parseAppManifest,
+  CapabilityDeniedError,
+  defineNativeComponent,
   rpcOk,
   rpcErr,
   VelaRpcErrorCodes,
@@ -138,6 +153,7 @@ bun run typecheck
 |------|--------|-----|
 | IPC / typed RPC envelopes + error codes | Types in `protocol/rpc.ts`; wire Phase 2 | [ADR 0002](adr/0002-ipc-privilege.md) |
 | Pure `resolveHit` helper | Landed in `hit/resolve-hit.ts` + tests | [input-and-hit-testing](input-and-hit-testing.md), [design gaps](design-gaps.md) |
+| Pure capability check + Host registration types | Landed (`checkCapability`, `CapabilityHost`, `parseAppManifest`); `@vela/host-core` dispatch | [capabilities-and-plugins](capabilities-and-plugins.md), G-P1-6/9/11 |
 | Plugin ABI + signing | Planned ADR 0003 | [tauri-comparison](research/tauri-comparison.md) |
 | Event catalog (`material.degraded`, …) | Planned | design gaps G-P1-3 |
 | `HitPolicy.callback` payloads | Planned | design gaps G-P1-1 |

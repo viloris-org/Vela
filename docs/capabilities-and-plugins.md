@@ -11,9 +11,11 @@ Vela separates **Capabilities** (non-UI system APIs) from **Native Components** 
 
 Types:
 
-- `packages/api/src/capability/types.ts`, `define.ts`
+- `packages/api/src/capability/types.ts`, `define.ts`, `check.ts`, `host.ts`, `layer-gates.ts`
+- `packages/api/src/manifest/types.ts` (`AppManifest`, `parseAppManifest`)
 - `packages/api/src/component/define.ts`
 - Preload: `packages/api/src/protocol/bridge.ts`
+- Portable Host router: `packages/host-core` (`@vela/host-core`)
 
 Decisions: [ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0007](adr/0007-typescript-full-stack-host.md), [ADR 0008](adr/0008-zig-systems-surface.md), [ADR 0001 § D5 - D7](adr/0001-composition-hit-material.md).
 
@@ -127,6 +129,34 @@ Host registration is privileged. Treat TS handlers as trusted host code: still
 `require` permissions, validate args, honor scopes. Typical plugin authors write
 **TS only** and call an injected systems facade; they do not import Swift/Kotlin/C
 per OS ([ADR 0008](adr/0008-zig-systems-surface.md) D5).
+
+Contracts for registration are in `@vela/api` (`CapabilityHost`, `CallContext`,
+`HostAPI`). Portable dispatch lives in `@vela/host-core`:
+
+```ts
+import { createCapabilityHost } from "@vela/host-core";
+import { BuiltinPermissions, defineCapability } from "@vela/api";
+
+defineCapability({
+  id: BuiltinPermissions.ClipboardWrite,
+  risk: "low",
+  description: "Write text to the clipboard",
+});
+
+const host = createCapabilityHost({
+  api: { platform: "linux", sys: { /* injected facades */ } },
+  capabilities: {
+    default: { permissions: [BuiltinPermissions.ClipboardWrite] },
+  },
+});
+
+host.handle("clipboard.write", async (args, ctx) => {
+  ctx.require(BuiltinPermissions.ClipboardWrite);
+  const text = String((args as { text?: string }).text ?? "");
+  await host.api.sys?.clipboard?.writeText(text);
+  return { ok: true };
+});
+```
 
 ### Reaching other languages
 

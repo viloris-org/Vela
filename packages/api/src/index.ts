@@ -109,6 +109,38 @@ export {
   registerBuiltinCapabilities,
   __resetCapabilityRegistryForTests,
 } from "./capability/define.ts";
+export {
+  matchPathPattern,
+  matchUrlPattern,
+  matchScope,
+  scopesAllowResource,
+} from "./capability/match-scope.ts";
+export {
+  checkCapability,
+  grantForProfile,
+  checkProfileCapability,
+} from "./capability/check.ts";
+export {
+  permissionsForInsertLayer,
+  insertLayerPermissionsGranted,
+} from "./capability/layer-gates.ts";
+export type {
+  HostSystemsFacade,
+  HostAPI,
+  CallContext,
+  CallHandler,
+  CapabilityHost,
+  CapabilityPlugin,
+} from "./capability/host.ts";
+export { CapabilityDeniedError } from "./capability/host.ts";
+
+export type {
+  AppManifest,
+  AppManifestEntry,
+  AppManifestWindow,
+  ParseAppManifestResult,
+} from "./manifest/types.ts";
+export { parseAppManifest, isAppManifest } from "./manifest/types.ts";
 
 export type {
   PropsSchema,

@@ -1,4 +1,4 @@
-# Contract gates for @vela/api + @vela/shell-core, plus zig-shell skeleton.
+# Contract gates for @vela/api + @vela/shell-core + @vela/host-core, plus zig-shell skeleton.
 # Full native L4 hosts are not in CI yet — see docs/testing-and-acceptance.md.
 name: CI
 
