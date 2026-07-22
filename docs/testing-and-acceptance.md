@@ -110,16 +110,14 @@ Minimum playground content (any web stack):
 
 Exit for Phase 1: short demo video covering S1 - S6.
 
-## CI (planned)
+## CI
 
-Once hosts exist:
-
-| Job | Command / check |
-|-----|-----------------|
-| Contracts | `bun test` + `bun run typecheck` |
-| macOS smoke | Headless or UI harness for S1 - S2 |
-| Windows smoke | WebView2 present; W1 - W2 |
-| Linux smoke | Best-effort; materials may degrade |
+| Job | Status | Command / check |
+|-----|--------|-----------------|
+| Contracts | Live (`.github/workflows/ci.yml`) | `bun install --frozen-lockfile` + `bun test` + `bun run typecheck` |
+| macOS smoke | Planned (hosts) | Headless or UI harness for S1 - S2 |
+| Windows smoke | Planned (hosts) | WebView2 present; W1 - W2 |
+| Linux smoke | Planned (hosts) | Best-effort; materials may degrade |
 
 Do not block CI on pixel-identical materials.
 
