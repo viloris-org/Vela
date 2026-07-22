@@ -71,12 +71,12 @@ Zig is **not** an app-facing API and **not** a replacement for `@vela/api`.
 
 **Zig must not own**
 
-- App/plugin capability business logic (those default to Bun TypeScript — [ADR 0006](0006-ts-first-capabilities.md))
+- App/plugin capability business logic (those default to Host TypeScript — [ADR 0006](0006-ts-first-capabilities.md)); portable OS kernels belong in plugin native / shared `vela-sys`, not here ([ADR 0008](0008-zig-systems-surface.md))
 - Page-visible APIs (still only `window.vela`)
 - AppKit / Win32 / GTK widget trees or WebView class selection as a product API
 - True system material painting (calls into L4)
 - OS hit-test overrides as the sole policy without L4 participation
-- Secrets or business logic that belong in Bun plugins
+- Secrets or business logic that belong in Host plugins
 
 **Bun must not**
 
@@ -224,4 +224,6 @@ Verdict: **rejected**.
 - [Technology stack](../technology-stack.md)
 - [ADR 0002](0002-ipc-privilege.md) - IPC and privilege
 - [ADR 0004](0004-cross-platform-abstraction.md) - multi-backend Shell
+- [ADR 0006](0006-ts-first-capabilities.md) - TS capabilities / T1.5
+- [ADR 0008](0008-zig-systems-surface.md) - Zig systems surface (not Shell dump)
 - [macOS spike architecture](../macos-spike-architecture.md)

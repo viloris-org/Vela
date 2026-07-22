@@ -17,6 +17,8 @@ ADRs capture decisions that are expensive to reverse. Format: short Markdown wit
 | [0004](0004-cross-platform-abstraction.md) | Cross-platform Shell abstraction | Accepted |
 | [0005](0005-zig-interop-layer.md) | Zig as Bun↔native interop layer | Accepted |
 | [0006](0006-ts-first-capabilities.md) | TypeScript-first capabilities with optional native bridges | Accepted |
+| [0007](0007-typescript-full-stack-host.md) | TypeScript-first full stack and pluggable privileged host | Accepted |
+| [0008](0008-zig-systems-surface.md) | Zig as the default unified systems surface for capabilities | Accepted |
 
 ## Template
 

@@ -35,12 +35,20 @@ Tier 2 must fail loudly when required capabilities are missing.
 
 ### Mobile (committed direction, experimental APIs)
 
-| Platform | Host | UI |
-|----------|------|-----|
-| iOS | Native (Swift) | WebView + layers |
-| Android | Native (Kotlin) | WebView + layers |
+| Platform | Shell / UI host | App TS | Privileged Host (capabilities) |
+|----------|-----------------|--------|--------------------------------|
+| iOS | Native (Swift) + WKWebView + layers | `window.vela` only | Same method names as desktop; Host **TS source** on a pluggable backend when available; interim **native handlers** OK |
+| Android | Native (Kotlin) + system WebView + layers | `window.vela` only | Same as iOS row |
 
-Bun is used for tooling/bundles, not as the full mobile in-process runtime. Shared surface: `@vela/api` Layer / Capability / bridge protocol.
+**Indirect system access on iOS (and Android):** App TypeScript calls system features only through Vela abstractions (`call` / `layers` / `hit` / `events`). The privileged side checks capabilities, then uses UIKit / platform APIs. **No Bun (or other third-party JIT) is required inside the app package** for that App path. See [ADR 0007](adr/0007-typescript-full-stack-host.md).
+
+| Bun role on mobile | Status |
+|--------------------|--------|
+| CI / dev bundles, contract tests | Yes (toolchain) |
+| Required in-process app runtime | **No** |
+| Required for App TS → system APIs | **No** — bridge + host/Shell is enough |
+
+Shared surface: `@vela/api` Layer / Capability / bridge protocol. Host plugin **source** portability is the long-term goal; a single engine binary on every store build is not.
 
 ### Non-targets (unless roadmap promotes them)
 
@@ -64,7 +72,8 @@ Bun is used for tooling/bundles, not as the full mobile in-process runtime. Shar
 | System materials | Liquid Glass / material | Mica/Acrylic | gtk.blur | material | fallback/css first |
 | Regional layer hit-through | yes | yes | yes | yes | yes |
 | Window region-through to OS | yes | yes | partial | limited | limited |
-| Capability plugins | yes | yes | yes | yes | yes |
+| Capability plugins (App via `vela.call`) | yes | yes | yes | yes | yes |
+| Host TS plugin runtime (reference) | Bun | Bun | planned | pluggable / interim native | pluggable / interim native |
 
 ## Abstraction expectations
 

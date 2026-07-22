@@ -3,11 +3,11 @@
 > **Type**: Conceptual  
 > **Status**: Current  
 > **Audience**: App authors | Host implementers  
-> **SoT**: `packages/api/src/capability/*`, `component/define.ts`, `protocol/bridge.ts`; [ADR 0006](adr/0006-ts-first-capabilities.md); ADR 0001 § D5–D7
+> **SoT**: `packages/api/src/capability/*`, `component/define.ts`, `protocol/bridge.ts`; [ADR 0006](adr/0006-ts-first-capabilities.md); [ADR 0007](adr/0007-typescript-full-stack-host.md); [ADR 0008](adr/0008-zig-systems-surface.md); ADR 0001 § D5–D7
 
 Vela separates **Capabilities** (non-UI system APIs) from **Native Components** (UI-bearing surfaces that create Layers). Both are permission-gated; default is **deny**.
 
-**Authoring default:** implement most capabilities in **TypeScript** on the privileged host (desktop: Bun). Apps always call through `window.vela`. Native and other languages are **optional bridges** for toolkit UI, materials, or foreign ABIs — not the default for clipboard-class features. See [ADR 0006](adr/0006-ts-first-capabilities.md).
+**Product goal:** TypeScript velocity on **both** the App (frontend) and the privileged Host (backend plugins). Apps always call through `window.vela`. Capability plugins are authored in **Host TypeScript** by default. First-party **portable OS-touching** and hot-path kernels default to a **unified Zig systems surface** so implementations do not scatter across Swift/Kotlin/C++ imports ([ADR 0008](adr/0008-zig-systems-surface.md)). Toolkit UI, materials paint, and vendor SDKs stay on L4 / adapters — not the common author path. See [ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0007](adr/0007-typescript-full-stack-host.md), and [ADR 0008](adr/0008-zig-systems-surface.md).
 
 Types:
 
@@ -15,35 +15,83 @@ Types:
 - `packages/api/src/component/define.ts`
 - Preload: `packages/api/src/protocol/bridge.ts`
 
-Decisions: [ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0001 § D5 - D7](adr/0001-composition-hit-material.md).
+Decisions: [ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0007](adr/0007-typescript-full-stack-host.md), [ADR 0008](adr/0008-zig-systems-surface.md), [ADR 0001 § D5 - D7](adr/0001-composition-hit-material.md).
 
 Security vocabulary is intentionally close to **Tauri 2** (permissions, scopes, capability grants bound to windows/profiles, runtime enforcement). Vela is not Tauri; see [Tauri comparison](research/tauri-comparison.md) for the map and divergences (layer-insert gates, signed native UI plugins).
 
-## TypeScript-first authoring
+## TypeScript-first full stack
 
-Most product plugins should feel like ordinary async TypeScript.
+Most product work should feel like ordinary async TypeScript on **two** sides of the trust boundary. Do not conflate them.
 
-| You write | Language | Runs where |
-|-----------|----------|------------|
-| App UI | TS / web | WebView (least privilege) |
-| Capability handlers (`vela.call`) | **TS by default** | Bun host (desktop) |
-| Optional client wrappers | TS | WebView (thin `call` helpers only) |
-| Native UI factories | Swift / Win / … | Shell L4 (when needed) |
-| Desktop transport | Zig | Shell control plane ([ADR 0005](adr/0005-zig-interop-layer.md)) |
+| Role | Language | Runs where | How it reaches the OS |
+|------|----------|------------|------------------------|
+| **App TS** (UI) | TS / web | System WebView (least privilege) | Only `window.vela` (message pass) |
+| **Host TS** (capability plugins) | **TS by default** | Privileged host runtime (desktop **reference**: Bun) | HostAPI → Zig systems surface / Shell after `require` |
+| Optional client wrappers | TS | WebView | Thin `call` helpers only — no second privilege path |
+| Systems kernels (portable OS / hot path) | **Zig** (default first-party) | Host-loaded native / shared `vela-sys` | [ADR 0008](adr/0008-zig-systems-surface.md) |
+| Native UI factories | Swift / Win / … | Shell L4 (when needed) | Toolkit views (`kind: "native"`) |
+| Desktop transport | Zig | Shell control plane ([ADR 0005](adr/0005-zig-interop-layer.md)) | Not a capability dumping ground |
+
+### App TS versus Host TS
+
+| | App TS | Host TS |
+|--|--------|---------|
+| Trust | Least | Medium–high |
+| Public surface | `window.vela` | Host registration / `handle` (design target) |
+| Bun / FFI / Zig imports | **Forbidden** | Allowed only on the host side of the bridge |
+| Portable without a device-side Bun binary | **Yes** (bridge on every OS, including iOS) | **Source-portable** when a host backend exists; interim native handlers may share the same method names |
+
+**“Call system APIs from TypeScript on iOS”** means App TS → `window.vela` → host/Shell → UIKit/… . It does **not** require embedding Bun (or a full JIT V8) in the WebView or in the IPA for the App path. See [ADR 0007 D3](adr/0007-typescript-full-stack-host.md).
+
+### Indirect system access (every platform)
+
+```text
+App TS (WKWebView / WebView2 / …)
+  await window.vela.call("clipboard.write", { text })
+  await window.vela.layers.insert({ kind: "material", /* … */ })
+        │ async message pass
+        ▼
+Privileged host + Shell
+  capability check → allow or structured deny
+        │
+        ▼
+OS / toolkit APIs
+```
+
+Rules:
+
+1. Page JS never holds raw OS handles or toolkit types.
+2. Method names and permission ids are shared across desktop and mobile.
+3. Until Host TS runs on a mobile backend, native code may implement the **same** `call` / insert paths so App TS keeps working (parity bridge, not the long-term authoring default).
+
+### Pluggable privileged host runtime
+
+| Concern | Decision |
+|---------|----------|
+| Authoring default for non-UI capabilities | Host TypeScript (ADR 0006) |
+| Desktop reference runtime | Bun |
+| Mobile / alternate backends | Pluggable (e.g. system JavaScriptCore context, embeddable engine) behind a stable Host plugin ABI |
+| Portable unit | Host **plugin source** + `@vela/api` — not one engine binary in every store package |
+| Host sandbox | Whitelist HostAPI only; no DOM, no ambient Node, no page objects ([ADR 0007 D5](adr/0007-typescript-full-stack-host.md)) |
+| Composition (hit, materials, window) | Stays **Shell native** — Host TS requests, does not reimplement |
+
+Bun remains the **repo toolchain** (`bun test`, install, web bundles) even when a given shipped app package does not embed the Bun runtime.
 
 ### Implementation tiers
 
 | Tier | Use when | Example |
 |------|----------|---------|
-| **T0 Host TS** | Pure logic or Bun/OS APIs without a Layer | Clipboard, notify, sandboxed fs |
-| **T1 Host TS + controlled OS** | Needs dialogs/process policy still without custom views | File picker, open-external |
-| **T1.5 Perf module** | Measured hot path; TS too slow or GC-hostile; **no** toolkit view | Transcode, parse, simulate, crypto — **Zig kernel** + TS facade |
+| **T0 Host TS** | Pure logic or host APIs without a meaningful OS kernel | Orchestration-only helpers |
+| **T1 Host TS + systems** | Needs OS touchpoints without a custom view | Clipboard, notify, sandboxed fs — **TS facade + prefer Zig systems surface** for first-party portable impl |
+| **T1.5 Perf / systems module** | Hot path **or** first-party portable OS kernel that must not scatter languages; **no** toolkit view | Transcode, parse, crypto, shared `vela-sys` domains — **Zig kernel** + TS facade |
 | **T2 Native UI bridge** | Toolkit view, camera, materials, vendor UI SDK | `camera.preview` layer, Liquid Glass paint |
 
-**Prefer T0/T1.** Use **T1.5** when profiling says you need native speed but not a
-native view. Use **T2** when you need a real Layer / toolkit surface.
+**Prefer Host TS for authoring.** Prefer **Zig systems surface** for first-party
+portable OS implementations so authors do not hop Swift/Kotlin/C++ imports
+([ADR 0008](adr/0008-zig-systems-surface.md)). Use pure T0 when no OS kernel is
+needed. Use **T2** when you need a real Layer / toolkit surface.
 
-See [ADR 0006 D9](adr/0006-ts-first-capabilities.md#d9---zig-performance-modules-behind-ts).
+See [ADR 0006 D9](adr/0006-ts-first-capabilities.md#d9---zig-performance-and-systems-modules-behind-ts) and [ADR 0008](adr/0008-zig-systems-surface.md).
 
 ### What app code always looks like
 
@@ -69,49 +117,55 @@ plugins/clipboard/
   package.json
   src/
     permissions.ts   # defineCapability catalog entries
-    host.ts          # Bun: register call handlers
+    host.ts          # privileged Host: register call handlers (desktop ref: Bun)
     client.ts        # optional app-side typed wrappers
+  native/            # optional/default Zig (or thin wrap of vela-sys)
   README.md
 ```
 
 Host registration is privileged. Treat TS handlers as trusted host code: still
-`require` permissions, validate args, honor scopes.
+`require` permissions, validate args, honor scopes. Typical plugin authors write
+**TS only** and call an injected systems facade; they do not import Swift/Kotlin/C
+per OS ([ADR 0008](adr/0008-zig-systems-surface.md) D5).
 
 ### Reaching other languages
 
 | Path | Mechanism | Who chooses it |
 |------|-----------|----------------|
 | App → host | `window.vela` message pass | App author (only public path) |
-| TS capability → **perf Zig module** | Bun loads narrow C ABI / addon (T1.5) | Plugin author after measurement |
+| TS capability → **Zig systems / perf module** | Host loads narrow C ABI / addon (T1.5, ADR 0008) | Framework default for first-party portable OS; plugin author for hot paths |
 | TS capability → Shell jobs | Bun RPC → Zig interop → L4 C ABI | Host / plugin when feature needs layers |
 | TS capability → signed native UI module | Host loader + caps (ADR 0003) | Plugin author for T2 |
 | Zig interop → Swift/C++ | C ABI inside Shell process | Shell engineers |
+| Vendor / exclusive SDK | Adapter inside plugin package | Platform engineer — **not** common author import path |
 
 App authors do not pick the backend language per call. The host registration
 binds method names to TS handlers and/or native factories.
 
-### High-performance capabilities (T1.5)
+### High-performance and systems capabilities (T1.5)
 
-For apps that need native speed **without** a native view:
+For native speed **or** consolidated first-party OS kernels **without** a native view:
 
 ```text
-App TS  --vela.call-->  Bun TS (caps + validate)  --narrow ABI-->  Zig perf module
+App TS  --vela.call-->  Host TS (caps + validate)  --narrow ABI-->  Zig systems surface / kernel
 ```
 
 | Do | Don't |
 |----|--------|
-| Keep the **same** `vela.call` method name as a pure-TS version | Import Zig from page JS |
-| Put permission checks in the Bun TS handler first | Bypass caps because the kernel is native |
+| Keep the **same** `vela.call` method name as a pure-TS version | Import Zig/Swift/Kotlin from page JS |
+| Put permission checks in the Host TS handler first | Bypass caps because the kernel is native |
 | Prefer handles / job ids over huge JSON payloads | Force multi-MB blobs through control-plane JSON |
-| Ship Zig (preferred) or other native kernels with a versioned C ABI | Merge unrelated perf code into `zig-shell` by default |
-| Measure before rewriting ordinary plugins | Make every plugin ship a native binary |
+| Ship Zig (preferred) or other native kernels with a versioned C ABI | Merge unrelated capability code into `zig-shell` by default |
+| Default first-party portable OS touchpoints onto the unified systems surface | Force every trivial orchestration plugin to ship native |
+| Accept a thicker unified surface to avoid multi-language author imports | Optimize for thinnest glue if it scatters languages |
 
-**Two different Zig hats:**
+**Three different Zig hats:**
 
 | Role | Where | Purpose |
 |------|-------|---------|
 | Shell interop | `hosts/zig-shell` | Window/WebView/layers transport ([ADR 0005](adr/0005-zig-interop-layer.md)) |
-| Perf module | plugin / package native code | Hot-path compute for a capability ([ADR 0006 D9](adr/0006-ts-first-capabilities.md#d9---zig-performance-modules-behind-ts)) |
+| Shared systems surface | `libs/vela-sys` (name TBD) | Unified portable OS/hot-path APIs ([ADR 0008](adr/0008-zig-systems-surface.md)) |
+| Plugin kernel | `plugins/*/native` | Feature-specific T1.5 / thin wrap of systems surface |
 
 Example layout:
 
@@ -119,9 +173,9 @@ Example layout:
 plugins/media-transcode/
   src/
     permissions.ts
-    host.ts          # Bun: require cap, call Zig ABI
+    host.ts          # Host: require cap, call Zig ABI
     client.ts        # optional typed wrappers
-  zig/
+  native/
     src/root.zig     # kernel
     build.zig
   README.md
@@ -138,6 +192,12 @@ host.handle("media.transcode", async (args, ctx) => {
 await window.vela.call("media.transcode", { jobId: "…" });
 ```
 
+### Platform-exclusive capabilities
+
+Exclusive materials, permission UX, or vendor SDKs **do not** get a fake portable
+pixel/API twin. They **do** keep the same `vela.call` / layer / permission entry,
+structured `unsupported` or degrade diagnostics, and live inside the same plugin
+packaging story — not a second import dialect for app authors. See [ADR 0008 D7](adr/0008-zig-systems-surface.md).
 ## Capability model
 
 | Concept | Role | Tauri peer (approx.) |
@@ -254,14 +314,14 @@ Rules:
 - Creating a sensitive layer requires matching permissions.
 - Apps may ship **signed** external modules (`ExternalNativeModule`): library
 path, factory symbol, permissions, `requiresSignature: true`.
-- Bun must **never** `dlopen` arbitrary code from page JS.
+- The Host must **never** `dlopen` arbitrary code from page JS.
 
 ## Plugin boundary (planned)
 
 | Plugin type | Default language | Surface | Tauri-shaped guidance |
 |-------------|------------------|---------|------------------------|
-| **Capability plugin** | **TypeScript (Bun host)** | `vela.call` + permission ids | Command plugin + permissions |
-| **Perf capability plugin** | **Zig kernel + TS facade** | Same `vela.call`; Bun loads native lib | Sidecar/native command acceleration |
+| **Capability plugin** | **Host TypeScript** (desktop ref: Bun) | `vela.call` + permission ids | Command plugin + permissions |
+| **Perf capability plugin** | **Zig kernel + TS facade** | Same `vela.call`; Host loads native lib after caps | Sidecar/native command acceleration |
 | Native UI plugin | Platform native + optional TS wrapper | `defineNativeComponent` + signed module | Mobile native plugins; Shell loads |
 | Material backend | Platform native (Shell L4) | Paint for `MaterialId`s | No Tauri peer |
 | Shell interop | Zig (desktop) | Transport / C ABI to L4 only | Not an app-facing plugin |
@@ -281,18 +341,21 @@ Follow-up ADRs:
 - Plugin ABI and signing — **0003** (planned)
 - Zig interop — [ADR 0005](adr/0005-zig-interop-layer.md) (Accepted)
 - TS-first capabilities — [ADR 0006](adr/0006-ts-first-capabilities.md) (Accepted)
+- TypeScript-first full stack / pluggable Host — [ADR 0007](adr/0007-typescript-full-stack-host.md) (Accepted)
 
 ## Security defaults
 
 1. Deny all capabilities unless manifest-granted.
 2. Deny unsigned native load unless `native:load-unsigned` (and product policy).
 3. Prefer custom URL schemes in production; no open localhost by default.
-4. Enforce on **both** Bun host and Shell (defense in depth).
+4. Enforce on **both** privileged Host and Shell (defense in depth).
 5. Keep secrets and high-value logic out of WebView content.
 6. Treat third-party frontend deps as part of the attack surface (optional
 isolation interceptor is future work under ADR 0002).
-7. **TS host handlers are privileged** — not “safe because TypeScript”; still
+7. **Host TS handlers are privileged** — not “safe because TypeScript”; still
 require permissions, validate args, honor scopes.
+8. Host runtime sandbox: no page DOM, no ambient full Node, no raw `dlopen` from
+plugin code without policy ([ADR 0007 D5](adr/0007-typescript-full-stack-host.md)).
 
 ## Acceptance checklist
 
@@ -311,8 +374,10 @@ require permissions, validate args, honor scopes.
 ## Related
 
 - [ADR 0006: TypeScript-first capabilities](adr/0006-ts-first-capabilities.md)
+- [ADR 0007: TypeScript-first full stack and pluggable Host](adr/0007-typescript-full-stack-host.md)
 - [Architecture](architecture.md)
 - [Cross-platform abstraction](cross-platform-abstraction.md)
+- [Platform support](platform-support.md)
 - [API contracts](api-contracts.md)
 - [ADR 0002](adr/0002-ipc-privilege.md)
 - [ADR 0005](adr/0005-zig-interop-layer.md)

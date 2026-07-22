@@ -11,7 +11,7 @@
 
 ## Context
 
-Vela is a Bun-centered GUI framework targeting desktop and mobile, with:
+Vela is a TypeScript-first, WebView-first GUI framework targeting desktop and mobile, with:
 
 - **WebView-first** main UI
 - **Strong shell control** (window, chrome, protocol, permissions)
@@ -19,7 +19,7 @@ Vela is a Bun-centered GUI framework targeting desktop and mobile, with:
 - **Native overlays**, including platform materials such as Apple **Liquid Glass** via Swift/system APIs
 - **Large surface area of system capabilities** behind a unified Capability model
 
-Flutter desktop often exposes whole-window mouse ignore / click-through. Electron is Chromium-heavy and weak at true native sibling composition. Qt provides widget stacking, masks, and partial event transparency. We want Qt-like composition philosophy with Web productivity and Bun as the desktop host language.
+Flutter desktop often exposes whole-window mouse ignore / click-through. Electron is Chromium-heavy and weak at true native sibling composition. Qt provides widget stacking, masks, and partial event transparency. We want Qt-like composition philosophy with Web productivity and a TypeScript privileged Host on desktop (reference runtime: Bun — toolchain and Host implementation detail, not the product identity).
 
 ## Decisions
 
@@ -92,12 +92,12 @@ HIG note (Apple): prefer materials on the **functional** layer (chrome, toolbars
 
 | Role | Desktop | Mobile |
 |------|---------|--------|
-| Orchestration / capabilities / plugins | **Bun host** | Shared TS contract; host is Swift/Kotlin |
+| Orchestration / capabilities / plugins | **Privileged Host TS** (desktop reference: Bun) | Shared TS contract; host is Swift/Kotlin (+ optional Host TS backend later) |
 | Windowing, WebView, layers, hit router | **Native Shell** | Same |
 | Liquid Glass / platform materials | Apple backend (Swift) | UIKit/SwiftUI host |
 | Main UI | WebView | WebView (v1) |
 
-Bun is **not** the in-process JS engine on iOS/Android for the full app runtime. Mobile runs a native host + shared Capability/Layer protocol; bundles are produced with Bun on CI/dev machines.
+Bun is **not** the in-process JS engine on iOS/Android for the full app runtime. Mobile runs a native host + shared Capability/Layer protocol; monorepo install/test/bundle may still use Bun on CI/dev machines. Product framing is **TypeScript-first full stack**, not “Bun-centered app runtime” ([ADR 0007](0007-typescript-full-stack-host.md)).
 
 ### D7 - Security defaults
 

@@ -5,9 +5,8 @@
 > **Audience**: App authors, host implementers, maintainers  
 > **SoT**: [Writing guidelines](writing-guidelines.md) for style; `@vela/api` and Accepted ADRs for product behavior
 
-Architecture and domain guides for **Vela**, a Bun-centered, WebView-first GUI framework (repository checkout name: `New_Vela`).
+Architecture and domain guides for **Vela**, a TypeScript-first, WebView-first GUI framework (repository checkout name: `New_Vela`). Bun is the monorepo toolchain and desktop reference Host, not the product identity — see [ADR 0007](adr/0007-typescript-full-stack-host.md).
 
-> **Project status**: contracts and architecture. Hosts are not shipped yet. Start with [Architecture](architecture.md). Follow [Writing guidelines](writing-guidelines.md) for every doc change.  
 > **Project status**: contracts and architecture. Hosts are not shipped yet. Start with [Architecture](architecture.md). Follow [Writing guidelines](writing-guidelines.md) for every doc change.
 
 ## Start here
@@ -49,6 +48,8 @@ Architecture and domain guides for **Vela**, a Bun-centered, WebView-first GUI f
 | [0004](adr/0004-cross-platform-abstraction.md) | Cross-platform Shell abstraction | Accepted |
 | [0005](adr/0005-zig-interop-layer.md) | Zig Bun↔native interop layer | Accepted |
 | [0006](adr/0006-ts-first-capabilities.md) | TypeScript-first capabilities | Accepted |
+| [0007](adr/0007-typescript-full-stack-host.md) | TypeScript-first full stack / pluggable Host | Accepted |
+| [0008](adr/0008-zig-systems-surface.md) | Zig unified systems surface for capabilities | Accepted |
 
 Full index: [ADR README](adr/README.md).
 
@@ -79,7 +80,8 @@ These pages map external systems. They are **not** product contracts and must no
 | Shell security / IPC vocabulary | `docs/research/tauri-comparison.md` + capabilities doc + [ADR 0002](adr/0002-ipc-privilege.md) |
 | Cross-platform Shell shape | [cross-platform-abstraction.md](cross-platform-abstraction.md) + [ADR 0004](adr/0004-cross-platform-abstraction.md) |
 | Desktop Bun↔native interop | [ADR 0005](adr/0005-zig-interop-layer.md) (Zig control plane + C ABI) |
-| Capability authoring | [ADR 0006](adr/0006-ts-first-capabilities.md) + [capabilities-and-plugins.md](capabilities-and-plugins.md) |
+| Capability authoring | [ADR 0006](adr/0006-ts-first-capabilities.md) + [ADR 0007](adr/0007-typescript-full-stack-host.md) + [capabilities-and-plugins.md](capabilities-and-plugins.md) |
+| Capability systems impl (Zig surface) | [ADR 0008](adr/0008-zig-systems-surface.md) (anti-scatter; not Host authoring language) |
 | Phase 1 macOS plan | [macos-spike-architecture.md](macos-spike-architecture.md) |
 | Design debt | [design-gaps.md](design-gaps.md) |
 | Documentation style | [writing-guidelines.md](writing-guidelines.md) |

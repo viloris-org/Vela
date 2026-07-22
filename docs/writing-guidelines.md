@@ -94,6 +94,8 @@ Aligned with Google voice/tone and Vercel docs voice:
 | please (in procedures) | Direct instruction |
 | here / click here (as link text) | Descriptive link text |
 | Pre-announcing unreleased behavior as fact | Status callout + roadmap link |
+| **Bun-centered** (as product identity) | **TypeScript-first**, **WebView-first**, **desktop reference Host: Bun** ([ADR 0007](adr/0007-typescript-full-stack-host.md)) |
+| Bun as the performance story | System WebView for App; T1.5 native for Host hot paths; Bun for DX / toolchain / desktop Host path |
 
 Break any rule rather than write something unclear or wrong. Consistency still matters: if you depart, stay consistent within the page and note why when the departure is structural.
 
@@ -122,9 +124,13 @@ Use one form everywhere. Expand acronyms on first use on a page when they are no
 | This monorepo checkout | `New_Vela` (paths and clone names only) |
 | Sibling product | sibling Vela (wgpu) or `../Vela` (Rust, no WebView core) |
 | Contract package | `@vela/api` |
-| Orchestration process (desktop) | Bun host |
+| Product framing | **TypeScript-first full stack**, **WebView-first** (not “Bun-centered”) |
+| Privileged backend process (role) | Privileged Host or Host |
+| Desktop Host implementation (reference) | Bun host / desktop reference Host (Bun) |
+| Repo toolchain | Bun (install, test, typecheck, bundle) — implementation detail |
 | Privileged native process | Native Shell or Shell |
-| Untrusted UI JS | WebView page JS or page JS |
+| Untrusted UI JS | WebView page JS, App TS, or page JS |
+| Host plugin language default | Host TS |
 | Composition unit | Layer |
 | In-window hit policy | `HitPolicy` |
 | Window to OS input mode | `WindowInputMode` |

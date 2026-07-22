@@ -5,7 +5,7 @@
 > **Audience**: Host implementers | Maintainers  
 > **SoT**: Stack choices; open decisions listed in this page and ADRs
 
-Preferred stack for New_Vela and the main alternatives. Goal: reinforce WebView-first UI, Qt-class composition, Bun desktop host, and portable contracts.
+Preferred stack for New_Vela and the main alternatives. Goal: reinforce WebView-first UI, Qt-class composition, TypeScript-first Host plugins, a Bun **desktop reference** host (and toolchain), and portable contracts.
 
 ## Selection rules
 
@@ -14,8 +14,8 @@ Preferred stack for New_Vela and the main alternatives. Goal: reinforce WebView-
 - Do not expose host-private types from the public contract package.
 - Prefer active maintenance, clear licensing, and explicit platform support.
 - Missing OS capabilities must produce diagnostics, not silent failure.
-- Avoid forcing a full Chromium+Node surface when a system WebView + Bun host
-is enough for the product class.
+- Avoid forcing a full Chromium+Node surface when a system WebView + privileged Host is enough for the product class.
+- Choose Host JS runtimes for **DX, packaging, and API fit** — not for server-style JS throughput. App UI trusts the system WebView engine; Host hot paths use T1.5 native kernels ([ADR 0006](adr/0006-ts-first-capabilities.md) D9).
 
 ## Current repository stack
 
@@ -23,24 +23,27 @@ is enough for the product class.
 |-------|--------|--------|
 | Contracts | TypeScript + Bun test runner | **Shipped** (`@vela/api`) |
 | Workspace | Bun workspaces | **Shipped** |
-| Desktop orchestration | Bun host | Planned |
-| Capability plugins (default) | TypeScript on Bun (`vela.call` handlers) | Planned ([ADR 0006](adr/0006-ts-first-capabilities.md)) |
-| Perf capability kernels (optional) | **Zig** (or other native) behind Bun TS facade | Planned (ADR 0006 D9) |
+| Desktop orchestration | Bun = **reference** privileged Host | Planned ([ADR 0007](adr/0007-typescript-full-stack-host.md)) |
+| Capability plugins (default authoring) | **Host TypeScript** (`vela.call` handlers) | Planned ([ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0007](adr/0007-typescript-full-stack-host.md)) |
+| Systems / perf capability kernels | **Zig** unified surface + plugin native (default first-party) | Planned ([ADR 0008](adr/0008-zig-systems-surface.md), ADR 0006 D9) |
 | Desktop interop / control plane | **Zig** (RPC framing, dispatch, C ABI to L4) | Planned ([ADR 0005](adr/0005-zig-interop-layer.md)) |
 | Native shell backends (L4) | Platform native (Swift / Win / Linux toolkits) | Planned (macOS scaffold started) |
 | Primary UI | System WebView (WKWebView, WebView2, …) | Planned |
 | Materials | Platform APIs (Liquid Glass, Mica, …) | Planned |
-| Mobile host | Swift / Kotlin + shared contracts | Planned (Zig not required for mobile v1) |
+| Mobile Shell | Swift / Kotlin + shared contracts | Planned (Zig not required for mobile v1) |
+| Mobile Host TS backend | Pluggable (e.g. system JSC); interim native `call` shims | Planned (ADR 0007); not required for App bridge |
 
 ## Recommended desktop path
 
-### Bun host
+### Privileged Host (desktop reference: Bun)
 
 - App lifecycle, plugin load, capability enforcement, packaging hooks
-- **Default home for capability plugins** written in TypeScript ([ADR 0006](adr/0006-ts-first-capabilities.md))
-- May load **T1.5 perf modules** (Zig preferred) via narrow ABI after cap checks
+- **Default home for capability plugins** written in TypeScript ([ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0007](adr/0007-typescript-full-stack-host.md))
+- May load **Zig systems / T1.5 modules** via narrow ABI after cap checks ([ADR 0008](adr/0008-zig-systems-surface.md))
 - Talks to Shell via typed RPC → Zig interop (ADR 0002, ADR 0005)
-- Builds/bundles web assets; not the mobile in-process JS engine
+- Builds/bundles web assets (toolchain); **not** required inside iOS/Android app packages for App TS → `window.vela` → system APIs
+- Other Host backends may run the **same plugin source** (pluggable runtime); see ADR 0007
+- **Not a performance pick:** typical Host work is I/O, permission checks, and RPC orchestration. Bun’s server-oriented runtime advantages are incidental; they are not a product requirement. Do not keep heavy work in Host TS solely because Bun is “fast” — use Zig systems/T1.5 when OS kernels or measurement say so.
 
 ### Zig interop (desktop Shell process)
 
@@ -49,16 +52,20 @@ is enough for the product class.
 - Exposes / consumes a stable **C ABI** toward L4 backends
 - Optional pure ports of hit/geometry helpers when drift cost is proven
 - Does **not** own toolkit widgets or system material paint
-- Does **not** replace capability perf plugins (those are separate T1.5 modules)
+- Does **not** own capability business plugins (those use Host TS + systems surface)
 - See [ADR 0005](adr/0005-zig-interop-layer.md)
 
-### Zig perf modules (optional, Bun side)
+### Zig systems surface and plugin kernels (Host side)
 
-- Owned by a capability plugin package, not by `zig-shell` by default
-- Called only from privileged Bun TS handlers after permission checks
-- Preferred first-party native language for new hot-path kernels
-- Other languages OK when exposing the same narrow ABI (vendor SDKs, existing libs)
-- See [ADR 0006 D9](adr/0006-ts-first-capabilities.md#d9---zig-performance-modules-behind-ts)
+- **Primary motive:** maintainability — one systems dialect and interface family so capabilities do not scatter across Swift/Kotlin/C++ author paths ([ADR 0008](adr/0008-zig-systems-surface.md))
+- Shared library intent: `libs/vela-sys` (name TBD) for portable OS/hot-path APIs
+- Plugin-owned kernels under `plugins/*/native` for feature-specific work
+- Called only from privileged Host TS handlers after permission checks
+- Preferred first-party native language for new Vela-owned systems code
+- Other languages OK when exposing the same narrow ABI family (vendor SDKs, existing libs)
+- Platform-exclusive UI/materials stay L4; no false pixel unification
+- Accept a thicker unified surface rather than multi-language thin bridges
+- See [ADR 0006 D9](adr/0006-ts-first-capabilities.md#d9---zig-performance-and-systems-modules-behind-ts), [ADR 0008](adr/0008-zig-systems-surface.md)
 
 ### Native Shell backends (L4)
 
@@ -96,7 +103,7 @@ is enough for the product class.
 
 ### Full Electron
 
-Pros: mature ecosystem. Cons: heavy; weak true multi-native sibling composition; does not match Bun-first orchestration goal as cleanly. Bundled Chromium means app vendors own WebView patch lag (Tauri documents the opposite choice).
+Pros: mature ecosystem. Cons: heavy; weak true multi-native sibling composition; does not match TypeScript-first Host + system WebView as cleanly. Bundled Chromium means app vendors own WebView patch lag (Tauri documents the opposite choice).
 
 ### Pure Flutter / pure Qt
 
@@ -122,9 +129,12 @@ Different product: no WebView core, GPU-heavy tool UIs. Useful as documentation 
 
 ### Zig vs shared Rust UI core
 
-Zig is chosen for **interop**, not as a WRY/TAO-class window stack. A shared
-Rust **UI** core remains rejected (ADR 0004). A shared Rust **interop** core is
-unnecessary once Zig owns framing/dispatch/C ABI (ADR 0005).
+Zig is chosen for **interop** and for the **default first-party systems surface**
+([ADR 0005](adr/0005-zig-interop-layer.md), [ADR 0008](adr/0008-zig-systems-surface.md)),
+not as a WRY/TAO-class window stack. A shared Rust **UI** core remains rejected
+(ADR 0004). A shared Rust **interop** core is unnecessary once Zig owns
+framing/dispatch/C ABI (ADR 0005). Capability systems code defaults to the same
+Zig dialect so plugins do not scatter across native languages (ADR 0008).
 
 ## Dependencies policy (contracts package)
 
@@ -142,7 +152,7 @@ against `@vela/api`. Conceptual map:
 control-plane between Bun and L4 backends. Zig is not a UI toolkit.
 
 ```text
-Bun (TS)  --UDS/pipe RPC-->  Zig  --C ABI-->  L4 (Swift / Win / Linux)
+Host TS (desktop ref: Bun)  --UDS/pipe RPC-->  Zig  --C ABI-->  L4 (Swift / Win / Linux)
 ```
 
 | Platform | Interop | L4 backend language (intent) | Notes |
@@ -164,7 +174,8 @@ proven. It must not become the public composition API or the sole window stack.
 - [x] Phase 1 process topology: **single Shell process allowed**; Bun split is Phase 2 - ADR 0002 D2
 - [x] Multi-OS Shell shape: **per-platform backends + shared contracts** (not mandatory shared Rust UI core) - [ADR 0004](adr/0004-cross-platform-abstraction.md)
 - [x] Desktop Bun↔native middle layer: **Zig** interop (RPC + C ABI; not UI core) - [ADR 0005](adr/0005-zig-interop-layer.md)
-- [x] Capability authoring default: **TypeScript on Bun host**; native optional for T2 - [ADR 0006](adr/0006-ts-first-capabilities.md)
+- [x] Capability authoring default: **TypeScript on privileged Host**; desktop reference runtime Bun; native optional for T2 - [ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0007](adr/0007-typescript-full-stack-host.md)
+- [x] Performance story: **system WebView for App**; **T1.5 native for Host hot paths**; Bun not selected for server-style JS throughput - ADR 0007 D8
 - [ ] Windows L4 language (C++/WinRT vs Rust+WinRT) at Phase 4 start
 - [ ] Zig C ABI header surface (`vela_shell_*` groups) checked in with `hosts/zig-shell`
 - [ ] Isolation-style interceptor between page and privilege (optional Phase 2+; ADR 0002 D7)

@@ -135,7 +135,7 @@ An isolation-style interceptor between untrusted page scripts and the privilege 
 | Commands ≈ `call`, Events ≈ `events` | `layers.*` / `hit.*` channels |
 | Capabilities / permissions / runtime deny | Material + native layer insert gates |
 | System WebView, not Chromium embed | Material backends, regional hit |
-| Custom protocols for assets | Bun-centered desktop orchestration |
+| Custom protocols for assets | Desktop Host TS orchestration (reference: Bun) |
 
 ## Consequences
 

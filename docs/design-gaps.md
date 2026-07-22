@@ -38,7 +38,7 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 | G-P1-7 | Coordinate conversion policy (AppKit y-up vs logical y-down) only implied | Explicit in spike + geometry notes | **closed** pure (`coordinates.ts`); Shell must call once at boundary |
 | G-P1-8 | Zig C ABI header + RPC endpoint skeleton | `hosts/zig-shell` + Phase 2 | open |
 | G-P1-9 | Bun capability host registration API (`handle` / plugin load) | `@vela/api` + Bun host Phase 2–3 | open |
-| G-P1-10 | Bun loader + versioning for T1.5 perf native modules (Zig ABI) | Bun host + plugin packaging | open |
+| G-P1-10 | Host loader + versioning for T1.5 / systems native modules (Zig ABI, `vela-sys`) | Host + plugin packaging; [ADR 0008](adr/0008-zig-systems-surface.md) | open |
 
 ## P2 - Later phases / polish
 
@@ -51,6 +51,11 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 | G-P2-8 | Cross-platform Shell abstraction unrecorded | [ADR 0004](adr/0004-cross-platform-abstraction.md) + conceptual doc | **closed** (Accepted; multi-backend + contracts-first) |
 | G-P2-9 | Bun↔native middle language unrecorded | [ADR 0005](adr/0005-zig-interop-layer.md) | **closed** (Zig interop; C ABI to L4) |
 | G-P2-10 | Capability authoring language / TS-first model unrecorded | [ADR 0006](adr/0006-ts-first-capabilities.md) | **closed** (TS default; native optional T2) |
+| G-P2-11 | Full-stack TS goal, App vs Host, pluggable Host runtime, iOS indirect OS access unrecorded | [ADR 0007](adr/0007-typescript-full-stack-host.md) | **closed** (Accepted 2026-07-23) |
+| G-P2-12 | Zig systems surface / anti-scatter for capabilities unrecorded | [ADR 0008](adr/0008-zig-systems-surface.md) | **closed** (Accepted 2026-07-23; impl still open) |
+| G-P1-13 | Shared `vela-sys` (or equivalent) layout + first domain (e.g. fs/clipboard) | ADR 0008 D6/D11; libs tree | open |
+| G-P1-11 | Host plugin registration ABI + sandboxed HostAPI surface | `@vela/api` + desktop Bun host; mobile backends | open |
+| G-P1-12 | Second Host runtime backend (e.g. iOS JSC) running same plugin source | ADR 0007 D4–D5; mobile spike | open |
 | G-P2-5 | Isolation interceptor (Tauri-class) optional design | ADR 0002 D7 | open (deferred) |
 | G-P2-6 | CI matrix for hosts | testing-and-acceptance | open |
 | G-P2-7 | Product vs repo naming (`New_Vela` vs Vela vs sibling wgpu Vela) | README disambiguation | partial |
@@ -91,4 +96,6 @@ Do not merge codebases or share public package names without an explicit rename 
 - [ADR 0004](adr/0004-cross-platform-abstraction.md)
 - [ADR 0005](adr/0005-zig-interop-layer.md)
 - [ADR 0006](adr/0006-ts-first-capabilities.md)
+- [ADR 0007](adr/0007-typescript-full-stack-host.md)
+- [ADR 0008](adr/0008-zig-systems-surface.md)
 - [ADR index](adr/README.md)

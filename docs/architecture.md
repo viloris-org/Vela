@@ -5,15 +5,16 @@
 > **Audience**: App authors | Host implementers | Maintainers  
 > **SoT**: `@vela/api` and Accepted ADRs; this page explains the product shape
 
-Vela (this repository: **New_Vela**) is a Bun-centered GUI framework for **desktop and mobile** applications that need:
+Vela (this repository: **New_Vela**) is a **TypeScript-first, WebView-first** GUI framework for **desktop and mobile** applications that need:
 
-- Web productivity for the main UI surface
+- Web productivity for the main UI surface (App TS in the system WebView)
+- Privileged **Host TS** for most system capabilities (pluggable runtime; desktop reference: Bun)
 - Strong native shell control (windowing, chrome, permissions)
 - **Qt-class composition**: multi-layer stacking with **regional** hit-through
 - First-class **system materials** (Liquid Glass, Mica, Acrylic, …)
 - A default-deny **Capability** model for system APIs
 
-> Status: architecture + shared TypeScript contracts (`@vela/api`). Host implementations (Bun desktop, native shell, iOS/Android) are not shipped yet. See [Roadmap](roadmap.md).
+> Status: architecture + shared TypeScript contracts (`@vela/api`). Host implementations (desktop privileged Host, native shell, iOS/Android) are not shipped yet. See [Roadmap](roadmap.md).
 
 ## Positioning
 
@@ -22,10 +23,10 @@ Vela (this repository: **New_Vela**) is a Bun-centered GUI framework for **deskt
 | Electron | Chromium + Node; overlays are awkward | Heavy; weak true native sibling composition |
 | Flutter desktop | Mostly whole-window mouse ignore | Regional holes between Web / native / material |
 | [Tauri](https://v2.tauri.app/) | System WebView + Rust Core + commands/events + capabilities | Composition/materials/regional hit not first-class |
-| Qt Widgets / Quick | Stacking, masks, partial event transparency | Not WebView-first; not Bun host |
+| Qt Widgets / Quick | Stacking, masks, partial event transparency | Not WebView-first; different authoring model |
 | Sibling `Vela` (Rust/wgpu) | Retained native + GPU viewports | Different product: no WebView core |
 
-Vela takes **Qt-like composition philosophy** (layer stack, masks, transparent for mouse events) and pairs it with **WebView-first authoring** and a **Bun** desktop orchestration host. See [Qt composition notes](research/qt-composition-notes.md).
+Vela takes **Qt-like composition philosophy** (layer stack, masks, transparent for mouse events) and pairs it with **WebView-first authoring** and a **TypeScript privileged Host** (desktop reference runtime: Bun). See [Qt composition notes](research/qt-composition-notes.md).
 
 From **Tauri 2** we adopt the *security and process mindset* (least privilege, message-pass IPC, capability grants, system WebView - not bundled Chromium), not the runtime. Full map: [Tauri comparison](research/tauri-comparison.md).
 
@@ -37,10 +38,10 @@ Application (TS / web assets)  -- least privilege --
         | window.vela preload (call / layers / hit / events)
         v
 +-------------------+     +------------------+     +------------------------+
-|  Bun host         |---->|  Zig interop     |---->|  Platform backend (L4) |
-|  (desktop)        | RPC |  framing,        | C   |  window, WebView,      |
-|  plugins, caps,   |<----|  dispatch, ABI   | ABI |  layers, hit, materials|
-|  app lifecycle    |     |  (Shell process) |     |  signed native factories|
+|  Privileged Host  |---->|  Zig interop     |---->|  Platform backend (L4) |
+|  (desktop ref:    | RPC |  framing,        | C   |  window, WebView,      |
+|   Bun; Host TS    |<----|  dispatch, ABI   | ABI |  layers, hit, materials|
+|   plugins, caps)  |     |  (Shell process) |     |  signed native factories|
 +-------------------+     +------------------+     +------------------------+
         |                        |                            |
         | shared contracts       | desktop control plane      | toolkit-private
@@ -49,25 +50,26 @@ Application (TS / web assets)  -- least privilege --
 ```
 
 Phase 1 may collapse Zig and use a single Swift process with a local preload
-bridge. Phase 2+ desktop requires Bun → Zig RPC → L4. Mobile keeps native
-orchestration without requiring Zig. See [ADR 0005](adr/0005-zig-interop-layer.md).
+bridge. Phase 2+ desktop requires the privileged Host (reference: Bun) → Zig RPC
+→ L4. Mobile keeps native orchestration without requiring Zig. See
+[ADR 0005](adr/0005-zig-interop-layer.md).
 
 | Role | Desktop | Mobile (v1 intent) |
 |------|---------|---------------------|
-| Orchestration, capabilities, plugins | **Bun host** | Native host (Swift/Kotlin); same TS contracts |
+| App UI (TypeScript / web) | System WebView | System WebView (same `window.vela`) |
+| Privileged Host (capability plugins) | **Bun** reference runtime | Same **Host TS** source when a host backend exists; interim native methods OK |
 | Control plane / Bun↔native glue | **Zig interop** (Phase 2+) | Optional later; not required for mobile v1 |
 | Windowing, WebView, layers, hit router | **Shell role** via L4 backend | Same Shell role, native host |
 | System materials | Platform native (e.g. Swift Liquid Glass) | Platform native |
-| Main application UI | WebView layer(s) | WebView layer(s) |
 
-Bun is **not** the in-process JS engine for full app runtime on iOS/Android. Mobile hosts implement the same Layer / Capability / bridge protocol; bundles are produced with Bun on CI/dev machines.
+**TypeScript-first full stack** ([ADR 0007](adr/0007-typescript-full-stack-host.md)): App **and** privileged Host are authored in TypeScript by default. Portable unit for Host plugins is **source + contracts**, not “ship Bun/V8 inside every mobile binary.” Bun is the **desktop reference Host** and the **repo toolchain** (`bun test`, bundles) — chosen for DX and a single desktop Host path, **not** because Host TS must win JS-engine benchmarks. App UI performance trusts the **system WebView** engine; heavy host work uses **T1.5 native kernels** ([ADR 0006](adr/0006-ts-first-capabilities.md)), not a faster Host JS runtime. Bun is **not** required inside iOS/Android app packages for App TS to call system APIs through `window.vela`.
 
 ### Trust boundaries (Tauri-aligned)
 
 | Zone | Privilege | May do |
 |------|-----------|--------|
-| WebView page JS | Least | Only `window.vela`; no Node, no FFI, no secrets |
-| Bun host | Medium - high | Capability catalog, plugin load, app lifecycle, packaging |
+| WebView page JS (App TS) | Least | Only `window.vela`; no Node, no FFI, no secrets |
+| Privileged Host (Host TS; desktop: Bun) | Medium - high | Capability catalog, plugin load, app lifecycle, packaging |
 | Zig interop (desktop Shell process) | High (with Shell) | RPC endpoint, dispatch, C ABI to L4; no page access |
 | Native Shell / L4 backend | Highest OS surface | Windowing, embed WebView, hit router, materials, signed natives |
 
@@ -99,11 +101,22 @@ See [Cross-platform abstraction](cross-platform-abstraction.md) and
 10. **Zig desktop interop** - Bun reaches platform backends through a Zig
 control plane (RPC + C ABI), not through Bun FFI into toolkits and not through
 page-visible native bindings. See [ADR 0005](adr/0005-zig-interop-layer.md).
-11. **TypeScript-first capabilities** - most non-UI system APIs are written as
-privileged Bun/TS handlers behind `vela.call`. Native and other languages are
-optional bridges for toolkit UI, materials, or foreign ABIs. **Hot paths** may
-use Zig (or other native) kernels behind the same TS `call` surface (T1.5).
-Apps always stay on the whitelist bridge. See [ADR 0006](adr/0006-ts-first-capabilities.md).
+11. **TypeScript-first full stack** - App UI and privileged Host plugins are
+authored in TypeScript by default. Apps only use `window.vela`. Host handlers
+implement `vela.call` behind a sandboxed HostAPI. Runtime is **pluggable** (Bun
+on desktop reference; other backends on mobile). Native bridges remain for
+toolkit UI, materials, and systems/T1.5 kernels. See [ADR 0006](adr/0006-ts-first-capabilities.md)
+and [ADR 0007](adr/0007-typescript-full-stack-host.md).
+12. **Indirect system access everywhere** - including iOS, page code reaches OS
+features only through Vela abstractions (message pass → capability check →
+native/Shell). No Bun-on-device requirement for that App path.
+13. **Zig unified systems surface for capabilities** - first-party portable
+OS-touching and hot-path implementations default to Zig behind Host TS so
+capabilities do not scatter across Swift/Kotlin/C++ author imports. Product
+contracts stay in `@vela/api`. Shell interop (`zig-shell`) stays separate from
+plugin/`vela-sys` kernels. Platform-exclusive features skip false pixel
+unification but keep the same call names and degrade paths. A thicker unified
+surface is preferred to multi-language glue. See [ADR 0008](adr/0008-zig-systems-surface.md).
 
 ## Cross-platform abstraction (summary)
 
@@ -114,8 +127,9 @@ universal window crate:
 |-------|------------------|
 | App (L0) | `window.vela` only |
 | Contracts (L1) | `@vela/api` types + pure helpers |
-| Orchestration (L2) | Bun desktop host; native mobile host; same protocol |
+| Orchestration (L2) | Privileged Host (desktop reference: Bun; mobile backends pluggable) + same protocol |
 | Zig interop (L2.5) | Desktop RPC, dispatch, C ABI (not UI toolkit) |
+| Zig systems (Host-side) | Unified portable OS/hot-path kernels for plugins ([ADR 0008](adr/0008-zig-systems-surface.md)); not `zig-shell` |
 | Shell role (L3) | Same jobs on every OS |
 | Backend (L4) | Swift / Win / Linux / mobile toolkit code |
 
@@ -131,6 +145,7 @@ New_Vela/
   docs/                 Architecture, domain guides, ADRs
   packages/api/         @vela/api - types + pure helpers (usable today)
   hosts/                zig-shell (planned interop); desktop-shell (macOS L4 scaffold); more L4 later
+  libs/                 (planned) vela-sys Zig systems surface — ADR 0008
   plugins/              (planned) camera, materials, fs, dialog, …
   apps/                 playground / dogfood (web package)
 ```
@@ -146,8 +161,8 @@ New_Vela/
 | True Liquid Glass / Mica paint | Platform native backend (L4) |
 | Shell job list across OS | Each L4 backend; contracts + ADR 0004 |
 | Bun↔Shell desktop glue | Zig interop (ADR 0005); not page-visible |
-| Non-UI capability plugins | TypeScript on Bun host by default (ADR 0006) |
-| High-perf capability kernels | Optional Zig (T1.5) behind Bun TS facade |
+| Non-UI capability plugins | Host TypeScript by default (ADR 0006, ADR 0007); desktop reference = Bun |
+| High-perf capability kernels | Optional Zig (T1.5) behind Host TS facade |
 | Native UI / materials | L4 + signed modules only when T2 required |
 | Signed native component load | Shell (never arbitrary `dlopen` from page JS) |
 | App UI markup / CSS / framework | App Web content (React/Vue/Svelte/… free choice) |
@@ -166,7 +181,7 @@ general Node escape hatch.
 - Prefer keeping secrets and business logic out of the WebView (least
 privilege); treat the page as hostile dependency surface.
 
-IPC / typed RPC privilege boundaries: **[ADR 0002](adr/0002-ipc-privilege.md)** (Proposed). Plugin ABI and signing: planned **ADR 0003**. Cross-platform Shell shape: **[ADR 0004](adr/0004-cross-platform-abstraction.md)** (Accepted). Zig interop: **[ADR 0005](adr/0005-zig-interop-layer.md)** (Accepted). TS-first capabilities: **[ADR 0006](adr/0006-ts-first-capabilities.md)** (Accepted).
+IPC / typed RPC privilege boundaries: **[ADR 0002](adr/0002-ipc-privilege.md)** (Proposed). Plugin ABI and signing: planned **ADR 0003**. Cross-platform Shell shape: **[ADR 0004](adr/0004-cross-platform-abstraction.md)** (Accepted). Zig interop: **[ADR 0005](adr/0005-zig-interop-layer.md)** (Accepted). TS-first capabilities: **[ADR 0006](adr/0006-ts-first-capabilities.md)** (Accepted). TypeScript-first full stack / pluggable Host: **[ADR 0007](adr/0007-typescript-full-stack-host.md)** (Accepted).
 
 Phase 1 may run a **single Shell process** to prove composition; Phase 2 splits Bun host vs Shell over a socket. Executable macOS plan: [macOS spike architecture](macos-spike-architecture.md). Open design debt: [design gaps](design-gaps.md).
 
@@ -194,6 +209,7 @@ Phase 1 may run a **single Shell process** to prove composition; Phase 2 splits 
 | [ADR 0004](adr/0004-cross-platform-abstraction.md) | Cross-platform Shell abstraction (Accepted) |
 | [ADR 0005](adr/0005-zig-interop-layer.md) | Zig Bun↔native interop layer (Accepted) |
 | [ADR 0006](adr/0006-ts-first-capabilities.md) | TypeScript-first capabilities (Accepted) |
+| [ADR 0007](adr/0007-typescript-full-stack-host.md) | TypeScript-first full stack + pluggable Host (Accepted) |
 
 ## Non-goals (v1)
 

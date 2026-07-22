@@ -72,7 +72,7 @@ packages per OS. Binding placement of Zig: [ADR 0005](adr/0005-zig-interop-layer
 |-------|------------|-----------------|
 | **L0 App** | Web UI + least privilege | App authors |
 | **L1 Contracts** | Types + pure helpers | Everyone; SoT for semantics |
-| **L2 Orchestration** | Capabilities, plugins, lifecycle, packaging | Host implementers; **capability plugins default to TS** ([ADR 0006](adr/0006-ts-first-capabilities.md)) |
+| **L2 Orchestration** | Capabilities, plugins, lifecycle, packaging | Host implementers; **capability plugins default to Host TS** ([ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0007](adr/0007-typescript-full-stack-host.md)); desktop reference runtime = Bun; mobile backends pluggable |
 | **L2.5 Zig interop** | Desktop control plane: RPC, dispatch, C ABI to L4 | Desktop host implementers |
 | **L3 Shell role** | Composition and OS surface jobs | Host implementers |
 | **L4 Backend** | Toolkit-specific views and paint | Platform engineers only |
@@ -106,7 +106,7 @@ packages per OS. Binding placement of Zig: [ADR 0005](adr/0005-zig-interop-layer
 | Control plane | RPC envelopes, channel names | UDS path, named pipe, framing bytes; Zig owns desktop framing |
 | Bun↔native glue | Zig interop + C ABI job groups | Platform `@_cdecl` / Win exports implementing those groups |
 | Authoring | One dogfood / app web package; TS capability plugins | Host packaging and entitlements |
-| Capability implementation | TS handlers on Bun (default) | T1.5 Zig perf kernels; T2 UI / foreign ABI |
+| Capability implementation | Host TS facades + shared method names | Zig systems surface / plugin kernels ([ADR 0008](adr/0008-zig-systems-surface.md)); T2 UI / L4 / vendor adapters |
 
 **Semantic materials, not pixel twins.** `apple.liquidGlass` and `win.mica` both
 mean “system material layer”; they are not required to look identical. See
@@ -187,10 +187,15 @@ desktop requires Zig so Windows/Linux do not each reimplement Bun wiring.
 
 | Surface | Desktop | Mobile |
 |---------|---------|--------|
-| App lifecycle / packaging hooks | Bun host (Phase 2+) | Native host |
-| Capability catalog + plugins | Bun host | Native host (subset) |
+| App UI JS | System WebView | System WebView — same `window.vela` |
+| App lifecycle / packaging hooks | Bun host (Phase 2+) | Native shell host |
+| Capability catalog + **Host TS** plugins | Bun = **reference** privileged runtime | Same plugin **source** on pluggable host backend when available; interim native `call` implementations OK ([ADR 0007](adr/0007-typescript-full-stack-host.md)) |
 | Build / bundle web assets | Bun (dev + CI) | Bun on CI/dev machines only |
-| In-process app JS runtime | WebView (+ Bun outside WebView) | WebView only — **no** in-process Bun app runtime |
+| Required Bun **inside** shipped app | Desktop reference yes (Phase 2+) | **No** — not required for App TS → system APIs |
+
+**iOS / Android system access from App TS** is always **indirect**: message pass
+→ capability check → platform APIs. Composition (hit, materials, WebView embed)
+stays on the native Shell role.
 
 Phase 1 may run a **single Shell process** with a thin local preload bridge so
 composition can be proven before process split. See ADR 0002 D2.
@@ -248,6 +253,7 @@ Zig talks to L4; page JS never sees either.
 - [ADR 0004: Cross-platform Shell abstraction](adr/0004-cross-platform-abstraction.md)
 - [ADR 0005: Zig interop layer](adr/0005-zig-interop-layer.md)
 - [ADR 0006: TypeScript-first capabilities](adr/0006-ts-first-capabilities.md)
+- [ADR 0007: TypeScript-first full stack / pluggable Host](adr/0007-typescript-full-stack-host.md)
 - [Capabilities and plugins](capabilities-and-plugins.md)
 - [Architecture](architecture.md)
 - [Technology stack](technology-stack.md)

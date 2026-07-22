@@ -39,16 +39,16 @@ model docs).
 
 ### Vela mapping
 
-Vela has **three** privilege tiers on desktop (mobile folds Bun into the native host):
+Vela has **three** privilege tiers on desktop (mobile uses the same App bridge; privileged Host runtime is pluggable and need not be Bun — [ADR 0007](../adr/0007-typescript-full-stack-host.md)):
 
 ```text
 +-------------------------------------------------------------+
-| WebView content (untrusted)                                 |
+| WebView content / App TS (untrusted)                        |
 | only window.vela - call / layers / hit / events             |
 +-----------------------------+-------------------------------+
                               | preload bridge (message pass)
 +-----------------------------v-------------------------------+
-| Bun host (desktop orchestration)                            |
+| Privileged Host (Host TS; desktop reference: Bun)           |
 | lifecycle, capability enforcement, plugins, packaging       |
 +-----------------------------+-------------------------------+
                               | typed RPC (ADR 0002)
@@ -60,12 +60,15 @@ Vela has **three** privilege tiers on desktop (mobile folds Bun into the native 
 
 | Tauri idea | Vela analogue |
 |------------|----------------|
-| Core process | **Native Shell** + **Bun host** together (split roles) |
+| Core process | **Native Shell** + **privileged Host** together (split roles) |
 | WebView process | System WebView process(es) |
-| IPC hub | Bun host for `call` / capability; Shell for layers / hit / paint |
+| IPC hub | Host for `call` / capability; Shell for layers / hit / paint |
 | No secrets in frontend | Same: business secrets and privileged I/O stay off the page |
+| Mobile without Node on device | Same for **App** path: bridge → host/Shell; Host **TS source** may run on a non-Bun backend |
 
-**Why split Bun and Shell?** Composition (layers, hit router, Liquid Glass / Mica) is hard to own from a pure JS host. Bun owns app/plugin lifecycle and capability catalog; Shell owns drawing and input. Both **must** re-check permissions (defense in depth), same spirit as Tauri Core filtering every IPC.
+**Why split Host and Shell?** Composition (layers, hit router, Liquid Glass / Mica) is hard to own from a pure JS host. Host owns app/plugin lifecycle and capability catalog; Shell owns drawing and input. Both **must** re-check permissions (defense in depth), same spirit as Tauri Core filtering every IPC.
+
+**Tauri mobile note (research only):** Tauri ships a **compiled** privileged core (Rust) plus system WebView; it does **not** require a Node/Bun runtime on device. Vela’s App path is the same class of design (bridge-only). Vela additionally targets **Host TypeScript** authoring with **pluggable** runtimes ([ADR 0007](../adr/0007-typescript-full-stack-host.md)) rather than Rust-only commands.
 
 ## IPC primitives
 

@@ -24,7 +24,7 @@ Phase status line uses the same marks for the phase as a whole.
 1. **Contracts before host ABIs** — stabilize `@vela/api` and pure helpers before locking Swift/Win/mobile shapes.
 2. **One Tier 1 composition proof first** — hit routing + materials on macOS before broad public host APIs.
 3. **Capability default-deny is never “polish”** — deny paths ship with the first real `call` / sensitive insert surface.
-4. **Mobile shares contracts early; host code may lag** — same Layer / Hit / Capability / bridge types; native hosts can trail desktop spike.
+4. **Mobile shares contracts early; host code may lag** — same Layer / Hit / Capability / bridge types; App TS → system APIs via the bridge works without device-side Bun ([ADR 0007](adr/0007-typescript-full-stack-host.md)); Host TS plugin backends on mobile can trail desktop.
 5. **Dogfood forces the hard cases** — playground must exercise multi-layer stack, system material, and regional hole hit-test.
 6. **Close P0 gaps before multi-host divergence** — pure `resolveHit` and RPC envelopes before second host copies ad-hoc logic.
 7. **Honest status** — design docs and scaffolds are not shipped hosts. Mark `[~]` until acceptance scenarios pass.
