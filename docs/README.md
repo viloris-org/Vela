@@ -18,10 +18,11 @@ Architecture and domain guides for **Vela**, a Bun-centered, WebView-first GUI f
 4. [Input and hit testing](input-and-hit-testing.md): two-level input
 5. [Materials](materials.md): system materials
 6. [Capabilities and plugins](capabilities-and-plugins.md): permissions
-7. [API contracts](api-contracts.md): `@vela/api` map
-8. [macOS spike architecture](macos-spike-architecture.md): Phase 1 Shell and hit plan
-9. [Design gaps](design-gaps.md): prioritized contract debt
-10. [Roadmap](roadmap.md): phased delivery
+7. [Cross-platform abstraction](cross-platform-abstraction.md): shared contracts vs multi-backend Shell + Zig
+8. [API contracts](api-contracts.md): `@vela/api` map
+9. [macOS spike architecture](macos-spike-architecture.md): Phase 1 Shell and hit plan
+10. [Design gaps](design-gaps.md): prioritized contract debt
+11. [Roadmap](roadmap.md): phased delivery
 
 ## Product docs
 
@@ -31,7 +32,8 @@ Architecture and domain guides for **Vela**, a Bun-centered, WebView-first GUI f
 | [Composition and layers](composition-and-layers.md) | Conceptual | Layer kinds, stack, insert/update |
 | [Input and hit testing](input-and-hit-testing.md) | Conceptual | `HitPolicy`, `WindowInputMode`, web-shaped |
 | [Materials](materials.md) | Conceptual | `MaterialId`, fallback, backdrop sources |
-| [Capabilities and plugins](capabilities-and-plugins.md) | Conceptual | Permissions, native components, bridge |
+| [Capabilities and plugins](capabilities-and-plugins.md) | Conceptual | TS-first plugins, permissions, native bridges |
+| [Cross-platform abstraction](cross-platform-abstraction.md) | Conceptual | Contracts-first multi-backend Shell |
 | [API contracts](api-contracts.md) | Reference | `@vela/api` module map |
 | [Technology stack](technology-stack.md) | Reference | Host and runtime choices |
 | [Platform support](platform-support.md) | Reference | Tiers and feature matrix |
@@ -44,6 +46,9 @@ Architecture and domain guides for **Vela**, a Bun-centered, WebView-first GUI f
 | [0001](adr/0001-composition-hit-material.md) | Composition, hit testing, materials | Accepted |
 | [0002](adr/0002-ipc-privilege.md) | IPC / typed RPC and privilege boundaries | Proposed |
 | 0003 | Plugin ABI and signing | Planned |
+| [0004](adr/0004-cross-platform-abstraction.md) | Cross-platform Shell abstraction | Accepted |
+| [0005](adr/0005-zig-interop-layer.md) | Zig Bun↔native interop layer | Accepted |
+| [0006](adr/0006-ts-first-capabilities.md) | TypeScript-first capabilities | Accepted |
 
 Full index: [ADR README](adr/README.md).
 
@@ -72,6 +77,9 @@ These pages map external systems. They are **not** product contracts and must no
 | Binding product decisions | `docs/adr/` |
 | Qt-class composition philosophy | `docs/research/qt-composition-notes.md` + ADR 0001 |
 | Shell security / IPC vocabulary | `docs/research/tauri-comparison.md` + capabilities doc + [ADR 0002](adr/0002-ipc-privilege.md) |
+| Cross-platform Shell shape | [cross-platform-abstraction.md](cross-platform-abstraction.md) + [ADR 0004](adr/0004-cross-platform-abstraction.md) |
+| Desktop Bun↔native interop | [ADR 0005](adr/0005-zig-interop-layer.md) (Zig control plane + C ABI) |
+| Capability authoring | [ADR 0006](adr/0006-ts-first-capabilities.md) + [capabilities-and-plugins.md](capabilities-and-plugins.md) |
 | Phase 1 macOS plan | [macos-spike-architecture.md](macos-spike-architecture.md) |
 | Design debt | [design-gaps.md](design-gaps.md) |
 | Documentation style | [writing-guidelines.md](writing-guidelines.md) |

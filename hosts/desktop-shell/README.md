@@ -5,7 +5,7 @@
 > **Status**: scaffold only. No compilable Swift app is checked in yet.  
 > **Machine note**: this monorepo is often edited on Linux; Xcode and macOS are required to build and run the Shell.
 
-Product contracts: `@vela/api`. Executable design: [docs/macos-spike-architecture.md](../../docs/macos-spike-architecture.md).
+Product contracts: `@vela/api`. Executable design: [docs/macos-spike-architecture.md](../../docs/macos-spike-architecture.md). Cross-host Shell role: [docs/cross-platform-abstraction.md](../../docs/cross-platform-abstraction.md) / [ADR 0004](../../docs/adr/0004-cross-platform-abstraction.md). Phase 2 Bun path: Zig interop ([ADR 0005](../../docs/adr/0005-zig-interop-layer.md)); this tree is the macOS **L4** backend.
 
 ## Goals (Phase 1)
 

@@ -23,7 +23,7 @@ True Liquid Glass / Mica / Acrylic must **sample live surfaces** in the same win
 | `gtk.blur` | Linux best-effort blur |
 | `fallback.css` | Explicit CSS fallback (no native material) |
 
-Cross-platform API is **semantic** (“system material”), not pixel-identical.
+Cross-platform API is **semantic** (“system material”), not pixel-identical. Host paint stays platform-private; policy is shared (`resolveMaterial`). See [Cross-platform abstraction](cross-platform-abstraction.md).
 
 ## Material layer fields
 

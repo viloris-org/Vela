@@ -14,6 +14,9 @@ ADRs capture decisions that are expensive to reverse. Format: short Markdown wit
 | [0001](0001-composition-hit-material.md) | Composition tree, hit testing, and material layers | Accepted |
 | [0002](0002-ipc-privilege.md) | IPC / typed RPC and privilege boundaries | Proposed |
 | 0003 | Plugin ABI and signing | Planned - draft vocabulary in [tauri-comparison.md](../research/tauri-comparison.md) |
+| [0004](0004-cross-platform-abstraction.md) | Cross-platform Shell abstraction | Accepted |
+| [0005](0005-zig-interop-layer.md) | Zig as Bun↔native interop layer | Accepted |
+| [0006](0006-ts-first-capabilities.md) | TypeScript-first capabilities with optional native bridges | Accepted |
 
 ## Template
 

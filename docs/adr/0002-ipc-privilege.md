@@ -61,6 +61,11 @@ Bun is **not** embedded as the Shell’s UI event-loop language. Shell owns AppK
 
 Framing: length-prefixed or newline-delimited JSON (host implementation detail); contracts define **payload shapes**, not wire bytes.
 
+Desktop Phase 2+ implementation note: the Shell-side RPC endpoint and dispatch
+live in the **Zig interop layer** ([ADR 0005](0005-zig-interop-layer.md)). Zig
+may use in-process C ABI toward platform L4 backends inside the Shell process;
+that does not reopen Bun↔Shell FFI.
+
 ### D4 - Channels and privilege
 
 | Channel | Direction | Privilege notes |
@@ -151,6 +156,7 @@ An isolation-style interceptor between untrusted page scripts and the privilege 
 
 - Land envelope types + error codes in `@vela/api`.
 - ADR 0003: Plugin ABI and signing.
+- ADR 0005: Zig interop layer (Accepted) — Shell-side RPC endpoint language.
 - Phase 1: [macOS spike architecture](../macos-spike-architecture.md).
 - Accept this ADR after spike confirms preload ↔ Shell channel assumptions.
 
@@ -163,3 +169,4 @@ An isolation-style interceptor between untrusted page scripts and the privilege 
 [IPC](https://v2.tauri.app/concept/inter-process-communication/), [capabilities](https://v2.tauri.app/security/capabilities/), [security](https://v2.tauri.app/security/)
 - Electron contrast: `contextBridge` + IPC (window-level mouse ignore is **not** layer hit)
 - [Design gaps](../design-gaps.md)
+- [ADR 0005](0005-zig-interop-layer.md) - Zig interop placement

@@ -9,7 +9,7 @@ Executable design for **Phase 1**: prove Qt-class composition on macOS with WKWe
 
 Status: design - host code not shipped. Contracts: `@vela/api`. Decisions: [ADR 0001](adr/0001-composition-hit-material.md). Acceptance scenarios: [Testing and acceptance](testing-and-acceptance.md) S1 - S7.
 
-Related research notes: [Input and hit testing](input-and-hit-testing.md), [Materials](materials.md), [Design gaps](design-gaps.md).
+Related research notes: [Input and hit testing](input-and-hit-testing.md), [Materials](materials.md), [Design gaps](design-gaps.md). Cross-host shape: [Cross-platform abstraction](cross-platform-abstraction.md), [ADR 0004](adr/0004-cross-platform-abstraction.md). Desktop Bun glue later: [ADR 0005](adr/0005-zig-interop-layer.md) (Zig; **not required for Phase 1 spike**).
 
 ## Goals / non-goals
 

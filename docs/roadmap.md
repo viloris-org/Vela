@@ -192,15 +192,17 @@ Short demo video or app binary notes in PR / issue: glass toolbar + underlay + h
 
 **Status:** `[ ]` not started.
 
-**Goal:** Bun process owns app lifecycle, plugins catalog, and capability checks; Shell owns window/WebView/layers/hit; communication is typed message-pass RPC with privilege boundaries.
+**Goal:** Bun process owns app lifecycle, plugins catalog, and capability checks; Shell owns window/WebView/layers/hit; communication is typed message-pass RPC with privilege boundaries. Desktop Shell control plane is **Zig** ([ADR 0005](adr/0005-zig-interop-layer.md)).
 
-**Depends on:** Phase 1 channel feedback; [ADR 0002](adr/0002-ipc-privilege.md) path to **Accepted**.  
-**Design debt:** G-P0-2, G-P0-4, G-P1-5, G-P1-6.
+**Depends on:** Phase 1 channel feedback; [ADR 0002](adr/0002-ipc-privilege.md) path to **Accepted**; [ADR 0005](adr/0005-zig-interop-layer.md) Zig interop.  
+**Design debt:** G-P0-2, G-P0-4, G-P1-5, G-P1-6, G-P1-8.
 
 ### Work items
 
 - [ ] Bun process owns app lifecycle (launch, quit, multi-window policy as designed)
 - [ ] Typed RPC / privilege boundary (ADR 0002 decisions implemented)
+- [ ] **Zig interop layer** (`hosts/zig-shell`): RPC endpoint, dispatch, C ABI to L4 ([ADR 0005](adr/0005-zig-interop-layer.md), [G-P1-8](design-gaps.md))
+- [ ] macOS L4 (Swift) implements C ABI surface behind Zig (or dual-path until cutover)
 - [ ] Capability checks on `call` and sensitive layer inserts (**both** Bun and Shell — defense in depth)
 - [ ] App manifest profiles (on-disk schema — [G-P1-6](design-gaps.md))
 - [ ] Packaging hooks for web assets + custom schemes (`app://` / `asset://` intent)
@@ -378,7 +380,7 @@ Use this as the default work queue until Phase 2 exit.
 4. [x] **Phase 0.5:** web-shaped empty default, AppKit coords, `LayerTreeSnapshot` (G-P0-5, G-P1-7, G-P1-5 pure)
 5. [~] **Phase 1:** dogfood + shell scaffold; next: Swift WebView + Liquid Glass + hole hit-test (S1–S7)
 6. [ ] Accept ADR 0002 after Phase 1 channel feedback
-7. [ ] **Phase 2:** Bun host + typed RPC / preload bridge
+7. [ ] **Phase 2:** Bun host + Zig interop + typed RPC / preload bridge
 8. [ ] **Phase 3:** Capability plugins (fs, dialog, clipboard, notify) + allow/deny playground
 9. [ ] **Phase 4:** Windows WebView2 + Mica/Acrylic + hit parity
 10. [ ] **Phase 5–7:** as dependency spine allows; mobile shares contracts without blocking desktop
@@ -392,6 +394,12 @@ Use this as the default work queue until Phase 2 exit.
 | ADR 0002 Proposed | `[x]` [adr/0002-ipc-privilege.md](adr/0002-ipc-privilege.md) |
 | Accept ADR 0002 after Phase 1 | `[ ]` |
 | ADR 0003 Plugin ABI + signing | `[ ]` planned |
+| ADR 0004 Cross-platform Shell abstraction | `[x]` [adr/0004-cross-platform-abstraction.md](adr/0004-cross-platform-abstraction.md) |
+| Cross-platform abstraction conceptual doc | `[x]` [cross-platform-abstraction.md](cross-platform-abstraction.md) |
+| ADR 0005 Zig interop layer | `[x]` [adr/0005-zig-interop-layer.md](adr/0005-zig-interop-layer.md) |
+| ADR 0006 TypeScript-first capabilities | `[x]` [adr/0006-ts-first-capabilities.md](adr/0006-ts-first-capabilities.md) |
+| `hosts/zig-shell` skeleton (RPC + C ABI) | `[ ]` Phase 2 |
+| Bun capability host registration (TS plugins) | `[ ]` Phase 2–3 ([G-P1-9](design-gaps.md)) |
 | Testing and acceptance (host smoke) | `[x]` [testing-and-acceptance.md](testing-and-acceptance.md) |
 | Qt composition notes | `[x]` research |
 | Tauri comparison | `[x]` research |

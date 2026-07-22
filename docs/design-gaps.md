@@ -36,6 +36,9 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 | G-P1-5 | Layer tree snapshot type for Shell↔Bun sync | `LayerTreeSnapshot` | **partial** (`layer/snapshot.ts` + `toOpaqueRegionStore`; live Bun sync Phase 2) |
 | G-P1-6 | App manifest **file** schema (on-disk format) | JSON/TOML schema doc + types | open |
 | G-P1-7 | Coordinate conversion policy (AppKit y-up vs logical y-down) only implied | Explicit in spike + geometry notes | **closed** pure (`coordinates.ts`); Shell must call once at boundary |
+| G-P1-8 | Zig C ABI header + RPC endpoint skeleton | `hosts/zig-shell` + Phase 2 | open |
+| G-P1-9 | Bun capability host registration API (`handle` / plugin load) | `@vela/api` + Bun host Phase 2–3 | open |
+| G-P1-10 | Bun loader + versioning for T1.5 perf native modules (Zig ABI) | Bun host + plugin packaging | open |
 
 ## P2 - Later phases / polish
 
@@ -45,6 +48,9 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 | G-P2-2 | Event catalog beyond free-form `subscribe` | api-contracts planned expansions | open |
 | G-P2-3 | Linux WebView + blur baseline choices | technology-stack + platform-support | open |
 | G-P2-4 | Android Activity / WebView packaging pattern | platform-support | open |
+| G-P2-8 | Cross-platform Shell abstraction unrecorded | [ADR 0004](adr/0004-cross-platform-abstraction.md) + conceptual doc | **closed** (Accepted; multi-backend + contracts-first) |
+| G-P2-9 | Bun↔native middle language unrecorded | [ADR 0005](adr/0005-zig-interop-layer.md) | **closed** (Zig interop; C ABI to L4) |
+| G-P2-10 | Capability authoring language / TS-first model unrecorded | [ADR 0006](adr/0006-ts-first-capabilities.md) | **closed** (TS default; native optional T2) |
 | G-P2-5 | Isolation interceptor (Tauri-class) optional design | ADR 0002 D7 | open (deferred) |
 | G-P2-6 | CI matrix for hosts | testing-and-acceptance | open |
 | G-P2-7 | Product vs repo naming (`New_Vela` vs Vela vs sibling wgpu Vela) | README disambiguation | partial |
@@ -81,4 +87,8 @@ Do not merge codebases or share public package names without an explicit rename 
 
 - [Roadmap](roadmap.md)
 - [API contracts](api-contracts.md) planned expansions
+- [Cross-platform abstraction](cross-platform-abstraction.md)
+- [ADR 0004](adr/0004-cross-platform-abstraction.md)
+- [ADR 0005](adr/0005-zig-interop-layer.md)
+- [ADR 0006](adr/0006-ts-first-capabilities.md)
 - [ADR index](adr/README.md)

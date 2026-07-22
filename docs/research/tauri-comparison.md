@@ -146,7 +146,7 @@ permissions at **insert** time, not only at `call` time.
 
 | Type | Surface | Tauri parallel |
 |------|---------|----------------|
-| Capability plugin | Methods behind `vela.call` + permission ids | Command plugin + permissions |
+| Capability plugin (TS-first, ADR 0006) | Methods behind `vela.call` + permission ids | Command plugin + permissions |
 | Native UI plugin | `defineNativeComponent` + signed module | Mobile native plugin + UI surface |
 | Material backend | Platform paint for `MaterialId` | (no direct peer - composition-specific) |
 
@@ -187,7 +187,7 @@ Vela intent:
 2. **Command-only product surface** - Vela’s differentiator is **layers,
 materials, regional hit**, not a thinner Tauri clone.
 3. **WRY/TAO as mandatory window stack** - Shell may use platform-native
-toolkits; abstraction is contracts, not a single crate.
+toolkits; abstraction is contracts, not a single crate ([ADR 0004](../adr/0004-cross-platform-abstraction.md)).
 4. **Assuming single content WebView per window** - multi-layer composition is
 the core ADR.
 5. **Replacing Qt mapping** - hit/mask philosophy still comes from Qt-class

@@ -78,9 +78,10 @@ Style (mandatory): **[docs/writing-guidelines.md](docs/writing-guidelines.md)**.
 | [Design gaps](docs/design-gaps.md) | Prioritized design debt |
 | [Qt composition notes](docs/research/qt-composition-notes.md) | Qt Widgets/Quick to Vela map (research) |
 | [Tauri comparison](docs/research/tauri-comparison.md) | Tauri 2 process/IPC/security reference (research) |
+| [Cross-platform abstraction](docs/cross-platform-abstraction.md) | Contracts-first multi-backend Shell |
 | [ADR index](docs/adr/README.md) | Decision records |
 
-ADRs: [0001 - Composition, hit, materials](docs/adr/0001-composition-hit-material.md) (Accepted) · [0002 - IPC / privilege](docs/adr/0002-ipc-privilege.md) (Proposed).
+ADRs: [0001 - Composition, hit, materials](docs/adr/0001-composition-hit-material.md) (Accepted) · [0002 - IPC / privilege](docs/adr/0002-ipc-privilege.md) (Proposed) · [0004 - Cross-platform Shell abstraction](docs/adr/0004-cross-platform-abstraction.md) (Accepted) · [0005 - Zig interop](docs/adr/0005-zig-interop-layer.md) (Accepted) · [0006 - TS-first capabilities](docs/adr/0006-ts-first-capabilities.md) (Accepted).
 
 ## Example (contract only)
 

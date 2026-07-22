@@ -66,6 +66,23 @@ Bun is used for tooling/bundles, not as the full mobile in-process runtime. Shar
 | Window region-through to OS | yes | yes | partial | limited | limited |
 | Capability plugins | yes | yes | yes | yes | yes |
 
+## Abstraction expectations
+
+All platforms implement the same **Shell role** against `@vela/api` (window,
+WebView, layers, hit, materials, factories, control plane). Backends may use
+different languages and toolkits; they must not fork the public contract
+surface. See [Cross-platform abstraction](cross-platform-abstraction.md) and
+[ADR 0004](adr/0004-cross-platform-abstraction.md).
+
+Tier differences affect **quality and availability**, not type names:
+
+| Rule | Meaning |
+|------|---------|
+| Same dogfood web package | L0 content is portable; materials/capabilities degrade |
+| Same hit semantics | Host mirrors `resolveHit`; no per-OS app-facing hit API |
+| Loud degrade | Missing material / WebView / permission → diagnostics, not silent blanks |
+| Logical coordinates | Contracts stay logical; Shell converts physical at the boundary |
+
 ## Diagnostics expectations
 
 Hosts should report:
@@ -77,6 +94,8 @@ Hosts should report:
 
 ## Related
 
+- [Cross-platform abstraction](cross-platform-abstraction.md)
+- [ADR 0004](adr/0004-cross-platform-abstraction.md)
 - [Technology stack](technology-stack.md)
 - [Materials](materials.md)
 - [Input and hit testing](input-and-hit-testing.md)
