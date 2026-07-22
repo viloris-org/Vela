@@ -108,10 +108,11 @@ const camera: InsertLayerSpec = {
 ## Roadmap (near term)
 
 1. ~~ADR + `@vela/api` contracts~~
-2. macOS spike: WebView + Liquid Glass toolbar + hole hit-test - [spike architecture](docs/macos-spike-architecture.md)
-3. Bun host + typed RPC / preload bridge - [ADR 0002](docs/adr/0002-ipc-privilege.md)
-4. Capability plugins (fs, dialog, clipboard, notify)
-5. Mobile hosts sharing the same contracts
+2. Contract hardening: pure `resolveHit` + RPC envelopes ([design gaps](docs/design-gaps.md) P0)
+3. macOS spike: WebView + Liquid Glass toolbar + hole hit-test - [spike architecture](docs/macos-spike-architecture.md)
+4. Bun host + typed RPC / preload bridge - [ADR 0002](docs/adr/0002-ipc-privilege.md)
+5. Capability plugins (fs, dialog, clipboard, notify)
+6. Windows parity → mobile hosts (same contracts)
 
 Full plan: [docs/roadmap.md](docs/roadmap.md). Design debt: [docs/design-gaps.md](docs/design-gaps.md).
 
