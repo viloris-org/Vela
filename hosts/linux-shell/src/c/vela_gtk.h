@@ -71,6 +71,22 @@ void vela_gtk_set_material_radius(VelaGtkApp *app, double radius_px);
 /** Opacity 0..1 for material host (visual only; hit policy stays separate). */
 void vela_gtk_set_material_opacity(VelaGtkApp *app, double opacity);
 
+/**
+ * Enable compositor window-behind blur for the material region when a
+ * Wayland blur manager is available (ext-background-effect or KDE blur).
+ * When disabled, any applied region is cleared.
+ */
+void vela_gtk_set_material_compositor_blur(VelaGtkApp *app, int enabled);
+
+/**
+ * Backend actually bound: "ext-background-effect" | "kde-blur" | "none" | …
+ * Valid after the window is realized (after run starts / first paint).
+ */
+const char *vela_gtk_material_blur_backend(VelaGtkApp *app);
+
+/** 1 if a non-empty blur region is currently applied to the surface. */
+int vela_gtk_material_blur_applied(VelaGtkApp *app);
+
 /** Underlay fill as RGB 0..1. */
 void vela_gtk_set_underlay_color(VelaGtkApp *app, double r, double g, double b);
 

@@ -176,17 +176,21 @@ On Linux, buckets **A** (Mica-class cheap atmosphere) and **B** (Acrylic-class l
 
 Staging note: compositor support for `ext-background-effect-v1` is still rolling out; probe may report the global absent → translucent chrome path.
 
-### Apply path (not yet: bind + set region)
+### Apply path (landed in `hosts/linux-shell`)
 
-Current spike **probes** globals and **plans** paint. Applying blur still TODO:
+Spike **probes** globals, **plans** paint, and **applies** compositor blur when the plan is `compositor-window-blur`:
 
-1. Obtain `wl_surface` for the material host / toplevel (`gdk_wayland_surface_get_wl_surface`).
-2. Bind `ext_background_effect_manager_v1` (or KDE blur manager).
-3. `get_background_effect` + `set_blur_region` for the material rect (surface-local).
-4. Ensure translucent toplevel / alpha so the effect is visible.
-5. Emit `material.degraded` only when path is degraded or capability drops at runtime.
+1. Obtain toplevel `wl_surface` via `gdk_wayland_surface_get_wl_surface` (window realize).
+2. Bind `ext_background_effect_manager_v1` (prefer) or `org_kde_kwin_blur_manager` (`vela_blur.c` + generated protocol stubs under `src/c/gen/`).
+3. `get_background_effect` + `set_blur_region` (or KDE `set_region` + `commit`) for the material rect in surface-local coordinates; clear on hide.
+4. Transparent window CSS (`window.vela-shell-window`) so alpha can pass through chrome; material widget still paints translucent fill.
+5. Emit `material.degraded` when path is degraded (e.g. layers-below requested but only window-behind available); log apply backend + region.
 
-Until apply lands, even a positive probe still paints translucent chrome in the widget tree; logs report the planned path honestly.
+Implementation notes:
+
+- Protocol objects and interface names stay L4-private; portable feature remains `material.backdrop.window-behind`.
+- Window-behind blur samples **desktop / other clients**, not sibling underlay layers. Dogfood with `samples: layers-below` still reports `degraded: true` with an explicit reason while using the compositor path as approximation.
+- Snapshot / GSK layers-below remains a follow-up for stronger glass over underlay content.
 
 ## Preload (spike subset)
 
@@ -237,8 +241,9 @@ Stretch (document, do not block): OS region-through, chrome drag, camera slot, Z
 - [x] Material host + degrade diagnostics
 - [x] Portable `ShellSessionFeature` + `planMaterialPaint` in `@vela/api`
 - [x] Wayland global → feature map + GDK registry probe (`vela_session`)
-- [ ] Apply `ext-background-effect` / KDE blur to material region (paint path)
+- [x] Apply `ext-background-effect` / KDE blur to material region (`vela_blur` + paint-path gate)
 - [ ] Manual L1–L6 on Fedora-class Wayland/X11
+- [ ] Snapshot-blur path for layers-below approximation (optional stretch)
 
 ## Platform pitfalls (Linux)
 

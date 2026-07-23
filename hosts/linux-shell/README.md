@@ -2,7 +2,7 @@
 
 **Phase 1L Linux composition spike** — native Shell process (Zig + thin C, GTK4 + WebKitGTK 6.0).
 
-> **Status**: compilable host with hit policy, preload bridge, dogfood bootstrap, degraded `gtk.blur` paint path. Manual L1–L6 still required.  
+> **Status**: compilable host with hit policy, preload bridge, dogfood bootstrap, `gtk.blur` paint plan, and **compositor blur apply** (ext-background-effect / KDE). Manual L1–L6 still required.  
 > **Tier**: 2 (best-effort materials; window→OS region-through partial).  
 > **Design**: [docs/linux-spike-architecture.md](../../docs/linux-spike-architecture.md).  
 > **Contracts**: `@vela/api` pure helpers remain algorithm SoT; this tree **mirrors** `resolveHit`.
@@ -62,6 +62,7 @@ zig build run -- --url http://127.0.0.1:5173
 hosts/linux-shell/
   README.md
   build.zig
+  protocols/                  # Wayland XML (ext-background-effect, KDE blur)
   scripts/preload.js          # source of truth for inject script
   src/
     main.zig                  # CLI + process entry + session log
@@ -74,6 +75,8 @@ hosts/linux-shell/
     bridge.zig                # window.vela JSON handlers
     c/vela_gtk.h|c            # thin GTK4/WebKitGTK surface
     c/vela_session.h|c        # GDK backend + Wayland registry probe
+    c/vela_blur.h|c           # apply blur region (ext / KDE)
+    c/gen/                    # wayland-scanner client stubs
 ```
 
 ## Dogfood layer ids
@@ -99,7 +102,22 @@ Paint path is chosen by `session.planGtkBlurPaint` after a display probe:
 | `snapshot-blur` | Host implements snapshot (feature flag) |
 | `translucent-chrome` | Default when no backdrop path |
 
-Until compositor blur is **applied** to the surface, the widget still paints translucent chrome. Logs report `path=` and `degraded` honestly. Protocol names stay in L4; portable ids are `material.backdrop.window-behind` etc. See [linux-spike-architecture.md](../../docs/linux-spike-architecture.md) and [materials.md](../../docs/materials.md).
+When the plan is `compositor-window-blur`, the host **applies** a blur region on the toplevel `wl_surface` for the material rect (`vela_blur.c`):
+
+1. Prefer `ext_background_effect_manager_v1` → `set_blur_region`
+2. Else `org_kde_kwin_blur_manager` → `set_region` + `commit`
+3. Material host still paints translucent chrome on top (window-behind is not layers-below glass)
+
+Logs report `path=`, `degraded`, `vela blur manager ready backend=…`, and `vela blur apply … region=…`. Protocol names stay in L4; portable ids are `material.backdrop.window-behind` etc. See [linux-spike-architecture.md](../../docs/linux-spike-architecture.md) and [materials.md](../../docs/materials.md).
+
+**Regenerate Wayland stubs** (after protocol XML changes):
+
+```bash
+wayland-scanner client-header protocols/ext-background-effect-v1.xml src/c/gen/ext-background-effect-v1-client-protocol.h
+wayland-scanner private-code protocols/ext-background-effect-v1.xml src/c/gen/ext-background-effect-v1-protocol.c
+wayland-scanner client-header protocols/kde-blur.xml src/c/gen/kde-blur-client-protocol.h
+wayland-scanner private-code protocols/kde-blur.xml src/c/gen/kde-blur-protocol.c
+```
 
 ## Acceptance
 
@@ -123,9 +141,10 @@ Manual scenarios **L1–L6** in [testing-and-acceptance.md](../../docs/testing-a
 - [x] Degraded material host widget
 - [x] Session probe + Wayland feature map (`ext-background-effect` → window-behind)
 - [x] Host path for `example/clock` (bundle serve + material under web + web-shaped hit)
-- [ ] Apply background-effect blur region to material host
+- [x] Apply background-effect / KDE blur region to material host (`vela_blur` + paint-path gate)
 - [ ] Manual L1–L6 with playground on display session
 - [ ] Optional: export C ABI for `hosts/zig-shell`
+- [ ] Optional: snapshot-blur for true layers-below approximation
 
 ## References
 

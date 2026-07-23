@@ -193,7 +193,7 @@ Short demo video or app binary notes in PR / issue: glass toolbar + underlay + h
 
 ## Phase 1L — Linux composition spike (parallel)
 
-**Status:** `[~]` architecture + G-P2-3 closed; host scaffold in progress.
+**Status:** `[~]` architecture + G-P2-3 closed; host hit/materials + compositor blur apply; manual L1–L6 open.
 
 **Goal:** Same Qt-class composition proof as Phase 1 on Linux Tier 2 (GTK4 + WebKitGTK 6.0), without requiring a Mac.
 
@@ -212,7 +212,7 @@ Short demo video or app binary notes in PR / issue: glass toolbar + underlay + h
 - [x] Material host with loud degrade path
 - [x] Portable session features + material paint plan (`ShellSessionProbe`, `planMaterialPaint`)
 - [x] Wayland global → feature map + GDK registry probe (G-P2-13 partial)
-- [ ] Apply compositor blur (`ext-background-effect` / KDE) to material region
+- [x] Apply compositor blur (`ext-background-effect` / KDE) to material region
 - [ ] Manual L1–L6 on a Linux session
 
 ### Explicit non-goals
@@ -427,7 +427,7 @@ Use this as the default work queue until Phase 2 exit.
 3. [x] **Phase 0.5:** RPC envelopes / error codes (G-P0-2) — types in `@vela/api`
 4. [x] **Phase 0.5:** web-shaped empty default, AppKit coords, `LayerTreeSnapshot` (G-P0-5, G-P1-7, G-P1-5 pure)
 5. [~] **Phase 1:** dogfood + shell scaffold + `@vela/shell-core` (portable policy/tests); next: Swift WebView + Liquid Glass + hole hit-test (S1–S7) when Mac available
-5b. [~] **Phase 1L (Linux, this machine):** G-P2-3 closed + linux spike doc; next: `hosts/linux-shell` L1–L6
+5b. [~] **Phase 1L (Linux, this machine):** host + compositor blur apply landed; next: manual L1–L6 + optional snapshot-blur
 6. [ ] Accept ADR 0002 after Phase 1 / 1L channel feedback
 7. [~] **Phase 2 contracts:** `@vela/host-core` + capability/manifest pure helpers; next: Bun process + Zig UDS + typed RPC / preload bridge
 8. [ ] **Phase 3:** Capability plugins (fs, dialog, clipboard, notify) + allow/deny playground
@@ -464,7 +464,7 @@ Use this as the default work queue until Phase 2 exit.
 | `@vela/shell-core` portable Shell policy | `[x]` layer/hit state + bridge adapter + S-class tests; L4 still open |
 | CI matrix once hosts exist | `[ ]` [G-P2-6](design-gaps.md) |
 | Linux WebView + blur baseline choices | `[x]` G-P2-3 closed — GTK4 + WebKitGTK 6.0; [linux-spike-architecture.md](linux-spike-architecture.md) |
-| `hosts/linux-shell` composition spike | `[~]` scaffold / in progress; L1–L6 open |
+| `hosts/linux-shell` composition spike | `[~]` hit + materials + compositor blur apply; manual L1–L6 open |
 | Product vs repo naming clarity | `[~]` README partial [G-P2-7](design-gaps.md) |
 
 Update [docs/README.md](README.md) when this page’s role or reading order changes.

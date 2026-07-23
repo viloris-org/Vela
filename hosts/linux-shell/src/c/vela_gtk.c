@@ -1,4 +1,5 @@
 #include "vela_gtk.h"
+#include "vela_blur.h"
 
 #include <gtk/gtk.h>
 #include <webkit/webkit.h>
@@ -26,6 +27,11 @@ struct VelaGtkApp {
     double material_radius;
     int material_w; /* last app-reported width (0 = unset) */
     int material_h;
+    int material_x;
+    int material_y;
+    int material_visible;
+    int compositor_blur_enabled;
+    VelaBlurState *blur;
     double underlay_r;
     double underlay_g;
     double underlay_b;
@@ -36,9 +42,55 @@ struct VelaGtkApp {
     int height;
 };
 
+static void sync_material_blur(VelaGtkApp *app)
+{
+    if (app == NULL || app->blur == NULL) {
+        return;
+    }
+    if (!app->compositor_blur_enabled || !app->material_visible ||
+        app->material_w < 1 || app->material_h < 1) {
+        (void)vela_blur_set_region(app->blur, 0, 0, 0, 0, 0);
+        return;
+    }
+    if (vela_blur_set_region(
+            app->blur,
+            app->material_x,
+            app->material_y,
+            app->material_w,
+            app->material_h,
+            1)) {
+        g_message(
+            "vela blur apply backend=%s region=%d,%d %dx%d",
+            vela_blur_backend_name(app->blur),
+            app->material_x,
+            app->material_y,
+            app->material_w,
+            app->material_h);
+    }
+}
+
+static void on_window_realize(GtkWidget *widget, gpointer user_data)
+{
+    VelaGtkApp *app = user_data;
+    (void)widget;
+    if (app->blur == NULL || app->window == NULL) {
+        return;
+    }
+    if (vela_blur_attach(app->blur, app->window)) {
+        g_message(
+            "vela blur manager ready backend=%s",
+            vela_blur_backend_name(app->blur));
+    } else {
+        g_message(
+            "vela blur manager unavailable backend=%s",
+            vela_blur_backend_name(app->blur));
+    }
+    sync_material_blur(app);
+}
+
 static void apply_material_css(VelaGtkApp *app)
 {
-    char css[640];
+    char css[768];
     double r = app->material_radius;
     int w = app->material_w > 0 ? app->material_w : 0;
     int h = app->material_h > 0 ? app->material_h : 0;
@@ -80,6 +132,10 @@ static void apply_material_css(VelaGtkApp *app)
             "  border-radius: 6px;"
             "  font-family: monospace;"
             "  font-size: 11px;"
+            "}"
+            /* Transparent shell chrome so compositor window-behind can show. */
+            "window.vela-shell-window {"
+            "  background-color: transparent;"
             "}",
             r,
             w,
@@ -114,6 +170,9 @@ static void apply_material_css(VelaGtkApp *app)
             "  border-radius: 6px;"
             "  font-family: monospace;"
             "  font-size: 11px;"
+            "}"
+            "window.vela-shell-window {"
+            "  background-color: transparent;"
             "}",
             r);
     }
@@ -280,6 +339,8 @@ static void on_app_activate(GtkApplication *application, gpointer user_data)
     app->window = gtk_application_window_new(app->application);
     gtk_window_set_title(GTK_WINDOW(app->window), app->title ? app->title : "Vela Linux Shell");
     gtk_window_set_default_size(GTK_WINDOW(app->window), app->width, app->height);
+    gtk_widget_add_css_class(app->window, "vela-shell-window");
+    g_signal_connect(app->window, "realize", G_CALLBACK(on_window_realize), app);
 
     app->overlay = gtk_overlay_new();
     gtk_window_set_child(GTK_WINDOW(app->window), app->overlay);
@@ -410,6 +471,11 @@ VelaGtkApp *vela_gtk_app_create(const VelaGtkConfig *config)
     app->material_radius = 28.0;
     app->material_w = 0;
     app->material_h = 0;
+    app->material_x = 0;
+    app->material_y = 0;
+    app->material_visible = 0;
+    app->compositor_blur_enabled = 0;
+    app->blur = vela_blur_create();
 
     app->application = gtk_application_new("dev.vela.linux-shell", G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app->application, "activate", G_CALLBACK(on_app_activate), app);
@@ -443,6 +509,10 @@ void vela_gtk_app_destroy(VelaGtkApp *app)
     if (app->material_css != NULL) {
         g_object_unref(app->material_css);
         app->material_css = NULL;
+    }
+    if (app->blur != NULL) {
+        vela_blur_destroy(app->blur);
+        app->blur = NULL;
     }
     g_free(app);
 }
@@ -483,11 +553,14 @@ void vela_gtk_set_material_bounds(VelaGtkApp *app, const VelaGtkRect *bounds)
     gtk_widget_set_margin_end(app->material, 0);
     gtk_widget_set_margin_bottom(app->material, 0);
     /* Pin glass plate to app-reported card bounds (avoid double/offset plate). */
+    app->material_x = x > 0 ? x : 0;
+    app->material_y = y > 0 ? y : 0;
     app->material_w = w;
     app->material_h = h;
     gtk_widget_set_size_request(app->material, w, h);
     apply_material_css(app);
     gtk_widget_queue_allocate(app->material);
+    sync_material_blur(app);
 }
 
 void vela_gtk_set_material_visible(VelaGtkApp *app, int visible)
@@ -495,7 +568,9 @@ void vela_gtk_set_material_visible(VelaGtkApp *app, int visible)
     if (app == NULL || app->material == NULL) {
         return;
     }
+    app->material_visible = visible ? 1 : 0;
     gtk_widget_set_visible(app->material, visible ? TRUE : FALSE);
+    sync_material_blur(app);
 }
 
 void vela_gtk_set_material_above_web(VelaGtkApp *app, int above_web)
@@ -536,6 +611,31 @@ void vela_gtk_set_material_opacity(VelaGtkApp *app, double opacity)
         opacity = 1.0;
     }
     gtk_widget_set_opacity(app->material, opacity);
+}
+
+void vela_gtk_set_material_compositor_blur(VelaGtkApp *app, int enabled)
+{
+    if (app == NULL) {
+        return;
+    }
+    app->compositor_blur_enabled = enabled ? 1 : 0;
+    sync_material_blur(app);
+}
+
+const char *vela_gtk_material_blur_backend(VelaGtkApp *app)
+{
+    if (app == NULL || app->blur == NULL) {
+        return "none";
+    }
+    return vela_blur_backend_name(app->blur);
+}
+
+int vela_gtk_material_blur_applied(VelaGtkApp *app)
+{
+    if (app == NULL || app->blur == NULL) {
+        return 0;
+    }
+    return vela_blur_is_applied(app->blur);
 }
 
 void vela_gtk_set_underlay_color(VelaGtkApp *app, double r, double g, double b)

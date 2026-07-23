@@ -264,6 +264,8 @@ pub fn main(init: std.process.Init) !void {
         },
     );
 
+    const want_compositor_blur = paint.path == .compositor_window_blur;
+
     const url_z = try gpa.dupeZ(u8, url);
     defer gpa.free(url_z);
     const preload_z = try gpa.dupeZ(u8, preload);
@@ -292,6 +294,13 @@ pub fn main(init: std.process.Init) !void {
 
     // Material host starts hidden; clock/playground layers.insert drives show + bounds.
     c.vela_gtk_set_material_visible(app, 0);
+    // Enable Wayland blur apply when paint plan selected compositor-window-blur.
+    // Attach + set_region happen on realize / material bounds (L4).
+    c.vela_gtk_set_material_compositor_blur(app, if (want_compositor_blur) 1 else 0);
+    std.log.info(
+        "compositor blur apply enabled={} (path={s})",
+        .{ want_compositor_blur, paint.path.name() },
+    );
     // Underlay gradient stand-in (clock hides CSS underlay-sim when host is present).
     c.vela_gtk_set_underlay_color(app, 0.12, 0.11, 0.29);
     c.vela_gtk_set_debug_hit_label(app, "lastHit: (waiting for click)");
