@@ -36,6 +36,7 @@ New_Vela/
   packages/host-core  @vela/host-core - portable Host call router + capability enforce
   hosts/zig-shell     Desktop Zig interop (L2.5): C ABI + mock L4 + RPC codec skeleton
   hosts/desktop-shell Phase 1 macOS Shell scaffold (Swift on macOS; README only until Xcode)
+  hosts/linux-shell  Linux composition spike (GTK4 + WebKitGTK 6.0; Tier 2)
   apps/playground     Dogfood web content (mock window.vela in browser)
   example/clock       Minimal clock App TS sample (layers + hit + mock bridge)
   plugins/            (planned) camera, materials, …
@@ -55,7 +56,12 @@ bun run example:clock      # minimal clock sample (http://localhost:5174)
 
 # Zig interop skeleton (requires Zig 0.16.x)
 cd hosts/zig-shell && zig build && zig build test
+
+# Linux composition spike (requires GTK4 + webkitgtk-6.0 devel)
+cd hosts/linux-shell && zig build && zig build run -- --url http://127.0.0.1:5173
 ```
+
+Serve dogfood first in another terminal: `bun run playground:serve`.
 
 ## Core ideas
 
@@ -86,6 +92,7 @@ Style (mandatory): **[docs/writing-guidelines.md](docs/writing-guidelines.md)**.
 | [Roadmap](docs/roadmap.md) | Phased delivery |
 | [Testing and acceptance](docs/testing-and-acceptance.md) | Host smoke gates |
 | [macOS spike architecture](docs/macos-spike-architecture.md) | Phase 1 Shell/hit plan |
+| [Linux spike architecture](docs/linux-spike-architecture.md) | Parallel Linux Tier 2 spike |
 | [Design gaps](docs/design-gaps.md) | Prioritized design debt |
 | [Qt composition notes](docs/research/qt-composition-notes.md) | Qt Widgets/Quick to Vela map (research) |
 | [Tauri comparison](docs/research/tauri-comparison.md) | Tauri 2 process/IPC/security reference (research) |
@@ -123,6 +130,7 @@ const camera: InsertLayerSpec = {
 1. ~~ADR + `@vela/api` contracts~~
 2. ~~Contract hardening: `resolveHit`, RPC types, coords, web-shaped defaults, snapshot~~
 3. macOS spike (in progress): `@vela/shell-core` policy/tests + shell scaffold; next real Swift Shell + Liquid Glass + S1–S7 - [spike architecture](docs/macos-spike-architecture.md)
+3b. Linux composition spike (this machine): GTK4 + WebKitGTK 6.0 under `hosts/linux-shell`; L1–L6 - [linux spike](docs/linux-spike-architecture.md)
 4. Host capability contracts (in progress): `@vela/host-core` + `checkCapability` / `parseAppManifest`; next Bun process + typed RPC / preload bridge - [ADR 0002](docs/adr/0002-ipc-privilege.md)
 5. Capability plugins (fs, dialog, clipboard, notify)
 6. Windows parity → mobile hosts (same contracts)

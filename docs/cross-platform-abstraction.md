@@ -146,7 +146,7 @@ Every backend must implement these jobs. Names are conceptual; payloads use
 |----------|------|-------------------------|---------|-----------|
 | macOS | 1 | Swift (AppKit + SwiftUI hosting) | WKWebView | Liquid Glass / `apple.material` |
 | Windows 11 | 1 | Native at Phase 4 start (C++/WinRT or Rust+WinRT) | WebView2 | Mica / Acrylic / smoke |
-| Linux | 2 | Native TBD with WebView stack | WebKitGTK or documented peer | `gtk.blur` best-effort |
+| Linux | 2 | Zig + GTK4 / WebKitGTK 6.0 (`hosts/linux-shell`) | WebKitGTK 6.0 | `gtk.blur` best-effort |
 | iOS | Mobile | Swift | WKWebView | System material + degrade |
 | Android | Mobile | Kotlin | System WebView | `fallback.css` first |
 

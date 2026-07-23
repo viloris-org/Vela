@@ -60,6 +60,18 @@ Cross-platform API is **semantic** (“system material”), not pixel-identical.
 
 Result shape: `ResolvedMaterial` with `requested`, `effective`, `platform`, `degraded`, optional `reason`.
 
+### Linux paint honesty (`gtk.blur`)
+
+Pure `resolveMaterial(..., "linux")` prefers `gtk.blur` with `degraded: false` as a **policy preference**, not a compositor guarantee. Shell paint must still:
+
+| Path | Effective | Diagnostics |
+|------|-----------|-------------|
+| Snapshot / GSK blur of layers-below | `gtk.blur` | Prefer reason `snapshot-blur` when not live glass |
+| Compositor window-behind blur only | `gtk.blur` | Reason `compositor-window-blur` when that is all that works |
+| No sampling path | translucent solid or `fallback.css` | `degraded: true`, reason `no-backdrop-blur` / `compositor-unavailable` |
+
+CSS `backdrop-filter` is legitimate only for **`fallback.css`**, not for silently claiming native `gtk.blur`. Spike design: [linux-spike-architecture.md](linux-spike-architecture.md).
+
 ## HIG guidance (Apple)
 
 Prefer materials on the **functional** layer (chrome, toolbars, transient controls), not dense document content. Prefer GlassEffectContainer-style multi-control fusion when multiple controls sit on one glass surface (`content` / `mountChild`).

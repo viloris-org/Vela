@@ -58,6 +58,7 @@ Parallel work that may start early without blocking Phase 1:
 - Design-gap types in `@vela/api` (G-P0-1, G-P0-2, selected P1)
 - Playground **web content** (HTML/TS only) that assumes `window.vela`
 - Docs / research updates that do not invent APIs
+- **Linux composition spike** (Tier 2): GTK4 + WebKitGTK 6.0 under `hosts/linux-shell` — [linux-spike-architecture.md](linux-spike-architecture.md); does not replace macOS Phase 1 exit
 
 ## Phase map
 
@@ -66,6 +67,7 @@ Parallel work that may start early without blocking Phase 1:
 | 0 | Project skeleton | `[x]` | Monorepo + `@vela/api` + ADR 0001 + core docs |
 | 0.5 | Contract hardening | `[~]` | Pure hit + RPC envelopes + coords + snapshot; host wire still open |
 | 1 | macOS composition spike | `[ ]` | S1–S7 pass; demo: glass toolbar + underlay + holes |
+| 1L | Linux composition spike (parallel) | `[~]` | L1–L6 on GTK4 + WebKitGTK 6.0; Tier 2 materials |
 | 2 | Bun host + typed RPC | `[~]` | Host contracts + `@vela/host-core` router landed; Bun process / UDS still open |
 | 3 | Capability plugins (desktop) | `[ ]` | fs / dialog / clipboard / notify + allow/deny playground |
 | 4 | Windows materials + parity | `[ ]` | WebView2 path; W1–W3; behavioral hit parity with macOS |
@@ -179,13 +181,47 @@ Parallel work that may start early without blocking Phase 1:
 - Bun host process split (single Shell process is the default spike shape)
 - Full capability engine / plugin ABI
 - Scroll-linked native slots, per-pixel alpha hit, CSS-transform hitching
-- Windows / Linux / mobile hosts
+- Windows / mobile hosts (Linux may proceed as **parallel Tier 2 spike** — not a Phase 1 exit substitute)
 - Pixel-identical glass across OS versions
 - Production `app://` packaging (local / temp scheme OK)
 
 ### Exit artifact
 
 Short demo video or app binary notes in PR / issue: glass toolbar + underlay + hole hit-test + single `HitTarget` proof.
+
+---
+
+## Phase 1L — Linux composition spike (parallel)
+
+**Status:** `[~]` architecture + G-P2-3 closed; host scaffold in progress.
+
+**Goal:** Same Qt-class composition proof as Phase 1 on Linux Tier 2 (GTK4 + WebKitGTK 6.0), without requiring a Mac.
+
+**Design:** [linux-spike-architecture.md](linux-spike-architecture.md).  
+**Acceptance:** [Testing and acceptance](testing-and-acceptance.md) **L1–L6**.  
+**Does not** replace Phase 1 macOS exit criteria.
+
+### Work items
+
+- [x] Lock Linux WebView + blur baseline (G-P2-3): GTK4 + WebKitGTK 6.0, `gtk.blur` best-effort
+- [x] Spike architecture doc
+- [x] `hosts/linux-shell` process (Zig + thin C GTK wrappers; build + `--self-test`)
+- [~] Window + WebView load of `apps/playground` (binary loads URL; manual L1 on display)
+- [x] Preload `window.vela` subset + dogfood layer ids (embed + bridge)
+- [x] Hit router mirror of `resolveHit`; lastHit label / log (`--self-test` fixtures)
+- [x] Material host with loud degrade path
+- [ ] Manual L1–L6 on a Linux session
+
+### Explicit non-goals
+
+- Bun / Zig UDS (Phase 2)
+- Pixel glass parity with macOS
+- Dual-maintain GTK3 / WebKit2GTK 4.1
+- Claiming Phase 1 complete without macOS S1–S7
+
+### Exit artifact
+
+Manual L1–L6 notes (or short demo): underlay + WebView + material toolbar + hole hit-test + single `HitTarget` + degrade reason for `gtk.blur` when applicable.
 
 ---
 
@@ -381,8 +417,9 @@ Use this as the default work queue until Phase 2 exit.
 2. [x] **Phase 0.5:** pure `resolveHit` + tests (G-P0-1)
 3. [x] **Phase 0.5:** RPC envelopes / error codes (G-P0-2) — types in `@vela/api`
 4. [x] **Phase 0.5:** web-shaped empty default, AppKit coords, `LayerTreeSnapshot` (G-P0-5, G-P1-7, G-P1-5 pure)
-5. [~] **Phase 1:** dogfood + shell scaffold + `@vela/shell-core` (portable policy/tests); next: Swift WebView + Liquid Glass + hole hit-test (S1–S7)
-6. [ ] Accept ADR 0002 after Phase 1 channel feedback
+5. [~] **Phase 1:** dogfood + shell scaffold + `@vela/shell-core` (portable policy/tests); next: Swift WebView + Liquid Glass + hole hit-test (S1–S7) when Mac available
+5b. [~] **Phase 1L (Linux, this machine):** G-P2-3 closed + linux spike doc; next: `hosts/linux-shell` L1–L6
+6. [ ] Accept ADR 0002 after Phase 1 / 1L channel feedback
 7. [~] **Phase 2 contracts:** `@vela/host-core` + capability/manifest pure helpers; next: Bun process + Zig UDS + typed RPC / preload bridge
 8. [ ] **Phase 3:** Capability plugins (fs, dialog, clipboard, notify) + allow/deny playground
 9. [ ] **Phase 4:** Windows WebView2 + Mica/Acrylic + hit parity
@@ -417,7 +454,8 @@ Use this as the default work queue until Phase 2 exit.
 | Playground dogfood + desktop-shell scaffold | `[~]` web mock + README; no Swift binary |
 | `@vela/shell-core` portable Shell policy | `[x]` layer/hit state + bridge adapter + S-class tests; L4 still open |
 | CI matrix once hosts exist | `[ ]` [G-P2-6](design-gaps.md) |
-| Linux WebView + blur baseline choices | `[ ]` [G-P2-3](design-gaps.md) |
+| Linux WebView + blur baseline choices | `[x]` G-P2-3 closed — GTK4 + WebKitGTK 6.0; [linux-spike-architecture.md](linux-spike-architecture.md) |
+| `hosts/linux-shell` composition spike | `[~]` scaffold / in progress; L1–L6 open |
 | Product vs repo naming clarity | `[~]` README partial [G-P2-7](design-gaps.md) |
 
 Update [docs/README.md](README.md) when this page’s role or reading order changes.
@@ -455,6 +493,7 @@ Competitor-driven **invent list** (why Vela exists — do not regress): regional
 | [Design gaps](design-gaps.md) | Prioritized contract debt (P0–P2) |
 | [Testing and acceptance](testing-and-acceptance.md) | S1–S7, W1–W3, capability gates |
 | [macOS spike architecture](macos-spike-architecture.md) | Phase 1 executable design |
+| [Linux spike architecture](linux-spike-architecture.md) | Parallel Tier 2 Linux composition spike |
 | [ADR 0001](adr/0001-composition-hit-material.md) | Accepted composition decisions |
 | [ADR 0002](adr/0002-ipc-privilege.md) | IPC / privilege (Proposed → Accept after Phase 1) |
 | [API contracts](api-contracts.md) | `@vela/api` module map |

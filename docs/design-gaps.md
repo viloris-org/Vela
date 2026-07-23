@@ -46,7 +46,7 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 |----|-----|--------|--------|
 | G-P2-1 | ADR 0003 Plugin ABI + signing | Planned | open |
 | G-P2-2 | Event catalog beyond free-form `subscribe` | api-contracts planned expansions | open |
-| G-P2-3 | Linux WebView + blur baseline choices | technology-stack + platform-support | open |
+| G-P2-3 | Linux WebView + blur baseline choices | technology-stack + platform-support + [linux-spike-architecture.md](linux-spike-architecture.md) | **closed** (GTK4 + WebKitGTK 6.0; `gtk.blur` best-effort + mandatory degrade diagnostics; host under `hosts/linux-shell`) |
 | G-P2-4 | Android Activity / WebView packaging pattern | platform-support | open |
 | G-P2-8 | Cross-platform Shell abstraction unrecorded | [ADR 0004](adr/0004-cross-platform-abstraction.md) + conceptual doc | **closed** (Accepted; multi-backend + contracts-first) |
 | G-P2-9 | Bun↔native middle language unrecorded | [ADR 0005](adr/0005-zig-interop-layer.md) | **closed** (Zig interop; C ABI to L4) |

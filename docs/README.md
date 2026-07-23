@@ -20,8 +20,9 @@ Architecture and domain guides for **Vela**, a TypeScript-first, WebView-first G
 7. [Cross-platform abstraction](cross-platform-abstraction.md): shared contracts vs multi-backend Shell + Zig
 8. [API contracts](api-contracts.md): `@vela/api` map
 9. [macOS spike architecture](macos-spike-architecture.md): Phase 1 Shell and hit plan
-10. [Design gaps](design-gaps.md): prioritized contract debt
-11. [Roadmap](roadmap.md): phased delivery
+10. [Linux spike architecture](linux-spike-architecture.md): parallel Tier 2 Linux composition spike
+11. [Design gaps](design-gaps.md): prioritized contract debt
+12. [Roadmap](roadmap.md): phased delivery
 
 ## Product docs
 
@@ -37,6 +38,7 @@ Architecture and domain guides for **Vela**, a TypeScript-first, WebView-first G
 | [Technology stack](technology-stack.md) | Reference | Host and runtime choices |
 | [Platform support](platform-support.md) | Reference | Tiers and feature matrix |
 | [macOS spike architecture](macos-spike-architecture.md) | Conceptual | Phase 1 view tree, hit router, dogfood exit |
+| [Linux spike architecture](linux-spike-architecture.md) | Conceptual | Tier 2 GTK4 + WebKitGTK 6.0 composition spike |
 
 ## Decisions (ADRs)
 

@@ -76,6 +76,21 @@ A host passes **Qt-class composition** when all of the following hold. These mir
 | W2 | Same S2 - S6 as macOS | Behavioral parity, not pixel parity |
 | W3 | Missing WebView2 runtime | Loud diagnostic; no silent blank window |
 
+### Scenario checklist (Linux composition spike, Tier 2)
+
+Design: [linux-spike-architecture.md](linux-spike-architecture.md). Behavioral parity with S* class scenarios; materials may degrade.
+
+| # | Scenario | Pass criteria |
+|---|----------|---------------|
+| L1 | Window + WebView loads playground | Visible dogfood content; no silent blank window |
+| L2 | Material toolbar host | Toolbar widget present; hits toolbar; real best-effort blur **or** explicit degrade reason |
+| L3 | Web-shaped hole → underlay | Hole clicks underlay (not OS desktop); panel/HUD/toolbar remain hittable |
+| L4 | Single delivery | Debug last `HitTarget`: one per pointer down |
+| L5 | Opacity ≠ hit | Changing toolbar opacity does not open a hit hole |
+| L6 | Stale generation | Lower `generation` web-shape updates dropped |
+
+Stretch (not required for first spike exit): S3-class window region-through, chrome drag, native camera slot.
+
 ## Capability acceptance
 
 From [Capabilities and plugins](capabilities-and-plugins.md):
@@ -117,7 +132,7 @@ Exit for Phase 1: short demo video covering S1 - S6.
 | Contracts | Live (`.github/workflows/ci.yml`) | `bun install --frozen-lockfile` + `bun test` + `bun run typecheck` |
 | macOS smoke | Planned (hosts) | Headless or UI harness for S1 - S2 |
 | Windows smoke | Planned (hosts) | WebView2 present; W1 - W2 |
-| Linux smoke | Planned (hosts) | Best-effort; materials may degrade |
+| Linux smoke | Planned (`hosts/linux-shell`) | Manual L1–L6; materials may degrade; GTK4 + WebKitGTK 6.0 |
 
 Do not block CI on pixel-identical materials.
 

@@ -28,7 +28,7 @@ Tier 1 means (once hosts exist):
 
 | Platform | Intent |
 |----------|--------|
-| Linux desktop | WebView + best-effort blur; shaped/click-through may be partial |
+| Linux desktop | **GTK4 + WebKitGTK 6.0**; `gtk.blur` best-effort; shaped/window click-through may be partial ([linux-spike-architecture.md](linux-spike-architecture.md)) |
 | Older Windows / macOS | Degrade materials; clear diagnostics |
 
 Tier 2 must fail loudly when required capabilities are missing.
@@ -69,11 +69,12 @@ Shared surface: `@vela/api` Layer / Capability / bridge protocol. Host plugin **
 |---------|-------|---------|-------|-----|---------|
 | Multi WebView layers | yes | yes | yes | yes | yes |
 | Native component layers | yes | yes | partial | yes | yes |
-| System materials | Liquid Glass / material | Mica/Acrylic | gtk.blur | material | fallback/css first |
+| System materials | Liquid Glass / material | Mica/Acrylic | gtk.blur (best-effort / degrade) | material | fallback/css first |
 | Regional layer hit-through | yes | yes | yes | yes | yes |
 | Window region-through to OS | yes | yes | partial | limited | limited |
 | Capability plugins (App via `vela.call`) | yes | yes | yes | yes | yes |
 | Host TS plugin runtime (reference) | Bun | Bun | planned | pluggable / interim native | pluggable / interim native |
+| Composition host tree (intent) | `hosts/desktop-shell` | Phase 4 | `hosts/linux-shell` | planned | planned |
 
 ## Abstraction expectations
 

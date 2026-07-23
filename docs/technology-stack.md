@@ -86,7 +86,7 @@ Preferred stack for New_Vela and the main alternatives. Goal: reinforce WebView-
 |----------|---------|--------|
 | macOS | WKWebView | Hit routing vs NSView siblings is critical |
 | Windows | WebView2 | Composition + materials (Mica/Acrylic) |
-| Linux | WebKitGTK or similar | Materials best-effort; Tier 2 |
+| Linux | **WebKitGTK 6.0** (GTK4) | Tier 2; baseline locked ([linux-spike-architecture.md](linux-spike-architecture.md)); older WebKit2GTK 4.1 not dual-maintained in v1 |
 | iOS | WKWebView | Same contracts; native host orchestration |
 | Android | System WebView | Same contracts; native host orchestration |
 
@@ -96,7 +96,7 @@ Preferred stack for New_Vela and the main alternatives. Goal: reinforce WebView-
 |----------|-------------------|
 | Apple | SwiftUI `glassEffect` / AppKit-UIKit hosting / Liquid Glass APIs |
 | Windows | System composition (Mica, Acrylic) |
-| Linux | GTK blur / compositor-dependent |
+| Linux | `gtk.blur` best-effort (snapshot / compositor window-behind) or loud degrade → translucent / `fallback.css` |
 | Fallback | `fallback.css` (`backdrop-filter` etc.) |
 
 ## Alternatives considered
@@ -159,7 +159,7 @@ Host TS (desktop ref: Bun)  --UDS/pipe RPC-->  Zig  --C ABI-->  L4 (Swift / Win 
 |----------|---------|------------------------------|--------|
 | macOS | Zig (Phase 2+; optional in Phase 1) | Swift | Phase 1 may be Swift-only spike |
 | Windows | Zig | Native at Phase 4 start | C++/WinRT or Rust+WinRT — pick when host starts |
-| Linux | Zig | Native TBD | WebView + blur baseline still open |
+| Linux | Zig | **GTK4 + WebKitGTK 6.0** (`hosts/linux-shell`) | Spike may be single-process; Phase 2 wires Zig C ABI |
 | iOS | Not required | Swift | Native host orchestration |
 | Android | Not required | Kotlin | Packaging pattern still open |
 
@@ -179,6 +179,6 @@ proven. It must not become the public composition API or the sole window stack.
 - [ ] Windows L4 language (C++/WinRT vs Rust+WinRT) at Phase 4 start
 - [~] Zig C ABI header surface (`vela_shell_*` groups) checked in with `hosts/zig-shell` (header + mock vtable + codec; UDS/real L4 open)
 - [ ] Isolation-style interceptor between page and privilege (optional Phase 2+; ADR 0002 D7)
-- [ ] Linux WebView + blur stack baseline
+- [x] Linux WebView + blur stack baseline: **GTK4 + WebKitGTK 6.0**, `gtk.blur` best-effort - [linux-spike-architecture.md](linux-spike-architecture.md)
 - [ ] Android host packaging (Activity / WebView integration pattern)
 - [ ] Packaging format and custom scheme asset pipeline (Phase 2)
