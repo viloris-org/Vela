@@ -117,7 +117,76 @@ Linux has no portable API for “live-sample sibling layers below this rect” c
 
 Never silent-success a flat semi-transparent box as full system material without a degrade reason.
 
-Pure `resolveMaterial("gtk.blur", "linux")` returns preferred id with `degraded: false` meaning **policy preference**, not a paint guarantee. Shell paint sets real diagnostics.
+Pure `resolveMaterial("gtk.blur", "linux")` returns preferred id with `degraded: false` meaning **policy preference**, not a paint guarantee. Shell paint sets real diagnostics via `planMaterialPaint` + session probe (see below).
+
+## Wayland session capabilities (abstraction)
+
+Wayland protocol objects are **L4-private**. They are mapped into portable
+`ShellSessionFeature` ids in `@vela/api` (`session/features.ts`). Page JS never
+sees interface names like `ext_background_effect_manager_v1`.
+
+### Probe flow
+
+```text
+GdkDisplay
+  ├─ backend: wayland | x11 | unknown
+  └─ (Wayland) gdk_wayland_display_query_registry(global)
+         │
+         ▼
+  session.zig featuresForWaylandGlobal(name)
+         │
+         ▼
+  ShellSessionProbe { displayBackend, features[] }
+         │
+         ▼
+  planMaterialPaint / planGtkBlurPaint → MaterialPaintPath + degrade reason
+```
+
+Host surface: `hosts/linux-shell/src/c/vela_session.c` + `src/session.zig`.
+
+### Wayland global → portable feature map (initial)
+
+| Wayland global (L4) | Portable feature | Shell job |
+|---------------------|------------------|-----------|
+| `ext_background_effect_manager_v1` | `material.backdrop.window-behind` | Materials paint path |
+| `org_kde_kwin_blur_manager` | `material.backdrop.window-behind` | Materials (Plasma legacy) |
+| `wl_compositor` (input region) | `window.input-region` | `WindowInputMode` region-through |
+| `wp_fractional_scale_manager_v1` | `window.fractional-scale` | DPI / scaleFactor |
+| `wp_alpha_modifier_v1` | `window.alpha` | Translucent toplevel |
+| `zxdg_decoration_manager_v1` | `window.server-decoration` | Window chrome |
+| `zwp_idle_inhibit_manager_v1` | `session.idle-inhibit` | Keep-awake capability later |
+| `xdg_activation_v1` | `session.activation` | Focus / launch activation |
+
+Add rows here when binding new protocols. Prefer **semantic** feature ids over
+exporting protocol strings into `@vela/api`.
+
+### Critical semantic split: window-behind vs layers-below
+
+Full cross-platform mapping (buckets A–E, Mica/Acrylic/Liquid Glass, resolve + paint plan): **[materials.md](materials.md)**.
+
+| Request | Meaning | Typical Linux path |
+|---------|---------|-------------------|
+| `samples: { type: "layers-below" }` | Blur **sibling layers** under the material rect (Liquid Glass class, bucket **C**) | Snapshot / GSK; **not** what `ext-background-effect` does alone |
+| `samples: { type: "window-content" }` | Desktop atmosphere / see-desktop (buckets **A/B**) | Compositor window-behind when available |
+| Compositor **window-behind** blur | Blur **desktop / other clients** behind this surface | `ext-background-effect-v1` `set_blur_region`, KDE blur |
+
+On Linux, buckets **A** (Mica-class cheap atmosphere) and **B** (Acrylic-class live blur) usually **collapse** to one compositor feature — there is no separate low-cost wallpaper-only API. That is a platform limit, not a Vela omission.
+
+`ext-background-effect-v1` ([protocol](https://wayland.app/protocols/ext-background-effect-v1)) improves translucent surfaces by blurring the **background behind the surface**. For a top-level window that is **not** live layers-below glass. When dogfood uses `layers-below` (C) and only window-behind is available, paint plan selects `compositor-window-blur` with **`degraded: true`** and an explicit reason. Liquid Glass remains **approximable** via snapshot/chrome (see materials.md); do not treat window-behind alone as non-degraded Liquid Glass.
+
+Staging note: compositor support for `ext-background-effect-v1` is still rolling out; probe may report the global absent → translucent chrome path.
+
+### Apply path (not yet: bind + set region)
+
+Current spike **probes** globals and **plans** paint. Applying blur still TODO:
+
+1. Obtain `wl_surface` for the material host / toplevel (`gdk_wayland_surface_get_wl_surface`).
+2. Bind `ext_background_effect_manager_v1` (or KDE blur manager).
+3. `get_background_effect` + `set_blur_region` for the material rect (surface-local).
+4. Ensure translucent toplevel / alpha so the effect is visible.
+5. Emit `material.degraded` only when path is degraded or capability drops at runtime.
+
+Until apply lands, even a positive probe still paints translucent chrome in the widget tree; logs report the planned path honestly.
 
 ## Preload (spike subset)
 
@@ -166,6 +235,9 @@ Stretch (document, do not block): OS region-through, chrome drag, camera slot, Z
 - [x] Layer tree + dogfood bootstrap ids
 - [x] Hit router mirror of `resolveHit` + lastHit (`--self-test` + UI label)
 - [x] Material host + degrade diagnostics
+- [x] Portable `ShellSessionFeature` + `planMaterialPaint` in `@vela/api`
+- [x] Wayland global → feature map + GDK registry probe (`vela_session`)
+- [ ] Apply `ext-background-effect` / KDE blur to material region (paint path)
 - [ ] Manual L1–L6 on Fedora-class Wayland/X11
 
 ## Platform pitfalls (Linux)
@@ -173,8 +245,9 @@ Stretch (document, do not block): OS region-through, chrome drag, camera slot, Z
 | Risk | Mitigation |
 |------|------------|
 | WebKit internal event handling vs overlays | Sole hit root; pick/controller policy before dual delivery |
-| No live layers-below glass | Explicit degrade + diagnostics |
-| Wayland vs X11 input regions | Tier 2 partial for window-through; document session used |
+| No live layers-below glass | Explicit degrade + diagnostics; do not pretend window-behind is layers-below |
+| Wayland vs X11 input regions | Probe backend; Tier 2 partial for window-through; document session used |
+| Staging protocols absent | Probe globals; fall back paint path; never silent-success |
 | `file://` ES modules | Prefer localhost dogfood serve for first demo |
 | Zig `@cImport` of full GTK | Thin C surface; keep Zig modules by Shell job |
 

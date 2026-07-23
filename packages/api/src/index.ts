@@ -64,6 +64,22 @@ export type {
   PlatformId,
 } from "./material/spec.ts";
 export { resolveMaterial } from "./material/spec.ts";
+export type {
+  MaterialPaintPath,
+  MaterialPaintPlan,
+  PlanMaterialPaintOptions,
+} from "./material/paint-plan.ts";
+export { planMaterialPaint } from "./material/paint-plan.ts";
+
+export type {
+  DisplayBackend,
+  ShellSessionFeature,
+  ShellSessionProbe,
+} from "./session/features.ts";
+export {
+  hasSessionFeature,
+  emptySessionProbe,
+} from "./session/features.ts";
 
 export type {
   LayerId,

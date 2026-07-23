@@ -28,6 +28,8 @@ Package: `packages/api/` Entry: `packages/api/src/index.ts`
 | `layer/types.ts` | `Layer*` variants, `InsertLayerSpec`, `LayerPatch`, defaults |
 | `layer/snapshot.ts` | `LayerTreeSnapshot`, `toOpaqueRegionStore` |
 | `material/spec.ts` | `MaterialId`, `BackdropSource`, `resolveMaterial`, … |
+| `material/paint-plan.ts` | `planMaterialPaint`, `MaterialPaintPath` (runtime paint honesty) |
+| `session/features.ts` | `ShellSessionProbe`, `ShellSessionFeature`, `DisplayBackend` |
 | `capability/types.ts` | Permissions, grants, checks, risk |
 | `capability/define.ts` | `defineCapability`, registry, builtins |
 | `capability/check.ts` | pure `checkCapability` / `checkProfileCapability` (default deny) |
@@ -67,9 +69,13 @@ See [Input and hit testing](input-and-hit-testing.md).
 
 ## Materials
 
-See [Materials](materials.md).
+See [Materials](materials.md) for semantic buckets (A desktop / B window-behind / C in-window glass / Liquid Glass approximation policy) and the resolve → session probe → paint-plan pipeline.
 
-Pure policy: `resolveMaterial(requested, platform, options?)`.
+| Helper | Role |
+|--------|------|
+| `resolveMaterial(requested, platform, options?)` | Map author `MaterialId` → platform preferred id |
+| `planMaterialPaint(..., { session, samples? })` | Runtime `MaterialPaintPath` + honest degrade |
+| `ShellSessionProbe` / `ShellSessionFeature` | Portable session capabilities (no raw Wayland names on the app surface) |
 
 ## Capabilities & components
 

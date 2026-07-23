@@ -210,6 +210,9 @@ Short demo video or app binary notes in PR / issue: glass toolbar + underlay + h
 - [x] Preload `window.vela` subset + dogfood layer ids (embed + bridge)
 - [x] Hit router mirror of `resolveHit`; lastHit label / log (`--self-test` fixtures)
 - [x] Material host with loud degrade path
+- [x] Portable session features + material paint plan (`ShellSessionProbe`, `planMaterialPaint`)
+- [x] Wayland global → feature map + GDK registry probe (G-P2-13 partial)
+- [ ] Apply compositor blur (`ext-background-effect` / KDE) to material region
 - [ ] Manual L1–L6 on a Linux session
 
 ### Explicit non-goals

@@ -100,7 +100,8 @@ packages per OS. Binding placement of Zig: [ADR 0005](adr/0005-zig-interop-layer
 |---------|-------------------|------------------|
 | Composition model | Layer kinds, z-index truth, insert/patch | Concrete view classes |
 | Input | `HitPolicy`, `WindowInputMode`, `resolveHit` | `hitTest`, message loops, gesture filters |
-| Materials | `MaterialId`, `resolveMaterial`, `ResolvedMaterial` | `glassEffect`, Mica, Acrylic, gtk blur |
+| Materials | `MaterialId`, semantic buckets A–E, `resolveMaterial`, `planMaterialPaint`, `ResolvedMaterial` | `glassEffect`, Mica, Acrylic, gtk blur paint, Wayland effect objects — see [materials.md](materials.md) |
+| Session features | `ShellSessionFeature`, `ShellSessionProbe`, `DisplayBackend` | Wayland globals, DWM APIs, AppKit availability flags |
 | Geometry | Logical `Rect` / `Region`, `scaleFactor` | Physical pixels, y-up AppKit conversion |
 | Security | Permission ids, default-deny checks | OS permission prompts, code signing stores |
 | Control plane | RPC envelopes, channel names | UDS path, named pipe, framing bytes; Zig owns desktop framing |

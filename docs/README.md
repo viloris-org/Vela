@@ -31,7 +31,7 @@ Architecture and domain guides for **Vela**, a TypeScript-first, WebView-first G
 | [Architecture](architecture.md) | Conceptual | High-level split, principles, non-goals |
 | [Composition and layers](composition-and-layers.md) | Conceptual | Layer kinds, stack, insert/update |
 | [Input and hit testing](input-and-hit-testing.md) | Conceptual | `HitPolicy`, `WindowInputMode`, web-shaped |
-| [Materials](materials.md) | Conceptual | `MaterialId`, fallback, backdrop sources |
+| [Materials](materials.md) | Conceptual | `MaterialId`, buckets A–E, cross-OS map, Liquid Glass, paint plan |
 | [Capabilities and plugins](capabilities-and-plugins.md) | Conceptual | TS-first plugins, permissions, native bridges |
 | [Cross-platform abstraction](cross-platform-abstraction.md) | Conceptual | Contracts-first multi-backend Shell |
 | [API contracts](api-contracts.md) | Reference | `@vela/api` module map |

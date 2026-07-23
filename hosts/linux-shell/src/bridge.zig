@@ -224,13 +224,14 @@ pub fn handleMessage(state: *ShellState, json_text: []const u8) BridgeResult {
             layer.kind = .material;
             layer.z_index = 30;
             layer.hit_policy = .{ .mode = .solid };
-            state.last_material = materials.paintPlanGtkBlur();
+            const paint = materials.paintPlanGtkBlur();
+            state.last_material = materials.toResolved(paint);
             if (bounds) |r| {
                 layer.bounds = r;
                 result.material_bounds = r;
             }
             result.material_visible = true;
-            result.log = "layers.insert material (gtk.blur degraded paint)";
+            result.log = "layers.insert material (paint plan applied)";
         } else if (std.mem.eql(u8, kind_s, "webview")) {
             layer.kind = .webview;
             layer.hit_policy = .{ .mode = .web_shaped };

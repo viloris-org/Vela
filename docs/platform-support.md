@@ -69,9 +69,11 @@ Shared surface: `@vela/api` Layer / Capability / bridge protocol. Host plugin **
 |---------|-------|---------|-------|-----|---------|
 | Multi WebView layers | yes | yes | yes | yes | yes |
 | Native component layers | yes | yes | partial | yes | yes |
-| System materials | Liquid Glass / material | Mica/Acrylic | gtk.blur (best-effort / degrade) | material | fallback/css first |
+| System materials | Liquid Glass (C) / material (A/B) | Mica (11) / Acrylic (10+) | gtk.blur best-effort; A/B = compositor window-behind only | material | fallback/css first |
+| Material mapping SoT | [materials.md](materials.md) buckets A–E | same | same | same | same |
+| Session feature probe | AppKit flags | DWM / composition | Wayland globals → `ShellSessionFeature` | partial | partial |
 | Regional layer hit-through | yes | yes | yes | yes | yes |
-| Window region-through to OS | yes | yes | partial | limited | limited |
+| Window region-through to OS | yes | yes | partial (`window.input-region` on Wayland) | limited | limited |
 | Capability plugins (App via `vela.call`) | yes | yes | yes | yes | yes |
 | Host TS plugin runtime (reference) | Bun | Bun | planned | pluggable / interim native | pluggable / interim native |
 | Composition host tree (intent) | `hosts/desktop-shell` | Phase 4 | `hosts/linux-shell` | planned | planned |

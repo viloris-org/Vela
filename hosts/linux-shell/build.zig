@@ -78,6 +78,10 @@ pub fn build(b: *std.Build) void {
         .file = b.path("src/c/vela_gtk.c"),
         .flags = c_flags_list.items,
     });
+    exe_mod.addCSourceFile(.{
+        .file = b.path("src/c/vela_session.c"),
+        .flags = c_flags_list.items,
+    });
 
     for (gtk_libs) |lib| {
         exe_mod.linkSystemLibrary(lib, .{});
@@ -112,6 +116,27 @@ pub fn build(b: *std.Build) void {
         }),
     });
     const run_pure = b.addRunArtifact(pure_tests);
-    const test_step = b.step("test", "Run pure hit/geometry unit tests");
+
+    const session_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/session.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    const run_session = b.addRunArtifact(session_tests);
+
+    const materials_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/materials.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    const run_materials = b.addRunArtifact(materials_tests);
+
+    const test_step = b.step("test", "Run pure hit/session/material unit tests");
     test_step.dependOn(&run_pure.step);
+    test_step.dependOn(&run_session.step);
+    test_step.dependOn(&run_materials.step);
 }

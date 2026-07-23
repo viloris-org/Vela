@@ -48,14 +48,16 @@ hosts/linux-shell/
   build.zig
   scripts/preload.js          # source of truth for inject script
   src/
-    main.zig                  # CLI + process entry
+    main.zig                  # CLI + process entry + session log
     preload.js                # copy embedded via @embedFile (keep in sync with scripts/)
     geometry.zig              # logical geometry (mirror @vela/api)
     layers.zig                # layer tree + web-shaped store
     hit.zig                   # resolveHit mirror + lastHit format
     materials.zig             # gtk.blur policy + paint honesty
+    session.zig               # Wayland global → ShellSessionFeature map + paint plan
     bridge.zig                # window.vela JSON handlers
     c/vela_gtk.h|c            # thin GTK4/WebKitGTK surface
+    c/vela_session.h|c        # GDK backend + Wayland registry probe
 ```
 
 ## Dogfood layer ids
@@ -68,14 +70,15 @@ hosts/linux-shell/
 
 ## Materials honesty
 
-This spike paints a **translucent GTK chrome** for the material host and records:
+Paint path is chosen by `session.planGtkBlurPaint` after a display probe:
 
-```text
-degraded: true
-reason: no-backdrop-blur: translucent host chrome (Tier 2 spike)
-```
+| Planned path | When |
+|--------------|------|
+| `compositor-window-blur` | Wayland advertises `ext_background_effect_manager_v1` or KDE blur |
+| `snapshot-blur` | Host implements snapshot (feature flag) |
+| `translucent-chrome` | Default when no backdrop path |
 
-CSS `backdrop-filter` is not claimed as native `gtk.blur`. See [materials.md](../../docs/materials.md).
+Until compositor blur is **applied** to the surface, the widget still paints translucent chrome. Logs report `path=` and `degraded` honestly. Protocol names stay in L4; portable ids are `material.backdrop.window-behind` etc. See [linux-spike-architecture.md](../../docs/linux-spike-architecture.md) and [materials.md](../../docs/materials.md).
 
 ## Acceptance
 
@@ -97,6 +100,8 @@ Manual scenarios **L1–L6** in [testing-and-acceptance.md](../../docs/testing-a
 - [x] Preload embed + bridge handlers
 - [x] Dogfood bootstrap ids
 - [x] Degraded material host widget
+- [x] Session probe + Wayland feature map (`ext-background-effect` → window-behind)
+- [ ] Apply background-effect blur region to material host
 - [ ] Manual L1–L6 with playground on display session
 - [ ] Optional: export C ABI for `hosts/zig-shell`
 

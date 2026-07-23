@@ -7,9 +7,11 @@ const geometry = @import("geometry.zig");
 const layers = @import("layers.zig");
 const hit = @import("hit.zig");
 const materials = @import("materials.zig");
+const session = @import("session.zig");
 const bridge = @import("bridge.zig");
 const c = @cImport({
     @cInclude("vela_gtk.h");
+    @cInclude("vela_session.h");
 });
 
 const version = "0.0.1";
@@ -105,6 +107,59 @@ fn printUsage() void {
     , .{version});
 }
 
+fn probeSession() session.Probe {
+    var global_ptrs: [16][*c]const u8 = undefined;
+    var count: usize = 0;
+    const backend_i = c.vela_session_probe(@ptrCast(&global_ptrs), global_ptrs.len, &count);
+
+    var probe: session.Probe = .{
+        .backend = switch (backend_i) {
+            c.VELA_DISPLAY_WAYLAND => .wayland,
+            c.VELA_DISPLAY_X11 => .x11,
+            else => .unknown,
+        },
+    };
+
+    var i: usize = 0;
+    while (i < count) : (i += 1) {
+        const name_z = global_ptrs[i];
+        if (name_z == null) continue;
+        const name = std.mem.span(name_z);
+        probe.features.merge(session.featuresForWaylandGlobal(name));
+    }
+
+    // Core input region on any Wayland session (even if query list empty).
+    if (probe.backend == .wayland) {
+        probe.features.set(.window_input_region);
+    }
+
+    return probe;
+}
+
+fn logSessionProbe(probe: session.Probe) void {
+    std.log.info("session backend={s}", .{switch (probe.backend) {
+        .wayland => "wayland",
+        .x11 => "x11",
+        .unknown => "unknown",
+    }});
+    const all = [_]session.Feature{
+        .material_backdrop_window_behind,
+        .material_backdrop_layers_below,
+        .material_backdrop_snapshot,
+        .window_input_region,
+        .window_fractional_scale,
+        .window_alpha,
+        .window_server_decoration,
+        .session_idle_inhibit,
+        .session_activation,
+    };
+    for (all) |f| {
+        if (probe.features.has(f)) {
+            std.log.info("  feature {s}", .{f.id()});
+        }
+    }
+}
+
 fn runSelfTest() !void {
     var tree: layers.LayerTree = .{};
     try layers.bootstrapDogfood(&tree, .{ .x = 0, .y = 0, .width = 800, .height = 600 });
@@ -129,8 +184,18 @@ fn runSelfTest() !void {
 
     const paint = materials.paintPlanGtkBlur();
     if (!paint.degraded) return error.SelfTestMaterialHonesty;
+    if (paint.path != .translucent_chrome) return error.SelfTestPaintPath;
 
-    std.debug.print("self-test ok (hit + generation + gtk.blur degrade)\n", .{});
+    // Protocol map pure checks (no display).
+    const ext = session.featuresForWaylandGlobal("ext_background_effect_manager_v1");
+    if (!ext.has(.material_backdrop_window_behind)) return error.SelfTestWaylandMap;
+
+    var behind_probe: session.Probe = .{ .backend = .wayland };
+    behind_probe.features.set(.material_backdrop_window_behind);
+    const behind_paint = materials.planPaint("gtk.blur", behind_probe);
+    if (behind_paint.path != .compositor_window_blur) return error.SelfTestCompositorPath;
+
+    std.debug.print("self-test ok (hit + generation + gtk.blur paint plan + wayland map)\n", .{});
 }
 
 pub fn main(init: std.process.Init) !void {
@@ -173,14 +238,22 @@ pub fn main(init: std.process.Init) !void {
     };
     try layers.bootstrapDogfood(&ctx.state.tree, .{ .x = 0, .y = 0, .width = 960, .height = 640 });
 
+    const probe = probeSession();
+    logSessionProbe(probe);
+
     const mat = materials.resolveMaterialLinux("apple.liquidGlass");
-    const paint = materials.paintPlanGtkBlur();
-    ctx.state.last_material = paint;
-    std.log.info("material policy requested={s} effective={s} paint_reason={s}", .{
-        mat.requested,
-        mat.effective,
-        paint.reason orelse "",
-    });
+    const paint = materials.planPaint("gtk.blur", probe);
+    ctx.state.last_material = materials.toResolved(paint);
+    std.log.info(
+        "material policy requested={s} effective={s} path={s} degraded={} reason={s}",
+        .{
+            mat.requested,
+            paint.effective,
+            paint.path.name(),
+            paint.degraded,
+            paint.reason orelse "",
+        },
+    );
 
     const url_z = try gpa.dupeZ(u8, url);
     defer gpa.free(url_z);
@@ -225,4 +298,5 @@ test {
     _ = layers;
     _ = hit;
     _ = materials;
+    _ = session;
 }
