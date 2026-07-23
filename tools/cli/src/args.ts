@@ -1,9 +1,27 @@
 export type TopCommand = "dev";
 
-export type AppId = "clock" | "playground";
-
 export type DevOptions = {
-  app: AppId;
+  /**
+   * Workspace demo selector (`--app <id|package|number>`).
+   * When omitted (and no `--dir` / `--url`), demos are auto-discovered;
+   * a single match starts immediately, multiple matches prompt (TTY) or error.
+   */
+  app?: string;
+  /**
+   * External project root (absolute, or relative to process.cwd()).
+   * When set, `vela dev` runs `bun run <script>` in that directory instead of
+   * a discovered workspace demo.
+   */
+  dir?: string;
+  /**
+   * package.json script override for `--dir`.
+   * When unset / default and not explicit, package `vela.json` dev.script wins.
+   */
+  script: string;
+  /** True when user passed `--script` (so default "serve" does not override vela.json). */
+  scriptExplicit: boolean;
+  /** List discovered packages and exit (handled in main). */
+  list: boolean;
   /** Serve only (browser mock). Do not launch native Shell. */
   browser: boolean;
   /** Skip `zig build` when the shell binary already exists. */
@@ -24,7 +42,9 @@ export type ParsedArgs = {
 };
 
 const DEFAULT_DEV: DevOptions = {
-  app: "clock",
+  script: "serve",
+  scriptExplicit: false,
+  list: false,
   browser: false,
   noBuild: false,
   /** false = auto: build only when binary is missing */
@@ -61,10 +81,18 @@ export function parseArgs(argv: string[]): ParsedArgs {
     return out;
   }
 
+  let appExplicit = false;
+  let dirExplicit = false;
+
   while (i < argv.length) {
     const a = argv[i]!;
     if (a === "-h" || a === "--help") {
       out.help = true;
+      i += 1;
+      continue;
+    }
+    if (a === "--list") {
+      out.dev.list = true;
       i += 1;
       continue;
     }
@@ -87,19 +115,49 @@ export function parseArgs(argv: string[]): ParsedArgs {
     }
     if (a === "--app") {
       const v = argv[++i];
-      if (v !== "clock" && v !== "playground") {
-        throw new Error(`--app expects clock|playground, got ${v ?? "(missing)"}`);
-      }
+      if (!v) throw new Error("--app expects an id (discovered demo id, package name, or list number)");
       out.dev.app = v;
+      appExplicit = true;
       i += 1;
       continue;
     }
     if (a.startsWith("--app=")) {
       const v = a.slice("--app=".length);
-      if (v !== "clock" && v !== "playground") {
-        throw new Error(`--app expects clock|playground, got ${v}`);
-      }
+      if (!v) throw new Error("--app expects an id (discovered demo id, package name, or list number)");
       out.dev.app = v;
+      appExplicit = true;
+      i += 1;
+      continue;
+    }
+    if (a === "--dir") {
+      const v = argv[++i];
+      if (!v) throw new Error("--dir expects a path");
+      out.dev.dir = v;
+      dirExplicit = true;
+      i += 1;
+      continue;
+    }
+    if (a.startsWith("--dir=")) {
+      const v = a.slice("--dir=".length);
+      if (!v) throw new Error("--dir expects a path");
+      out.dev.dir = v;
+      dirExplicit = true;
+      i += 1;
+      continue;
+    }
+    if (a === "--script") {
+      const v = argv[++i];
+      if (!v) throw new Error("--script expects a package.json script name");
+      out.dev.script = v;
+      out.dev.scriptExplicit = true;
+      i += 1;
+      continue;
+    }
+    if (a.startsWith("--script=")) {
+      const v = a.slice("--script=".length);
+      if (!v) throw new Error("--script expects a package.json script name");
+      out.dev.script = v;
+      out.dev.scriptExplicit = true;
       i += 1;
       continue;
     }
@@ -149,6 +207,16 @@ export function parseArgs(argv: string[]): ParsedArgs {
     throw new Error(`Unknown flag: ${a}`);
   }
 
+  if (appExplicit && dirExplicit) {
+    throw new Error("--app and --dir are mutually exclusive (use --dir for external projects)");
+  }
+  if (out.dev.scriptExplicit && !dirExplicit) {
+    throw new Error("--script requires --dir");
+  }
+  if (out.dev.list && (dirExplicit || out.dev.url)) {
+    throw new Error("--list cannot be combined with --dir or --url");
+  }
+
   return out;
 }
 
@@ -158,21 +226,40 @@ export function printHelp(command?: TopCommand): void {
 
 One-terminal instant dogfood: App content server + native Linux Shell.
 
-Options:
-  --app clock|playground   Content to serve (default: clock)
-  --browser                Serve only; do not launch Shell (browser mock)
-  --port <n>               Content server port (clock 5174, playground 5173)
+Content (pick one style — first match wins):
+  (default)                1) nearest vela.json walking up from cwd
+                           2) else monorepo discover (menu if several)
+  --dir <path>             Explicit package root (must contain vela.json)
+  --app <id|name|n>        Monorepo pick by id (skip menu / cwd)
+  --list                   Print monorepo packages and exit
+  --script <name>          With --dir: override vela.json dev.script
   --url <url>              Skip local serve; open Shell at this URL
+
+Other options:
+  --browser                Serve only; do not launch Shell (browser mock)
+  --port <n>               Content server port (default: vela.json dev.port)
   --no-build               Never run zig build (fail if binary missing)
   --build                  Always run zig build before launch
                            (default: build only when binary is missing)
   --shell <path>           Path to vela-linux-shell binary
   -h, --help               Show this help
 
+Package standard (docs/app-package-layout.md):
+  <app-root>/vela.json     REQUIRED root marker (id, optional dev.port/script)
+  <app-root>/package.json  scripts for instant serve
+  Monorepo: vela.workspace.json packageParents (default apps, example)
+
+Serves receive PORT, VELA_PORT, and <ID>_PORT (e.g. CLOCK_PORT).
+
 Examples:
-  bun run dev
-  bun run vela -- dev --app playground
-  bun run vela -- dev --browser --app clock
+  cd example/clock && bun run dev          # independent package (preferred)
+  bun run dev                              # monorepo shortcut → example/clock
+  bun run dev:pick                         # monorepo menu / discover
+  bun run vela -- dev --dir example/clock
+  bun run vela -- dev --dir ../Zepyyr
+  bun run vela -- dev --list
+  bun run vela -- dev --app playground --browser
+  bun run vela -- dev --url http://127.0.0.1:5180
   bun run vela -- dev --no-build
 `);
     return;
@@ -188,9 +275,11 @@ Commands:
   help    Show this help
 
 Examples:
-  bun run dev                         # clock + linux-shell
-  bun run vela -- dev --app playground
-  bun run vela -- dev --browser       # content only
+  cd example/clock && bun run dev          # real package-root flow
+  bun run dev                              # → --dir example/clock
+  bun run vela -- dev --dir ../Zepyyr
+  bun run vela -- dev --list
+  bun run vela -- dev --browser
 
 Planned (not yet):
   vela build    Static / ship-shaped artifacts

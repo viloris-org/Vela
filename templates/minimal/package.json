@@ -1,12 +1,11 @@
 {
-  "name": "@vela/example-clock",
+  "name": "@vela/template-minimal",
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Minimal clock app using window.vela (layers + hit); browser mock when host is absent",
+  "description": "Minimal Vela App scaffold (copy from templates/minimal; not a workspace demo)",
   "scripts": {
     "serve": "bun ./serve.ts",
-    "dev": "bun ../../tools/cli/src/main.ts dev --dir .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

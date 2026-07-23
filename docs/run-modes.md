@@ -34,16 +34,25 @@ stores already force, used on every OS so release validation matches reality.
 CLI shape:
 
 ```text
-bun run dev                      # instant: content + linux-shell (one terminal)
-bun run vela -- dev [options]    # same entry; see tools/cli
+cd example/clock && bun run dev  # preferred: independent package root
+bun run dev                      # monorepo shortcut → --dir example/clock
+bun run dev:pick                 # monorepo discover / menu
+bun run vela -- dev [options]    # same CLI; see tools/cli
+bun run vela -- dev --dir <path> # any package root (vela.json)
+bun run vela -- dev --list       # print monorepo packages
 bun run vela -- dev --browser    # content only (browser mock window.vela)
+bun run vela -- dev --url <url>  # Shell only; content already served elsewhere
 vela build                       # (planned) static: bundle App + Shell/Host
 vela run --release               # (planned) run the static tree
 ```
 
 **Shipped today:** `tools/cli` `dev` orchestrates App serve + `hosts/linux-shell`
-(auto `zig build` when the binary is missing). Content-only scripts remain:
-`bun run playground:serve` / `example:clock`.
+(auto `zig build` when the binary is missing). Packages follow the **App package
+layout** ([app-package-layout.md](app-package-layout.md)). **Preferred dogfood**
+is an independent package root (nearest `vela.json` from cwd, or `--dir`) —
+`example/clock` is the in-repo stand-in for external apps. Monorepo multi-package
+discovery (`vela.workspace.json`) is secondary (`dev:pick` / `--app` / `--list`).
+Content-only: `bun run playground:serve` / `example:clock`.
 
 ## Shared invariants (both modes)
 

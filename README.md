@@ -39,6 +39,7 @@ Vela/
   hosts/linux-shell  Linux composition spike (GTK4 + WebKitGTK 6.0; Tier 2)
   apps/playground     Dogfood web content (mock window.vela in browser)
   example/clock       Minimal clock App TS sample (layers + hit + mock bridge)
+  templates/          App scaffold copy sources (not auto-discovered demos)
   tools/cli           Developer CLI (`bun run dev` — content + Shell)
   plugins/            notify, tray, dialog (Host TS + mock sys); more planned
   packages/sys-desktop Desktop Host systems facades (notify, tray, dialog)

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "playground",
+  "name": "Playground",
+  "kind": "app",
+  "version": "0.0.1",
+  "identifier": "dev.vela.playground",
+  "dev": {
+    "port": 5173,
+    "script": "serve"
+  },
+  "entry": {
+    "web": "index.html"
+  }
+}

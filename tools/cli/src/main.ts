@@ -8,6 +8,7 @@
  *   vela run     # (future) ship-shaped tree
  *
  * Today only `dev` is implemented for the Linux composition spike.
+ * Workspace demos are auto-discovered under apps/* and example/*.
  */
 import { runDev } from "./dev";
 import { parseArgs, printHelp } from "./args";

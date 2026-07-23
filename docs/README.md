@@ -19,12 +19,13 @@ Architecture and domain guides for **Vela**, a TypeScript-first, WebView-first G
 6. [Capabilities and plugins](capabilities-and-plugins.md): permissions
 7. [Cross-platform abstraction](cross-platform-abstraction.md): shared contracts vs multi-backend Shell + Zig
 8. [Run modes](run-modes.md): instant (dev) vs static (release; Bun compile-only)
-9. [App load and startup](app-load-and-startup.md): WebView cold start; prewarm, cache, shell snapshot (no Bun on device)
-10. [API contracts](api-contracts.md): `@vela/api` map
-11. [macOS spike architecture](macos-spike-architecture.md): Phase 1 Shell and hit plan
-12. [Linux spike architecture](linux-spike-architecture.md): parallel Tier 2 Linux composition spike
-13. [Design gaps](design-gaps.md): prioritized contract debt
-14. [Roadmap](roadmap.md): phased delivery
+9. [App package layout](app-package-layout.md): `vela.json` tree standard, workspace discovery, templates
+10. [App load and startup](app-load-and-startup.md): WebView cold start; prewarm, cache, shell snapshot (no Bun on device)
+11. [API contracts](api-contracts.md): `@vela/api` map
+12. [macOS spike architecture](macos-spike-architecture.md): Phase 1 Shell and hit plan
+13. [Linux spike architecture](linux-spike-architecture.md): parallel Tier 2 Linux composition spike
+14. [Design gaps](design-gaps.md): prioritized contract debt
+15. [Roadmap](roadmap.md): phased delivery
 
 ## Product docs
 
@@ -37,6 +38,7 @@ Architecture and domain guides for **Vela**, a TypeScript-first, WebView-first G
 | [Capabilities and plugins](capabilities-and-plugins.md) | Conceptual | TS-first plugins, permissions, native bridges |
 | [Cross-platform abstraction](cross-platform-abstraction.md) | Conceptual | Contracts-first multi-backend Shell |
 | [Run modes](run-modes.md) | Conceptual | Instant vs static; Bun toolchain vs WebView App runtime |
+| [App package layout](app-package-layout.md) | Reference | `vela.json` / workspace file tree; CLI discovery SoT; `templates/` |
 | [App load and startup](app-load-and-startup.md) | Conceptual | App WebView load costs; prewarm / code cache / shell snapshot |
 | [API contracts](api-contracts.md) | Reference | `@vela/api` module map |
 | [Technology stack](technology-stack.md) | Reference | Host and runtime choices |

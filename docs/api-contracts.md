@@ -37,6 +37,8 @@ Package: `packages/api/` Entry: `packages/api/src/index.ts`
 | `capability/layer-gates.ts` | insert-layer permission requirements |
 | `capability/host.ts` | `CapabilityHost`, `HostAPI`, `CallContext`, `CapabilityDeniedError` |
 | `manifest/types.ts` | `AppManifest` + `parseAppManifest` (JSON schema v1) |
+| `project/package.ts` | `VelaPackage` + `parseVelaPackage` / `VELA_PACKAGE_MARKER` (`vela.json`) |
+| `project/workspace.ts` | `VelaWorkspace` + `parseVelaWorkspace` / monorepo scan parents |
 | `component/define.ts` | `defineNativeComponent`, factories, external modules |
 | `window/types.ts` | `VelaWindow`, `VelaApp`, create options |
 | `protocol/bridge.ts` | `VelaPreloadBridge`, `window.vela` typing |

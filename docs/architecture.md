@@ -146,8 +146,10 @@ Vela/
   packages/api/         @vela/api - types + pure helpers (usable today)
   hosts/                zig-shell (planned interop); desktop-shell (macOS L4 scaffold); more L4 later
   libs/                 (planned) vela-sys Zig systems surface — ADR 0008
-  plugins/              (planned) camera, materials, fs, dialog, …
-  apps/                 playground / dogfood (web package)
+  plugins/              camera, materials, fs, dialog, …
+  apps/                 playground / dogfood (web packages; vela.json)
+  example/              small App samples (discovered demos)
+  templates/            App scaffold copy sources (not packageParents)
 ```
 
 ## Ownership boundaries

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "clock",
+  "name": "Clock",
+  "kind": "app",
+  "version": "0.0.1",
+  "identifier": "dev.vela.clock",
+  "dev": {
+    "port": 5174,
+    "script": "serve"
+  },
+  "entry": {
+    "web": "index.html"
+  }
+}

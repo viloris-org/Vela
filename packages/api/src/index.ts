@@ -191,6 +191,30 @@ export type {
 export { parseAppManifest, isAppManifest } from "./manifest/types.ts";
 
 export type {
+  VelaPackage,
+  VelaPackageKind,
+  VelaPackageDev,
+  VelaPackageEntry,
+  ParseVelaPackageResult,
+} from "./project/package.ts";
+export {
+  VELA_PACKAGE_MARKER,
+  parseVelaPackage,
+  isVelaPackage,
+} from "./project/package.ts";
+export type {
+  VelaWorkspace,
+  ParseVelaWorkspaceResult,
+} from "./project/workspace.ts";
+export {
+  VELA_WORKSPACE_MARKER,
+  DEFAULT_PACKAGE_PARENTS,
+  parseVelaWorkspace,
+  defaultVelaWorkspace,
+  isVelaWorkspace,
+} from "./project/workspace.ts";
+
+export type {
   PropsSchema,
   NativeEventMap,
   NativeSurfaceHandle,

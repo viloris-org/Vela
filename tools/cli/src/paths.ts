@@ -17,25 +17,3 @@ export function defaultShellBinary(root = repoRoot()): string {
 export function shellBinaryExists(path: string): boolean {
   return existsSync(path);
 }
-
-export type AppSpec = {
-  id: "clock" | "playground";
-  filter: string;
-  defaultPort: number;
-  envPortKey: string;
-};
-
-export const APPS: Record<"clock" | "playground", AppSpec> = {
-  clock: {
-    id: "clock",
-    filter: "@vela/example-clock",
-    defaultPort: 5174,
-    envPortKey: "CLOCK_PORT",
-  },
-  playground: {
-    id: "playground",
-    filter: "@vela/playground",
-    defaultPort: 5173,
-    envPortKey: "PLAYGROUND_PORT",
-  },
-};

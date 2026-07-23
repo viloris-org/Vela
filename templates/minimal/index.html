@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vela — Minimal</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="app" class="app">
+      <h1>Minimal</h1>
+      <p class="lede">
+        Scaffold from <code>templates/minimal</code>. Host injects
+        <code>window.vela</code>; without a host this page installs an in-page mock.
+      </p>
+      <p id="bridge-status" class="status" aria-live="polite">bridge: …</p>
+      <p id="version" class="meta">—</p>
+    </main>
+    <!-- Bundled by serve.ts for host WebView (WebKitGTK cannot run raw TS). -->
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

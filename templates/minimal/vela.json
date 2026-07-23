@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "minimal",
+  "name": "Minimal",
+  "kind": "app",
+  "version": "0.0.1",
+  "identifier": "dev.vela.minimal",
+  "dev": {
+    "port": 5180,
+    "script": "serve"
+  },
+  "entry": {
+    "web": "index.html"
+  }
+}
