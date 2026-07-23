@@ -10,7 +10,7 @@ Requires GTK4 + WebKitGTK 6.0 + Zig 0.16.x (see `hosts/linux-shell/README.md`).
 
 ```bash
 # terminal 1 — bundle + serve App TS for WebView
-cd /path/to/New_Vela
+cd /path/to/Vela
 bun install
 bun run example:clock
 # → http://127.0.0.1:5174  (main.js is Bun-built browser JS)

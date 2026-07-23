@@ -5,7 +5,7 @@
 > **Audience**: App authors | Host implementers | Maintainers  
 > **SoT**: `@vela/api` and Accepted ADRs; this page explains the product shape
 
-Vela (this repository: **New_Vela**) is a **TypeScript-first, WebView-first** GUI framework for **desktop and mobile** applications that need:
+Vela is a **TypeScript-first, WebView-first** GUI framework for **desktop and mobile** applications that need:
 
 - Web productivity for the main UI surface (App TS in the system WebView)
 - Privileged **Host TS** for most system capabilities (pluggable runtime; desktop reference: Bun)
@@ -140,7 +140,7 @@ Drift control: pure unit tests in `@vela/api`, host mirrors of `resolveHit` /
 ## Monorepo layout (current + planned)
 
 ```text
-New_Vela/
+Vela/
   README.md
   docs/                 Architecture, domain guides, ADRs
   packages/api/         @vela/api - types + pure helpers (usable today)

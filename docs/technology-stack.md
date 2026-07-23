@@ -5,7 +5,7 @@
 > **Audience**: Host implementers | Maintainers  
 > **SoT**: Stack choices; open decisions listed in this page and ADRs
 
-Preferred stack for New_Vela and the main alternatives. Goal: reinforce WebView-first UI, Qt-class composition, TypeScript-first Host plugins, a Bun **desktop reference** host (and toolchain), and portable contracts.
+Preferred stack for Vela and the main alternatives. Goal: reinforce WebView-first UI, Qt-class composition, TypeScript-first Host plugins, a Bun **desktop reference** host (and toolchain), and portable contracts.
 
 ## Selection rules
 
@@ -113,9 +113,9 @@ Pros: mature ecosystem. Cons: heavy; weak true multi-native sibling composition;
 
 Pros: strong native composition (masks, stacking, foreign windows - see [Qt composition notes](research/qt-composition-notes.md)). Cons: not WebView-first; different authoring model than the intended product class.
 
-### Sibling Rust `Vela` (wgpu retained GUI)
+### Legacy Rust `Vela_old` (wgpu retained GUI)
 
-Different product: no WebView core, GPU-heavy tool UIs. Useful as documentation structure and GUI-quality bar, not as the runtime.
+Archived predecessor: no WebView core, GPU-heavy tool UIs. Useful as documentation structure and GUI-quality bar, not as the runtime.
 
 ### Tauri 2
 

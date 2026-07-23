@@ -5,7 +5,7 @@
 > **Audience**: Maintainers | Contributors | Host implementers  
 > **SoT**: Delivery plan only; not a product API contract. Behavior binds via `@vela/api` and Accepted ADRs.
 
-Staged plan to grow New_Vela from **contracts + ADRs** into a cross-platform, WebView-first GUI framework with Qt-class composition, system materials, and default-deny capabilities.
+Staged plan to grow Vela from **contracts + ADRs** into a cross-platform, WebView-first GUI framework with Qt-class composition, system materials, and default-deny capabilities.
 
 This page tracks **what to build in which order** and **how we know a phase is done**. It does not invent APIs. Open design debt lives in [design gaps](design-gaps.md). Host smoke gates live in [testing and acceptance](testing-and-acceptance.md).
 
@@ -478,7 +478,7 @@ Do not schedule these as Phase 0–4 success criteria:
 - Full CSS/DOM reimplementation outside WebView
 - Pixel-perfect material parity across OS
 - Per-pixel alpha hit testing as the default hit model
-- Replacing sibling Rust/wgpu `Vela` (`../Vela`) product scope
+- Replacing legacy Rust/wgpu product scope (archived as `Vela_old`)
 - Bundled Chromium (system WebView is the model)
 - Page JS with Node integration or raw FFI
 

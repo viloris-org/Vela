@@ -22,14 +22,14 @@
 | Flutter desktop | Often whole-window mouse ignore | Regional holes between Web / native / material |
 | Tauri 2 | WebView + Core + commands/capabilities | Same security class; layers, materials, and hit as first-class contracts |
 | Qt Widgets / Quick | Stacking, masks, partial event transparency | Same *class* of composition, WebView-first, not Qt at runtime |
-| Sibling Rust Vela (wgpu, repo `../Vela`) | Retained native + GPU viewports | **Different product** - no WebView core; do not confuse with this monorepo |
+| Legacy Rust Vela (`Vela_old`, wgpu) | Retained native + GPU viewports | Archived predecessor — different stack; do not confuse with this monorepo |
 
 References: [Qt composition notes](docs/research/qt-composition-notes.md) · [Tauri comparison](docs/research/tauri-comparison.md) (process/IPC/security, not a runtime).
 
 ## Monorepo
 
 ```text
-New_Vela/
+Vela/
   docs/               Architecture, domain guides, ADRs, research, writing guidelines
   packages/api/       @vela/api - shared contracts (usable today)
   packages/shell-core @vela/shell-core - portable Shell policy + hit/layer state (tests on Linux)
@@ -49,7 +49,7 @@ New_Vela/
 Requires [Bun](https://bun.sh).
 
 ```bash
-cd /path/to/New_Vela
+cd /path/to/Vela
 bun install
 bun test
 bun run typecheck

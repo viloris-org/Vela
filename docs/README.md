@@ -5,7 +5,7 @@
 > **Audience**: App authors, host implementers, maintainers  
 > **SoT**: [Writing guidelines](writing-guidelines.md) for style; `@vela/api` and Accepted ADRs for product behavior
 
-Architecture and domain guides for **Vela**, a TypeScript-first, WebView-first GUI framework (repository checkout name: `New_Vela`). Bun is the monorepo toolchain and desktop reference Host, not the product identity — see [ADR 0007](adr/0007-typescript-full-stack-host.md).
+Architecture and domain guides for **Vela**, a TypeScript-first, WebView-first GUI framework ([viloris-org/Vela](https://github.com/viloris-org/Vela)). Bun is the monorepo toolchain and desktop reference Host, not the product identity — see [ADR 0007](adr/0007-typescript-full-stack-host.md).
 
 > **Project status**: contracts and architecture. Hosts are not shipped yet. Start with [Architecture](architecture.md). Follow [Writing guidelines](writing-guidelines.md) for every doc change.
 
@@ -102,17 +102,17 @@ These pages map external systems. They are **not** product contracts and must no
 |--------|-----|
 | [Tauri 2 docs](https://v2.tauri.app/) | Process model, IPC, capabilities, plugins |
 | Qt 6 public docs / optional local `../qt6` | Composition, masks, event transparency |
-| Sibling Rust Vela (`../Vela`) | Different product (wgpu retained GUI) |
+| Legacy Rust Vela (`Vela_old`) | Archived predecessor (wgpu retained GUI) |
 
 ## Related repositories
 
 | Path | Relation |
 |------|----------|
-| Sibling Rust Vela (`../Vela`) | **Different product**: wgpu retained GUI, no WebView core. Doc rigor transfers; runtime does not. |
+| Legacy Rust Vela (`../Vela_old`, [viloris-org/Vela_old](https://github.com/viloris-org/Vela_old)) | **Archived predecessor**: wgpu retained GUI, no WebView core. Doc rigor transfers; runtime does not. |
 | Local `../qt6` | Optional Qt super-repo for source study |
 | Local `../qt5` | Not required; Qt 5/6 public docs are enough for mapping |
 
-**Naming:** this monorepo is often checked out as `New_Vela`; the product name is **Vela** (WebView-first). Sibling `../Vela` is the Rust/wgpu framework. Keep names disambiguated in issues and packages.
+**Naming:** this monorepo is **Vela** (product and repo). Legacy Rust/wgpu lives as `Vela_old`. Keep names disambiguated in issues and packages when discussing the predecessor.
 
 ## Contributing to docs
 

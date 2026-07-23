@@ -22,7 +22,7 @@ Related: [Roadmap](roadmap.md), [macOS spike architecture](macos-spike-architect
 ## Contract package (current)
 
 ```bash
-cd /path/to/New_Vela
+cd /path/to/Vela
 bun install
 bun test
 bun run typecheck

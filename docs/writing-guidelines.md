@@ -121,8 +121,8 @@ Use one form everywhere. Expand acronyms on first use on a page when they are no
 | Term | Canonical form |
 |------|----------------|
 | Product name | **Vela** |
-| This monorepo checkout | `New_Vela` (paths and clone names only) |
-| Sibling product | sibling Vela (wgpu) or `../Vela` (Rust, no WebView core) |
+| This monorepo checkout | `Vela` (product and clone name) |
+| Legacy product | `Vela_old` (Rust/wgpu predecessor; no WebView core) |
 | Contract package | `@vela/api` |
 | Product framing | **TypeScript-first full stack**, **WebView-first** (not “Bun-centered”) |
 | Privileged backend process (role) | Privileged Host or Host |

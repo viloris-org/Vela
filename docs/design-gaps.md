@@ -61,7 +61,7 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 | G-P1-12 | Second Host runtime backend (e.g. iOS JSC) running same plugin source | ADR 0007 D4–D5; mobile spike | open |
 | G-P2-5 | Isolation interceptor (Tauri-class) optional design | ADR 0002 D7 | open (deferred) |
 | G-P2-6 | CI matrix for hosts | testing-and-acceptance | open |
-| G-P2-7 | Product vs repo naming (`New_Vela` vs Vela vs sibling wgpu Vela) | README disambiguation | partial |
+| G-P2-7 | Product vs repo naming (Vela vs legacy `Vela_old`) | README disambiguation | closed (repo is `Vela`; legacy archived as `Vela_old`) |
 
 ## Competitor-driven product gaps (intentional invent list)
 
@@ -78,10 +78,10 @@ These are **not bugs** - they are why Vela exists. Track so we do not regress to
 
 | Repo | Product | Transfer |
 |------|---------|----------|
-| `New_Vela` (this) | WebView-first + Bun + native composition | - |
-| `../Vela` (Rust/wgpu) | Retained GPU GUI, **no** WebView core | Doc rigor, input/focus separation, acceptance culture - **not** runtime |
+| `Vela` (this) | WebView-first + Bun + native composition | - |
+| `Vela_old` (Rust/wgpu) | Retained GPU GUI, **no** WebView core | Doc rigor, input/focus separation, acceptance culture - **not** runtime |
 
-Do not merge codebases or share public package names without an explicit rename plan.
+Do not merge codebases or share public package names with the archived predecessor without an explicit plan.
 
 ## Suggested close order
 
