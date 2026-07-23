@@ -222,3 +222,4 @@ bun run vela -- dev --app my-app
 - [API contracts](api-contracts.md) — `@vela/api` map
 - [App load and startup](app-load-and-startup.md) — WebView load model
 - [Templates catalog](../templates/README.md) — scaffold copy sources
+- [Agent skills (app authors)](../skills/README.md) — coding-agent workflows for scaffold and App TS

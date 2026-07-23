@@ -51,3 +51,4 @@ bun run vela -- dev --dir ../MyApp
 - [App package layout](../docs/app-package-layout.md) — tree SoT
 - [Run modes](../docs/run-modes.md) — instant vs static
 - [Examples](../example/) — runnable samples (discovered demos)
+- [create-vela-app skill](../skills/create-vela-app/SKILL.md) — agent workflow for copy + rename + verify
