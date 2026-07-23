@@ -9,3 +9,5 @@ export {
   type CapabilityHostRuntime,
   type InvokeCallOptions,
 } from "./capability-host.ts";
+
+export { createHostEventBus } from "./event-bus.ts";

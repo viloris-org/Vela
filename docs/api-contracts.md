@@ -160,6 +160,7 @@ bun run typecheck
 | IPC / typed RPC envelopes + error codes | Types in `protocol/rpc.ts`; wire Phase 2 | [ADR 0002](adr/0002-ipc-privilege.md) |
 | Pure `resolveHit` helper | Landed in `hit/resolve-hit.ts` + tests | [input-and-hit-testing](input-and-hit-testing.md), [design gaps](design-gaps.md) |
 | Pure capability check + Host registration types | Landed (`checkCapability`, `CapabilityHost`, `parseAppManifest`); `@vela/host-core` dispatch | [capabilities-and-plugins](capabilities-and-plugins.md), G-P1-6/9/11 |
+| Notify + tray + dialog capability contracts + Host TS plugins | Landed (`Notify*` / `Tray*` / `Dialog*` types; plugins + mock sys; `@vela/sys-desktop` notify/dialog facades) | [capabilities-and-plugins](capabilities-and-plugins.md) |
 | Plugin ABI + signing | Planned ADR 0003 | [tauri-comparison](research/tauri-comparison.md) |
 | Event catalog (`material.degraded`, …) | Planned | design gaps G-P1-3 |
 | `HitPolicy.callback` payloads | Planned | design gaps G-P1-1 |

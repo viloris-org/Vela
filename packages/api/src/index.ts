@@ -141,6 +141,7 @@ export {
   insertLayerPermissionsGranted,
 } from "./capability/layer-gates.ts";
 export type {
+  HostEventBus,
   HostSystemsFacade,
   HostAPI,
   CallContext,
@@ -149,6 +150,37 @@ export type {
   CapabilityPlugin,
 } from "./capability/host.ts";
 export { CapabilityDeniedError } from "./capability/host.ts";
+
+export type {
+  NotifyShowOptions,
+  NotifyShowResult,
+  NotifyCloseOptions,
+  NotifyActionEvent,
+  NotifyEventChannel,
+} from "./capability/notify.ts";
+export { NotifyEventChannels, NotifyMethods } from "./capability/notify.ts";
+
+export type {
+  TrayMenuItem,
+  TrayCreateOptions,
+  TrayCreateResult,
+  TrayUpdateOptions,
+  TrayRemoveOptions,
+  TrayActionEvent,
+  TrayEventChannel,
+} from "./capability/tray.ts";
+export { TrayEventChannels, TrayMethods } from "./capability/tray.ts";
+
+export type {
+  DialogFilter,
+  DialogOpenOptions,
+  DialogOpenResult,
+  DialogSaveOptions,
+  DialogSaveResult,
+  DialogMethod,
+} from "./capability/dialog.ts";
+export { DialogMethods } from "./capability/dialog.ts";
+
 
 export type {
   AppManifest,

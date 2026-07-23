@@ -114,13 +114,32 @@ typed `clipboard.writeText()` helper must wrap `window.vela.call` only.
 
 ### Capability plugin layout (intent)
 
+First-party samples in-repo:
+
+| Package | Methods | Permission | Systems |
+|---------|---------|------------|---------|
+| `@vela/plugin-notify` | `notify.show`, `notify.close` | `notify:show` | inject `sys.notify` |
+| `@vela/plugin-tray` | `tray.create`, `tray.update`, `tray.remove` | `tray:manage` | inject `sys.tray` |
+| `@vela/plugin-dialog` | `dialog.open`, `dialog.save` | `dialog:open`, `dialog:save` | inject `sys.dialog` |
+| `@vela/sys-desktop` | — (Host inject) | — | **linux / macos / windows** real facades |
+
+Desktop Host wiring:
+
+```ts
+import { createDesktopSystems } from "@vela/sys-desktop";
+
+const desktop = createDesktopSystems({ platform: "auto", events });
+// desktop.sys → HostAPI.sys (notify + tray + dialog); trayMode: "memory" for headless CI
+```
+
 ```text
-plugins/clipboard/
+plugins/notify/   # or clipboard/, tray/, dialog/, …
   package.json
   src/
     permissions.ts   # defineCapability catalog entries
     host.ts          # privileged Host: register call handlers (desktop ref: Bun)
     client.ts        # optional app-side typed wrappers
+    mock-sys.ts      # in-memory HostSystemsFacade for tests
   native/            # optional/default Zig (or thin wrap of vela-sys)
   README.md
 ```
@@ -249,6 +268,7 @@ From `BuiltinPermissions`:
 | `clipboard:read` | medium | Read clipboard |
 | `clipboard:write` | low | Write clipboard |
 | `notify:show` | low | User notifications |
+| `tray:manage` | low | System tray icons and menus (desktop) |
 | `dialog:open` | medium | Open file/folder pickers |
 | `dialog:save` | medium | Save dialogs |
 | `window:material` | low | Insert system material layers |
@@ -396,7 +416,7 @@ plugin code without policy ([ADR 0007 D5](adr/0007-typescript-full-stack-host.md
 - [ ] Unsigned module load blocked by default
 - [ ] `call` with serializable args only; host rejects non-serializable abuse
 - [ ] Profile A cannot use permissions granted only to profile B on another WebView
-- [ ] First-party non-UI plugins (clipboard/dialog/notify/fs subset) implementable in TS without L4 code
+- [~] First-party non-UI plugins (notify/tray/dialog landed; clipboard/fs still open) implementable in TS without L4 code
 - [ ] T2 native feature still uses the same `call` / layer names from app TS
 - [ ] T1.5 perf plugin: page still only `vela.call`; Bun enforces caps before Zig ABI
 - [ ] Perf Zig modules are not required for ordinary T0 plugins

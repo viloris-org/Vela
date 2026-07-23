@@ -40,7 +40,8 @@ New_Vela/
   apps/playground     Dogfood web content (mock window.vela in browser)
   example/clock       Minimal clock App TS sample (layers + hit + mock bridge)
   tools/cli           Developer CLI (`bun run dev` — content + Shell)
-  plugins/            (planned) camera, materials, …
+  plugins/            notify, tray, dialog (Host TS + mock sys); more planned
+  packages/sys-desktop Desktop Host systems facades (notify, tray, dialog)
 ```
 
 ## Quick start
@@ -143,7 +144,7 @@ const camera: InsertLayerSpec = {
 3. macOS spike (in progress): `@vela/shell-core` policy/tests + shell scaffold; next real Swift Shell + Liquid Glass + S1–S7 - [spike architecture](docs/macos-spike-architecture.md)
 3b. Linux composition spike (this machine): GTK4 + WebKitGTK 6.0 under `hosts/linux-shell`; L1–L6 - [linux spike](docs/linux-spike-architecture.md)
 4. Host capability contracts (in progress): `@vela/host-core` + `checkCapability` / `parseAppManifest`; next Bun process + typed RPC / preload bridge - [ADR 0002](docs/adr/0002-ipc-privilege.md)
-5. Capability plugins (fs, dialog, clipboard, notify)
+5. Capability plugins (notify, tray landed as Host TS + mock; fs/dialog/clipboard next)
 6. Windows parity → mobile hosts (same contracts)
 
 Full plan: [docs/roadmap.md](docs/roadmap.md). Design debt: [docs/design-gaps.md](docs/design-gaps.md).

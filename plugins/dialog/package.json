@@ -1,0 +1,33 @@
+{
+  "name": "@vela/plugin-dialog",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Host TS capability plugin: file/folder open and save dialogs (dialog.open / dialog.save)",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./host": {
+      "types": "./src/host.ts",
+      "default": "./src/host.ts"
+    },
+    "./client": {
+      "types": "./src/client.ts",
+      "default": "./src/client.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@vela/api": "workspace:*",
+    "@vela/host-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.8.0"
+  }
+}

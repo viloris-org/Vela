@@ -69,7 +69,7 @@ Parallel work that may start early without blocking Phase 1:
 | 1 | macOS composition spike | `[ ]` | S1–S7 pass; demo: glass toolbar + underlay + holes |
 | 1L | Linux composition spike (parallel) | `[~]` | L1–L6 on GTK4 + WebKitGTK 6.0; Tier 2 materials |
 | 2 | Bun host + typed RPC | `[~]` | Host contracts + `@vela/host-core` router landed; Bun process / UDS still open |
-| 3 | Capability plugins (desktop) | `[ ]` | fs / dialog / clipboard / notify + allow/deny playground |
+| 3 | Capability plugins (desktop) | `[~]` | notify + tray + dialog plugins + contracts; real OS notify/dialog facades; fs/clipboard + playground still open |
 | 4 | Windows materials + parity | `[ ]` | WebView2 path; W1–W3; behavioral hit parity with macOS |
 | 5 | Plugin ABI + signing | `[ ]` | ADR 0003 Accepted; unsigned load blocked by default |
 | 6 | Mobile hosts | `[ ]` | iOS + Android subset; shared dogfood content |
@@ -268,7 +268,7 @@ Manual L1–L6 notes (or short demo): underlay + WebView + material toolbar + ho
 
 ## Phase 3 — Capability plugins (desktop)
 
-**Status:** `[ ]` not started.
+**Status:** `[~]` contracts + Host TS plugins for notify/tray/dialog (mock sys); real OS notify/dialog facades in `@vela/sys-desktop`; fs/clipboard + playground still open.
 
 **Goal:** First-party desktop permissions that match the security spine and force allow/deny dogfood.
 
@@ -276,7 +276,13 @@ Manual L1–L6 notes (or short demo): underlay + WebView + material toolbar + ho
 
 ### Work items
 
-- [ ] `fs` (app sandbox scope), `dialog`, `clipboard`, `notify`
+- [x] `notify` plugin (`@vela/plugin-notify`: show/close + mock sys + allow/deny tests)
+- [x] `tray` plugin (`@vela/plugin-tray`: create/update/remove + mock sys + allow/deny tests)
+- [x] `dialog` plugin (`@vela/plugin-dialog`: open/save + mock sys + allow/deny tests)
+- [x] Contracts: `Notify*` / `Tray*` / `Dialog*` types, `tray:manage`, `HostAPI.events`, richer `sys.notify` / `sys.tray` / `sys.dialog`
+- [x] Real OS `sys.notify` + `sys.dialog` facades (`@vela/sys-desktop`: linux/macos/windows CLI backends)
+- [ ] `fs` (app sandbox scope), `clipboard`
+- [ ] Real OS `sys.tray` / remaining facades (desktop Host / Zig systems surface)
 - [ ] `shell:open-external`
 - [ ] Material insert permission enforcement (`window:material` or successor)
 - [ ] Camera / native-sensitive insert permission paths (even if camera is stub)

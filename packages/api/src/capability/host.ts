@@ -1,6 +1,21 @@
 import type { PlatformId } from "../material/spec.ts";
 import type { WindowId } from "../window/types.ts";
 import type {
+  DialogOpenOptions,
+  DialogOpenResult,
+  DialogSaveOptions,
+  DialogSaveResult,
+} from "./dialog.ts";
+import type {
+  NotifyShowOptions,
+  NotifyShowResult,
+} from "./notify.ts";
+import type {
+  TrayCreateOptions,
+  TrayCreateResult,
+  TrayUpdateOptions,
+} from "./tray.ts";
+import type {
   CapabilityCheckResult,
   CapabilityGrant,
   PermissionId,
@@ -13,6 +28,15 @@ import type {
  * App page never imports these types at runtime privilege — only Host TS plugins do.
  */
 
+/** Host → App push channel (wired to preload `events.subscribe`). */
+export interface HostEventBus {
+  emit(channel: string, payload: unknown): void;
+  subscribe(
+    channel: string,
+    handler: (payload: unknown) => void,
+  ): () => void;
+}
+
 /** Whitelisted facades injected into Host TS (no ambient Node / DOM). */
 export interface HostSystemsFacade {
   readonly clipboard?: {
@@ -20,18 +44,21 @@ export interface HostSystemsFacade {
     writeText(text: string): Promise<void>;
   };
   readonly notify?: {
-    show(options: {
-      readonly title: string;
-      readonly body?: string;
-    }): Promise<void>;
+    show(options: NotifyShowOptions): Promise<NotifyShowResult>;
+    close?(id: string): Promise<void>;
+  };
+  readonly tray?: {
+    create(options: TrayCreateOptions): Promise<TrayCreateResult>;
+    update(id: string, patch: Omit<TrayUpdateOptions, "id">): Promise<void>;
+    remove(id: string): Promise<void>;
   };
   readonly fs?: {
     readText(path: string): Promise<string>;
     writeText(path: string, data: string): Promise<void>;
   };
   readonly dialog?: {
-    open(options?: unknown): Promise<unknown>;
-    save(options?: unknown): Promise<unknown>;
+    open(options?: DialogOpenOptions): Promise<DialogOpenResult>;
+    save(options?: DialogSaveOptions): Promise<DialogSaveResult>;
   };
   readonly shell?: {
     openExternal(url: string): Promise<void>;
@@ -46,6 +73,11 @@ export interface HostAPI {
   readonly platform: PlatformId;
   /** Optional systems facades (T0/T1). Missing members → handler must fail closed. */
   readonly sys?: HostSystemsFacade;
+  /**
+   * Optional event bus for OS → App notifications (tray click, notify action, …).
+   * Runtime host wires this to preload `window.vela.events`.
+   */
+  readonly events?: HostEventBus;
 }
 
 export interface CallContext {

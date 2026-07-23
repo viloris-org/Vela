@@ -63,6 +63,12 @@ export function registerBuiltinCapabilities(): void {
       risk: "low",
     },
     {
+      id: "tray:manage",
+      description: "Create, update, and remove system tray icons and menus",
+      risk: "low",
+      platforms: ["macos", "windows", "linux"],
+    },
+    {
       id: "dialog:open",
       description: "Open file / folder picker dialogs",
       risk: "medium",

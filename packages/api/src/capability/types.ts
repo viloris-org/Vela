@@ -12,6 +12,8 @@ export const BuiltinPermissions = {
   ClipboardRead: "clipboard:read",
   ClipboardWrite: "clipboard:write",
   NotifyShow: "notify:show",
+  /** Create / update / remove system tray icons and menus. */
+  TrayManage: "tray:manage",
   DialogOpen: "dialog:open",
   DialogSave: "dialog:save",
   WindowMaterial: "window:material",

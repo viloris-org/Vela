@@ -21,8 +21,9 @@ App TS  --window.vela.call-->  (preload / Shell)  --RPC-->  Host
 | Owns | Does not own |
 |------|----------------|
 | Method registry (`handle`) | Page / WebView / `window.vela` |
-| `ctx.require` / grant checks | Real clipboard / fs / dialogs |
+| `ctx.require` / grant checks | Real clipboard / notify / tray / fs / dialogs |
 | `invoke` / `invokeRpc` | Zig Shell interop / UDS |
+| `createHostEventBus` (optional inject) | Preload wiring of `window.vela.events` |
 | Profile isolation | Material paint / hit routing |
 
 Pair with `@vela/shell-core` for composition policy. Desktop Bun host will wire both.
@@ -30,11 +31,16 @@ Pair with `@vela/shell-core` for composition policy. Desktop Bun host will wire 
 ## Usage
 
 ```ts
-import { createCapabilityHost } from "@vela/host-core";
+import { createCapabilityHost, createHostEventBus } from "@vela/host-core";
 import { BuiltinPermissions } from "@vela/api";
 
+const events = createHostEventBus();
 const host = createCapabilityHost({
-  api: { platform: "linux", sys: { /* inject facades */ } },
+  api: {
+    platform: "linux",
+    sys: { /* inject facades: clipboard, notify, tray, … */ },
+    events,
+  },
   capabilities: {
     default: { permissions: [BuiltinPermissions.ClipboardWrite] },
   },
