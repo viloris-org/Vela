@@ -1,57 +1,74 @@
 # @vela/example-clock
 
-Minimal **clock** App TS example. Shows how a real app talks to `window.vela` without the full playground HUD surface.
+Minimal **clock** App TS sample for the **Linux host** dogfood path: real `window.vela` preload, material insert, web-shaped hit regions.
 
-Contracts: `@vela/api` preload (`window.vela`). Spike context: [macOS spike architecture](../../docs/macos-spike-architecture.md).
+Contracts: `@vela/api` preload (`window.vela`). Host: `hosts/linux-shell` ([linux spike](../../docs/linux-spike-architecture.md)).
 
-## What this example does
+## Host path (primary)
 
-| Piece | Behavior |
-|-------|----------|
-| Digital clock | Updates every 250 ms; toggle 12h / 24h |
-| Clock card | Opaque web UI; reported via `vela.hit.setOpaqueRegions` / `setMainOpaqueRegions` |
-| Material layer | `vela.layers.insert` with `kind: "material"` + rounded-rect bounds (CSS glass is a stand-in) |
-| Hole | Space outside the card/status is **not** in opaque regions → hits fall through to underlay |
-| Status strip | Generation + bridge log (mock draws region overlays in the browser) |
-
-## Open in a browser (layout review)
-
-From monorepo root (after `bun install`):
+Requires GTK4 + WebKitGTK 6.0 + Zig 0.16.x (see `hosts/linux-shell/README.md`).
 
 ```bash
+# terminal 1 — bundle + serve App TS for WebView
+cd /path/to/New_Vela
+bun install
 bun run example:clock
-# → http://localhost:5174
+# → http://127.0.0.1:5174  (main.js is Bun-built browser JS)
+
+# terminal 2 — native Shell
+cd hosts/linux-shell
+zig build
+zig build run -- --url http://127.0.0.1:5174
+# default URL is already :5174 if you omit --url
 ```
 
-Or:
+Expected:
 
-```bash
-cd example/clock && bun run serve
-```
-
-When `window.vela` is missing, an in-page **mock** installs: logs bridge calls and draws blue region overlays.
+| Check | Pass |
+|-------|------|
+| Mode pill | `host 0.0.1-linux-shell` (not `mock`) |
+| Clock | Time ticks; 12h/24h toggle works |
+| Material | Native glass widget under card (often degraded translucent chrome + `material.degraded` log) |
+| Hit | Card/status clickable; empty space → underlay (`lastHit` debug label) |
+| Regions | Status generation bumps on resize / “Push regions” |
 
 ## What the host injects
-
-Same Phase 1 preload surface as the playground:
 
 | API | Required |
 |-----|----------|
 | `vela.version` | yes |
-| `vela.layers.insert` / `update` / `remove` | yes (Shell-local ok) |
+| `vela.layers.insert` / `update` / `remove` | yes |
 | `vela.hit.setOpaqueRegions` / `setMainOpaqueRegions` | yes |
-| `vela.call` | optional deny-all stub |
-| `vela.events.subscribe` | optional (`material.degraded`) |
+| `vela.call` | deny-all stub |
+| `vela.events.subscribe` | `material.degraded` |
 
-Suggested main layer id for region updates: `main-webview` (see `src/main.ts` / `MAIN_LAYER_ID`).
+Main web layer id: `main-webview`. Clock material id: `clock-material` (zIndex **8**, under web z **10**, `hitPolicy: transparent` — glass backdrop, web owns UI hits).
 
-## Layout review checklist
+## Layout / composition model
 
-1. Clock card + status strip show as opaque region overlays (mock).
-2. Space around the card has no overlay — underlay gradient visible.
-3. Resize re-pushes regions and bumps generation.
-4. Material insert either succeeds (host) or keeps the CSS glass stand-in (mock).
+```text
+underlay-native (z 5)
+  └── clock-material glass (z 8, under WebView)
+        └── main-webview (z 10, web-shaped: card + status opaque)
+```
+
+Outside card/status is a **hole** → Shell routes to underlay. CSS `#underlay-sim` is hidden when host preload is present.
+
+## Serve only (content package)
+
+```bash
+bun run example:clock
+# or: cd example/clock && bun run serve
+```
+
+`serve.ts` **bundles** `src/main.ts` → `/main.js` for WebKitGTK. Raw TypeScript is not loadable in the host WebView.
+
+If `window.vela` is missing (plain browser), an in-page mock still installs for layout review — that is **not** the host dogfood path.
 
 ## Status
 
-Example app for App TS authors. **Does not** implement a host. Pair with `apps/playground` for the composition dogfood surface and `hosts/desktop-shell` for a real Shell.
+- [x] Bundle + serve for host WebView
+- [x] Host-aware UI (hide underlay sim, softer CSS glass)
+- [x] linux-shell: minimal bootstrap, material under web, full bounds, degrade event
+- [ ] Compositor blur applied to material host (still honest degrade)
+- [ ] macOS Swift host parity

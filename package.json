@@ -11,7 +11,9 @@
     "test:shell-core": "bun test packages/shell-core",
     "test:host-core": "bun test packages/host-core",
     "playground:serve": "bun run --filter @vela/playground serve",
-    "example:clock": "bun run --filter @vela/example-clock serve"
+    "example:clock": "bun run --filter @vela/example-clock serve",
+    "vela": "bun tools/cli/src/main.ts",
+    "dev": "bun tools/cli/src/main.ts dev"
   },
   "devDependencies": {
     "@types/bun": "latest",

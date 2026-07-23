@@ -6,12 +6,16 @@ Small App TS samples that talk to `window.vela`. Not hosts and not the Phase 1 c
 |---------|---------|---------------|
 | [clock](clock/) | `@vela/example-clock` | Digital clock UI, material insert, web-shaped opaque regions, mock bridge |
 
-## Run
+## Run (host path)
 
 From monorepo root after `bun install`:
 
 ```bash
-bun run example:clock   # http://localhost:5174
+# terminal 1 — App content (bundled for WebView)
+bun run example:clock   # http://127.0.0.1:5174
+
+# terminal 2 — native Shell
+cd hosts/linux-shell && zig build run -- --url http://127.0.0.1:5174
 ```
 
-When no host injects `window.vela`, each example installs an in-page mock so layout and bridge calls are reviewable in a normal browser.
+`serve.ts` bundles TypeScript to browser JS. The host injects `window.vela` via preload. Without a host, an in-page mock still works for layout review in a normal browser.

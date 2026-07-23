@@ -52,11 +52,21 @@ void vela_gtk_app_destroy(VelaGtkApp *app);
 /** Navigate main WebView. */
 void vela_gtk_load_uri(VelaGtkApp *app, const char *uri);
 
-/** Resize / place material host in logical content coords. */
+/** Resize / place material host in logical content coords (top-left origin). */
 void vela_gtk_set_material_bounds(VelaGtkApp *app, const VelaGtkRect *bounds);
 
 /** Show/hide material host. */
 void vela_gtk_set_material_visible(VelaGtkApp *app, int visible);
+
+/**
+ * Stack material relative to the WebView.
+ * above_web=1: chrome/toolbar on top (playground).
+ * above_web=0: card glass under transparent WebView (clock).
+ */
+void vela_gtk_set_material_above_web(VelaGtkApp *app, int above_web);
+
+/** Corner radius in px; use a large value (e.g. 999) for capsule/pill. */
+void vela_gtk_set_material_radius(VelaGtkApp *app, double radius_px);
 
 /** Opacity 0..1 for material host (visual only; hit policy stays separate). */
 void vela_gtk_set_material_opacity(VelaGtkApp *app, double opacity);

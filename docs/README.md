@@ -18,11 +18,13 @@ Architecture and domain guides for **Vela**, a TypeScript-first, WebView-first G
 5. [Materials](materials.md): system materials
 6. [Capabilities and plugins](capabilities-and-plugins.md): permissions
 7. [Cross-platform abstraction](cross-platform-abstraction.md): shared contracts vs multi-backend Shell + Zig
-8. [API contracts](api-contracts.md): `@vela/api` map
-9. [macOS spike architecture](macos-spike-architecture.md): Phase 1 Shell and hit plan
-10. [Linux spike architecture](linux-spike-architecture.md): parallel Tier 2 Linux composition spike
-11. [Design gaps](design-gaps.md): prioritized contract debt
-12. [Roadmap](roadmap.md): phased delivery
+8. [Run modes](run-modes.md): instant (dev) vs static (release; Bun compile-only)
+9. [App load and startup](app-load-and-startup.md): WebView cold start; prewarm, cache, shell snapshot (no Bun on device)
+10. [API contracts](api-contracts.md): `@vela/api` map
+11. [macOS spike architecture](macos-spike-architecture.md): Phase 1 Shell and hit plan
+12. [Linux spike architecture](linux-spike-architecture.md): parallel Tier 2 Linux composition spike
+13. [Design gaps](design-gaps.md): prioritized contract debt
+14. [Roadmap](roadmap.md): phased delivery
 
 ## Product docs
 
@@ -34,6 +36,8 @@ Architecture and domain guides for **Vela**, a TypeScript-first, WebView-first G
 | [Materials](materials.md) | Conceptual | `MaterialId`, buckets A–E, cross-OS map, Liquid Glass, paint plan |
 | [Capabilities and plugins](capabilities-and-plugins.md) | Conceptual | TS-first plugins, permissions, native bridges |
 | [Cross-platform abstraction](cross-platform-abstraction.md) | Conceptual | Contracts-first multi-backend Shell |
+| [Run modes](run-modes.md) | Conceptual | Instant vs static; Bun toolchain vs WebView App runtime |
+| [App load and startup](app-load-and-startup.md) | Conceptual | App WebView load costs; prewarm / code cache / shell snapshot |
 | [API contracts](api-contracts.md) | Reference | `@vela/api` module map |
 | [Technology stack](technology-stack.md) | Reference | Host and runtime choices |
 | [Platform support](platform-support.md) | Reference | Tiers and feature matrix |
@@ -85,6 +89,8 @@ These pages map external systems. They are **not** product contracts and must no
 | Cross-platform Shell shape | [cross-platform-abstraction.md](cross-platform-abstraction.md) + [ADR 0004](adr/0004-cross-platform-abstraction.md) |
 | Desktop Bun↔native interop | [ADR 0005](adr/0005-zig-interop-layer.md) (Zig control plane + C ABI) |
 | Capability authoring | [ADR 0006](adr/0006-ts-first-capabilities.md) + [ADR 0007](adr/0007-typescript-full-stack-host.md) + [capabilities-and-plugins.md](capabilities-and-plugins.md) |
+| Instant vs static assembly | [run-modes.md](run-modes.md) + [ADR 0007](adr/0007-typescript-full-stack-host.md) D7 |
+| App WebView load / prewarm | [app-load-and-startup.md](app-load-and-startup.md) |
 | Capability systems impl (Zig surface) | [ADR 0008](adr/0008-zig-systems-surface.md) (anti-scatter; not Host authoring language) |
 | Phase 1 macOS plan | [macos-spike-architecture.md](macos-spike-architecture.md) |
 | Design debt | [design-gaps.md](design-gaps.md) |

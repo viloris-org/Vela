@@ -112,8 +112,8 @@ export function installMockVela(sink: MockStatusSink): VelaPreloadBridge {
         drawRegionOverlays(update.opaqueRegions);
       },
       setMainOpaqueRegions(region: Region): void {
-        generation += 1;
-        sink.onGeneration(generation);
+        // Convenience alias for main webview — do not invent a second generation
+        // counter (callers that also use setOpaqueRegions would double-bump).
         log(
           `hit.setMainOpaqueRegions primitives=${region.primitives.length} gen=${generation} (layer=${MAIN_LAYER_ID})`,
         );

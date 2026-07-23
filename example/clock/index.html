@@ -21,7 +21,10 @@
           <span id="mode-pill" class="mode-pill">…</span>
         </div>
 
-        <div id="time" class="time" aria-label="Current time">--:--:--</div>
+        <div class="time-row" aria-label="Current time">
+          <div id="time" class="time">--:--:--</div>
+          <div id="ampm" class="ampm" hidden></div>
+        </div>
         <div id="date" class="date">—</div>
 
         <div class="controls" data-hit="controls">
@@ -46,6 +49,7 @@
       </div>
     </div>
 
-    <script type="module" src="./src/main.ts"></script>
+    <!-- Bundled by serve.ts for host WebView (WebKitGTK cannot run raw TS). -->
+    <script type="module" src="./main.js"></script>
   </body>
 </html>

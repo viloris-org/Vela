@@ -189,10 +189,10 @@ desktop requires Zig so Windows/Linux do not each reimplement Bun wiring.
 | Surface | Desktop | Mobile |
 |---------|---------|--------|
 | App UI JS | System WebView | System WebView — same `window.vela` |
-| App lifecycle / packaging hooks | Bun host (Phase 2+) | Native shell host |
-| Capability catalog + **Host TS** plugins | Bun = **reference** privileged runtime | Same plugin **source** on pluggable host backend when available; interim native `call` implementations OK ([ADR 0007](adr/0007-typescript-full-stack-host.md)) |
-| Build / bundle web assets | Bun (dev + CI) | Bun on CI/dev machines only |
-| Required Bun **inside** shipped app | Desktop reference yes (Phase 2+) | **No** — not required for App TS → system APIs |
+| App lifecycle / packaging hooks | Privileged Host (Phase 2+); Bun = **instant** reference | Native shell host |
+| Capability catalog + **Host TS** plugins | Bun = **instant** reference Host; static uses ship-shaped backend | Same plugin **source** on pluggable host backend when available; interim native `call` implementations OK ([ADR 0007](adr/0007-typescript-full-stack-host.md)) |
+| Build / bundle web assets | Bun (dev + CI + **static** builds) | Bun on CI/dev machines only |
+| Required Bun **inside** shipped app | **No** for App path; static mode forbids Bun as App JS engine ([run modes](run-modes.md)) | **No** — not required for App TS → system APIs |
 
 **iOS / Android system access from App TS** is always **indirect**: message pass
 → capability check → platform APIs. Composition (hit, materials, WebView embed)

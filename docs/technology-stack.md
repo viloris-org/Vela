@@ -41,9 +41,18 @@ Preferred stack for New_Vela and the main alternatives. Goal: reinforce WebView-
 - **Default home for capability plugins** written in TypeScript ([ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0007](adr/0007-typescript-full-stack-host.md))
 - May load **Zig systems / T1.5 modules** via narrow ABI after cap checks ([ADR 0008](adr/0008-zig-systems-surface.md))
 - Talks to Shell via typed RPC → Zig interop (ADR 0002, ADR 0005)
-- Builds/bundles web assets (toolchain); **not** required inside iOS/Android app packages for App TS → `window.vela` → system APIs
+- **Instant mode:** Bun may run as the desktop reference Host for plugin DX
+- **Static / release:** Bun is **compile/bundle only** on build machines; App JS always runs in the **system WebView**; mobile packages never require Bun ([run modes](run-modes.md), [ADR 0007](adr/0007-typescript-full-stack-host.md) D7)
 - Other Host backends may run the **same plugin source** (pluggable runtime); see ADR 0007
 - **Not a performance pick:** typical Host work is I/O, permission checks, and RPC orchestration. Bun’s server-oriented runtime advantages are incidental; they are not a product requirement. Do not keep heavy work in Host TS solely because Bun is “fast” — use Zig systems/T1.5 when OS kernels or measurement say so.
+
+### Web UI (App)
+
+- Any web stack (React, Vue, Svelte, Solid, vanilla)
+- Talks only through `window.vela` preload bridge
+- **Always executes in the system WebView** — never under Bun as the App engine
+- First-load tactics (prewarm, bytecode cache, shell HTML) live in
+  [App load and startup](app-load-and-startup.md) — **not** “ship Bun for faster V8”
 
 ### Zig interop (desktop Shell process)
 
@@ -74,11 +83,6 @@ Preferred stack for New_Vela and the main alternatives. Goal: reinforce WebView-
 - WebView embed + preload injection
 - Material backends + native component factories
 - Linked into the Shell process behind Zig’s C ABI (Phase 2+)
-
-### Web UI
-
-- Any web stack (React, Vue, Svelte, Solid, vanilla)
-- Talks only through `window.vela` preload bridge
 
 ## Platform WebView expectations
 
@@ -176,7 +180,9 @@ proven. It must not become the public composition API or the sole window stack.
 - [x] Desktop Bun↔native middle layer: **Zig** interop (RPC + C ABI; not UI core) - [ADR 0005](adr/0005-zig-interop-layer.md)
 - [x] Capability authoring default: **TypeScript on privileged Host**; desktop reference runtime Bun; native optional for T2 - [ADR 0006](adr/0006-ts-first-capabilities.md), [ADR 0007](adr/0007-typescript-full-stack-host.md)
 - [x] Performance story: **system WebView for App**; **T1.5 native for Host hot paths**; Bun not selected for server-style JS throughput - ADR 0007 D8
+- [x] Run modes: **instant** (dev; Bun Host OK) vs **static** (Bun compile-only; App JS in WebView) - [run-modes.md](run-modes.md), ADR 0007 D7
 - [ ] Windows L4 language (C++/WinRT vs Rust+WinRT) at Phase 4 start
+
 - [~] Zig C ABI header surface (`vela_shell_*` groups) checked in with `hosts/zig-shell` (header + mock vtable + codec; UDS/real L4 open)
 - [ ] Isolation-style interceptor between page and privilege (optional Phase 2+; ADR 0002 D7)
 - [x] Linux WebView + blur stack baseline: **GTK4 + WebKitGTK 6.0**, `gtk.blur` best-effort - [linux-spike-architecture.md](linux-spike-architecture.md)

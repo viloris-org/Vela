@@ -13,13 +13,19 @@ struct VelaGtkApp {
     GtkWidget *underlay;
     GtkWidget *webview;
     GtkWidget *material;
+    GtkWidget *material_label;
     GtkWidget *debug_label;
+    GtkCssProvider *material_css;
     WebKitUserContentManager *ucm;
     VelaGtkPointerDownFn on_pointer_down;
     void *on_pointer_down_userdata;
     VelaGtkBridgeMessageFn on_bridge_message;
     void *on_bridge_message_userdata;
     int32_t hit_route; /* 1 underlay 2 web 3 material */
+    int material_above_web; /* 1 toolbar-on-top, 0 glass-under-web */
+    double material_radius;
+    int material_w; /* last app-reported width (0 = unset) */
+    int material_h;
     double underlay_r;
     double underlay_g;
     double underlay_b;
@@ -30,6 +36,140 @@ struct VelaGtkApp {
     int height;
 };
 
+static void apply_material_css(VelaGtkApp *app)
+{
+    char css[640];
+    double r = app->material_radius;
+    int w = app->material_w > 0 ? app->material_w : 0;
+    int h = app->material_h > 0 ? app->material_h : 0;
+    if (r < 0.0) {
+        r = 999.0; /* capsule */
+    }
+    /*
+     * Translucent chrome stand-in for gtk.blur when compositor/snapshot
+     * blur is unavailable. Keep alpha low so underlay color bleeds through
+     * and stacked web card (also soft) does not read as a solid white slab.
+     * max-width/height pin the plate to app-reported card bounds.
+     */
+    if (w > 0 && h > 0) {
+        g_snprintf(
+            css,
+            sizeof(css),
+            ".vela-material {"
+            "  background-color: alpha(#f8fafc, 0.38);"
+            "  border-radius: %.0fpx;"
+            "  border: 1px solid alpha(white, 0.40);"
+            "  box-shadow:"
+            "    0 20px 48px alpha(black, 0.22),"
+            "    inset 0 1px 0 alpha(white, 0.45);"
+            "  min-width: %dpx; min-height: %dpx;"
+            "  max-width: %dpx; max-height: %dpx;"
+            "  padding: 0;"
+            "}"
+            ".vela-material-label {"
+            "  font-weight: 600;"
+            "  font-size: 11px;"
+            "  color: alpha(#0f172a, 0.45);"
+            "  opacity: 1;"
+            "  margin: 6px 10px;"
+            "}"
+            ".vela-debug {"
+            "  background-color: alpha(black, 0.55);"
+            "  color: white;"
+            "  padding: 4px 8px;"
+            "  border-radius: 6px;"
+            "  font-family: monospace;"
+            "  font-size: 11px;"
+            "}",
+            r,
+            w,
+            h,
+            w,
+            h);
+    } else {
+        g_snprintf(
+            css,
+            sizeof(css),
+            ".vela-material {"
+            "  background-color: alpha(#f8fafc, 0.38);"
+            "  border-radius: %.0fpx;"
+            "  border: 1px solid alpha(white, 0.40);"
+            "  box-shadow:"
+            "    0 20px 48px alpha(black, 0.22),"
+            "    inset 0 1px 0 alpha(white, 0.45);"
+            "  min-height: 0;"
+            "  padding: 0;"
+            "}"
+            ".vela-material-label {"
+            "  font-weight: 600;"
+            "  font-size: 11px;"
+            "  color: alpha(#0f172a, 0.45);"
+            "  opacity: 1;"
+            "  margin: 6px 10px;"
+            "}"
+            ".vela-debug {"
+            "  background-color: alpha(black, 0.55);"
+            "  color: white;"
+            "  padding: 4px 8px;"
+            "  border-radius: 6px;"
+            "  font-family: monospace;"
+            "  font-size: 11px;"
+            "}",
+            r);
+    }
+    if (app->material_css == NULL) {
+        app->material_css = gtk_css_provider_new();
+        gtk_style_context_add_provider_for_display(
+            gdk_display_get_default(),
+            GTK_STYLE_PROVIDER(app->material_css),
+            GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    }
+    gtk_css_provider_load_from_string(app->material_css, css);
+}
+
+static void reorder_material(VelaGtkApp *app)
+{
+    GtkOverlay *ov;
+    if (app->overlay == NULL || app->material == NULL || app->webview == NULL) {
+        return;
+    }
+    ov = GTK_OVERLAY(app->overlay);
+    /*
+     * GtkOverlay has no reorder API: remove + re-add paints later siblings on top.
+     * above_web: underlay → web → material → debug
+     * !above_web (clock glass): underlay → material → web → debug
+     */
+    g_object_ref(app->material);
+    g_object_ref(app->webview);
+    if (app->debug_label != NULL) {
+        g_object_ref(app->debug_label);
+    }
+
+    gtk_overlay_remove_overlay(ov, app->material);
+    gtk_overlay_remove_overlay(ov, app->webview);
+    if (app->debug_label != NULL) {
+        gtk_overlay_remove_overlay(ov, app->debug_label);
+    }
+
+    if (app->material_above_web) {
+        gtk_overlay_add_overlay(ov, app->webview);
+        gtk_overlay_add_overlay(ov, app->material);
+    } else {
+        gtk_overlay_add_overlay(ov, app->material);
+        gtk_overlay_add_overlay(ov, app->webview);
+    }
+    if (app->debug_label != NULL) {
+        gtk_overlay_add_overlay(ov, app->debug_label);
+        gtk_widget_set_can_target(app->debug_label, FALSE);
+    }
+
+    g_object_unref(app->material);
+    g_object_unref(app->webview);
+    if (app->debug_label != NULL) {
+        g_object_unref(app->debug_label);
+    }
+}
+
 static void underlay_draw(
     GtkDrawingArea *area,
     cairo_t *cr,
@@ -38,14 +178,50 @@ static void underlay_draw(
     gpointer user_data)
 {
     VelaGtkApp *app = user_data;
+    cairo_pattern_t *base;
+    cairo_pattern_t *warm;
+    cairo_pattern_t *cool;
     (void)area;
-    (void)width;
-    (void)height;
-    cairo_set_source_rgb(cr, app->underlay_r, app->underlay_g, app->underlay_b);
+    (void)app;
+
+    /* Match example/clock #underlay-sim: dark base + warm/cool blooms so glass reads. */
+    base = cairo_pattern_create_linear(0, 0, width * 0.35, height);
+    cairo_pattern_add_color_stop_rgb(base, 0.0, 0.118, 0.106, 0.294); /* #1e1b4b */
+    cairo_pattern_add_color_stop_rgb(base, 0.50, 0.059, 0.090, 0.165); /* #0f172a */
+    cairo_pattern_add_color_stop_rgb(base, 1.0, 0.075, 0.306, 0.290); /* #134e4a */
+    cairo_set_source(cr, base);
     cairo_paint(cr);
-    /* Visual cue for dogfood holes */
-    cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.12);
-    cairo_rectangle(cr, width * 0.15, height * 0.25, width * 0.7, height * 0.45);
+    cairo_pattern_destroy(base);
+
+    warm = cairo_pattern_create_radial(
+        width * 0.20,
+        height * 0.30,
+        0,
+        width * 0.20,
+        height * 0.30,
+        width * 0.55);
+    cairo_pattern_add_color_stop_rgba(warm, 0.0, 0.984, 0.749, 0.141, 0.55); /* #fbbf24 */
+    cairo_pattern_add_color_stop_rgba(warm, 0.55, 0.984, 0.749, 0.141, 0.0);
+    cairo_set_source(cr, warm);
+    cairo_paint(cr);
+    cairo_pattern_destroy(warm);
+
+    cool = cairo_pattern_create_radial(
+        width * 0.80,
+        height * 0.70,
+        0,
+        width * 0.80,
+        height * 0.70,
+        width * 0.50);
+    cairo_pattern_add_color_stop_rgba(cool, 0.0, 0.957, 0.447, 0.714, 0.42); /* #f472b6 */
+    cairo_pattern_add_color_stop_rgba(cool, 0.50, 0.957, 0.447, 0.714, 0.0);
+    cairo_set_source(cr, cool);
+    cairo_paint(cr);
+    cairo_pattern_destroy(cool);
+
+    /* Soft band cue for dogfood holes (under material/web). */
+    cairo_set_source_rgba(cr, 1.0, 1.0, 1.0, 0.06);
+    cairo_rectangle(cr, width * 0.12, height * 0.22, width * 0.76, height * 0.50);
     cairo_fill(cr);
 }
 
@@ -73,10 +249,11 @@ static void on_script_message(
 
 static void apply_hit_can_target(VelaGtkApp *app)
 {
-    /* Default: web receives events; material always on top for its allocation. */
+    /* Route from Shell resolveHit — only the winning sibling targets. */
     gtk_widget_set_can_target(app->underlay, app->hit_route == 1);
     gtk_widget_set_can_target(app->webview, app->hit_route == 2 || app->hit_route == 0);
-    gtk_widget_set_can_target(app->material, TRUE);
+    /* Material only captures when it wins hit (toolbar). Card glass is under web. */
+    gtk_widget_set_can_target(app->material, app->hit_route == 3);
 }
 
 static void on_click_pressed(
@@ -140,59 +317,53 @@ static void on_app_activate(GtkApplication *application, gpointer user_data)
         NULL);
     gtk_widget_set_hexpand(app->webview, TRUE);
     gtk_widget_set_vexpand(app->webview, TRUE);
-    /* WebView as overlay child on top of underlay, under material. */
-    gtk_overlay_add_overlay(GTK_OVERLAY(app->overlay), app->webview);
+    /* Transparent page chrome so underlay + material glass show through holes. */
+    {
+        GdkRGBA clear = { 0.0, 0.0, 0.0, 0.0 };
+        webkit_web_view_set_background_color(WEBKIT_WEB_VIEW(app->webview), &clear);
+    }
     gtk_widget_set_halign(app->webview, GTK_ALIGN_FILL);
     gtk_widget_set_valign(app->webview, GTK_ALIGN_FILL);
 
     app->material = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_add_css_class(app->material, "vela-material");
-    gtk_widget_set_halign(app->material, GTK_ALIGN_CENTER);
+    gtk_widget_set_halign(app->material, GTK_ALIGN_START);
     gtk_widget_set_valign(app->material, GTK_ALIGN_START);
-    gtk_widget_set_margin_top(app->material, 12);
-    gtk_widget_set_size_request(app->material, 480, 52);
-    {
-        GtkWidget *label = gtk_label_new("gtk.blur toolbar (degraded)");
-        gtk_widget_add_css_class(label, "vela-material-label");
-        gtk_box_append(GTK_BOX(app->material), label);
-    }
-    gtk_overlay_add_overlay(GTK_OVERLAY(app->overlay), app->material);
+    gtk_widget_set_hexpand(app->material, FALSE);
+    gtk_widget_set_vexpand(app->material, FALSE);
+    gtk_widget_set_overflow(app->material, GTK_OVERFLOW_HIDDEN);
+    gtk_widget_set_size_request(app->material, 120, 40);
+    app->material_label = gtk_label_new("gtk.blur");
+    gtk_widget_add_css_class(app->material_label, "vela-material-label");
+    gtk_widget_set_halign(app->material_label, GTK_ALIGN_START);
+    gtk_widget_set_valign(app->material_label, GTK_ALIGN_START);
+    gtk_box_append(GTK_BOX(app->material), app->material_label);
+    /* Hidden until layers.insert; apps drive bounds/stack. */
+    gtk_widget_set_visible(app->material, FALSE);
+    /* Default stack is under-web glass — badge would bleed through WebView. */
+    gtk_widget_set_visible(app->material_label, FALSE);
 
+    /* Default stack: material under web (card glass). Toolbar insert reorders above. */
+    app->material_above_web = 0;
+    app->material_radius = 28.0;
+    gtk_overlay_add_overlay(GTK_OVERLAY(app->overlay), app->material);
+    gtk_overlay_add_overlay(GTK_OVERLAY(app->overlay), app->webview);
+
+    /*
+     * Bottom-right so it does not stack on top of example status HUD
+     * (clock Status panel sits bottom-left).
+     */
     app->debug_label = gtk_label_new("lastHit: (none)");
     gtk_widget_add_css_class(app->debug_label, "vela-debug");
-    gtk_widget_set_halign(app->debug_label, GTK_ALIGN_START);
+    gtk_widget_set_halign(app->debug_label, GTK_ALIGN_END);
     gtk_widget_set_valign(app->debug_label, GTK_ALIGN_END);
-    gtk_widget_set_margin_start(app->debug_label, 8);
+    gtk_widget_set_margin_end(app->debug_label, 8);
     gtk_widget_set_margin_bottom(app->debug_label, 8);
     gtk_overlay_add_overlay(GTK_OVERLAY(app->overlay), app->debug_label);
     gtk_widget_set_can_target(app->debug_label, FALSE);
 
-    {
-        GtkCssProvider *provider = gtk_css_provider_new();
-        const char *css =
-            ".vela-material {"
-            "  background-color: alpha(@theme_bg_color, 0.55);"
-            "  border-radius: 999px;"
-            "  border: 1px solid alpha(@theme_fg_color, 0.18);"
-            "  padding: 0 20px;"
-            "  min-height: 52px;"
-            "}"
-            ".vela-material-label { font-weight: 600; }"
-            ".vela-debug {"
-            "  background-color: alpha(black, 0.55);"
-            "  color: white;"
-            "  padding: 4px 8px;"
-            "  border-radius: 6px;"
-            "  font-family: monospace;"
-            "  font-size: 11px;"
-            "}";
-        gtk_css_provider_load_from_string(provider, css);
-        gtk_style_context_add_provider_for_display(
-            gdk_display_get_default(),
-            GTK_STYLE_PROVIDER(provider),
-            GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-        g_object_unref(provider);
-    }
+    apply_material_css(app);
+    reorder_material(app);
 
     {
         GtkGesture *click = gtk_gesture_click_new();
@@ -235,6 +406,10 @@ VelaGtkApp *vela_gtk_app_create(const VelaGtkConfig *config)
     app->preload_js = config->preload_js ? g_strdup(config->preload_js) : NULL;
     app->initial_url = config->initial_url ? g_strdup(config->initial_url) : NULL;
     app->hit_route = 2;
+    app->material_above_web = 0;
+    app->material_radius = 28.0;
+    app->material_w = 0;
+    app->material_h = 0;
 
     app->application = gtk_application_new("dev.vela.linux-shell", G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app->application, "activate", G_CALLBACK(on_app_activate), app);
@@ -265,6 +440,10 @@ void vela_gtk_app_destroy(VelaGtkApp *app)
     g_free(app->title);
     g_free(app->preload_js);
     g_free(app->initial_url);
+    if (app->material_css != NULL) {
+        g_object_unref(app->material_css);
+        app->material_css = NULL;
+    }
     g_free(app);
 }
 
@@ -278,12 +457,37 @@ void vela_gtk_load_uri(VelaGtkApp *app, const char *uri)
 
 void vela_gtk_set_material_bounds(VelaGtkApp *app, const VelaGtkRect *bounds)
 {
+    int x;
+    int y;
+    int w;
+    int h;
     if (app == NULL || app->material == NULL || bounds == NULL) {
         return;
     }
-    gtk_widget_set_margin_top(app->material, (int)bounds->y);
-    gtk_widget_set_size_request(app->material, (int)bounds->width, (int)bounds->height);
-    /* Horizontal: center with approximate margin via width request only for spike. */
+    x = (int)(bounds->x + 0.5);
+    y = (int)(bounds->y + 0.5);
+    w = (int)(bounds->width + 0.5);
+    h = (int)(bounds->height + 0.5);
+    if (w < 1) {
+        w = 1;
+    }
+    if (h < 1) {
+        h = 1;
+    }
+    gtk_widget_set_halign(app->material, GTK_ALIGN_START);
+    gtk_widget_set_valign(app->material, GTK_ALIGN_START);
+    gtk_widget_set_hexpand(app->material, FALSE);
+    gtk_widget_set_vexpand(app->material, FALSE);
+    gtk_widget_set_margin_start(app->material, x > 0 ? x : 0);
+    gtk_widget_set_margin_top(app->material, y > 0 ? y : 0);
+    gtk_widget_set_margin_end(app->material, 0);
+    gtk_widget_set_margin_bottom(app->material, 0);
+    /* Pin glass plate to app-reported card bounds (avoid double/offset plate). */
+    app->material_w = w;
+    app->material_h = h;
+    gtk_widget_set_size_request(app->material, w, h);
+    apply_material_css(app);
+    gtk_widget_queue_allocate(app->material);
 }
 
 void vela_gtk_set_material_visible(VelaGtkApp *app, int visible)
@@ -292,6 +496,32 @@ void vela_gtk_set_material_visible(VelaGtkApp *app, int visible)
         return;
     }
     gtk_widget_set_visible(app->material, visible ? TRUE : FALSE);
+}
+
+void vela_gtk_set_material_above_web(VelaGtkApp *app, int above_web)
+{
+    if (app == NULL) {
+        return;
+    }
+    app->material_above_web = above_web ? 1 : 0;
+    /*
+     * Toolbar chrome (above web): keep the "gtk.blur" dogfood badge.
+     * Card glass (under web): hide it — the badge bleeds through the
+     * transparent WebView and collides with app brand text (clock "VELA").
+     */
+    if (app->material_label != NULL) {
+        gtk_widget_set_visible(app->material_label, above_web ? TRUE : FALSE);
+    }
+    reorder_material(app);
+}
+
+void vela_gtk_set_material_radius(VelaGtkApp *app, double radius_px)
+{
+    if (app == NULL) {
+        return;
+    }
+    app->material_radius = radius_px;
+    apply_material_css(app);
 }
 
 void vela_gtk_set_material_opacity(VelaGtkApp *app, double opacity)

@@ -132,7 +132,9 @@ pub const dogfood = struct {
     pub const toolbar_material = "toolbar-material";
 };
 
-pub fn bootstrapDogfood(tree: *LayerTree, content: geometry.Rect) !void {
+/// Underlay + primary webview only. Apps insert material via window.vela.
+/// Used by the live Shell so clock (card glass) and playground (toolbar) both drive insert.
+pub fn bootstrapMinimal(tree: *LayerTree, content: geometry.Rect) !void {
     var underlay: Layer = .{
         .kind = .native,
         .bounds = content,
@@ -150,6 +152,11 @@ pub fn bootstrapDogfood(tree: *LayerTree, content: geometry.Rect) !void {
     };
     try web.setId(dogfood.main_webview);
     _ = try tree.insert(web);
+}
+
+/// Full dogfood stack including toolbar material (self-test / hit fixtures).
+pub fn bootstrapDogfood(tree: *LayerTree, content: geometry.Rect) !void {
+    try bootstrapMinimal(tree, content);
 
     const toolbar_h: f64 = 52;
     const inset_x: f64 = 16;

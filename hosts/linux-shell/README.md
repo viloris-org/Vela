@@ -28,6 +28,16 @@ Requires **Zig 0.16.x**.
 
 ## Build / run
 
+**One terminal (preferred):** from the monorepo root:
+
+```bash
+bun run dev                              # clock + this shell
+bun run vela -- dev --app playground     # playground + this shell
+bun run vela -- dev --build              # force zig rebuild
+```
+
+**Manual two-terminal path:**
+
 ```bash
 cd hosts/linux-shell
 zig build
@@ -35,8 +45,14 @@ zig build test
 ./zig-out/bin/vela-linux-shell --version
 ./zig-out/bin/vela-linux-shell --self-test
 
-# Dogfood (other terminal first):
-#   bun run playground:serve
+# Preferred dogfood — clock example (other terminal first):
+#   bun run example:clock          # http://127.0.0.1:5174
+zig build run
+# or explicitly:
+zig build run -- --url http://127.0.0.1:5174
+
+# Playground composition HUD:
+#   bun run playground:serve       # http://127.0.0.1:5173
 zig build run -- --url http://127.0.0.1:5173
 ```
 
@@ -62,11 +78,16 @@ hosts/linux-shell/
 
 ## Dogfood layer ids
 
+Live Shell boots **minimal** stack (underlay + webview). Apps insert material.
+
 | Id | Role |
 |----|------|
 | `underlay-native` | Native underlay (z 5) |
 | `main-webview` | Primary WebView (z 10, web-shaped) |
-| `toolbar-material` | Capsule material toolbar (z 30) |
+| `clock-material` | Clock card glass (z 8, under web; example/clock) |
+| `toolbar-material` | Capsule material toolbar (z 30, above web; playground) |
+
+Self-test still uses `bootstrapDogfood` (includes pre-seeded toolbar) for hit fixtures.
 
 ## Materials honesty
 
@@ -101,6 +122,7 @@ Manual scenarios **L1–L6** in [testing-and-acceptance.md](../../docs/testing-a
 - [x] Dogfood bootstrap ids
 - [x] Degraded material host widget
 - [x] Session probe + Wayland feature map (`ext-background-effect` → window-behind)
+- [x] Host path for `example/clock` (bundle serve + material under web + web-shaped hit)
 - [ ] Apply background-effect blur region to material host
 - [ ] Manual L1–L6 with playground on display session
 - [ ] Optional: export C ABI for `hosts/zig-shell`

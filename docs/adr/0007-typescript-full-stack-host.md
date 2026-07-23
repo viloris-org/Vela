@@ -7,7 +7,7 @@
 
 - **Status**: Accepted
 - **Date**: 2026-07-23
-- **Amended**: 2026-07-23 (D8 performance assumptions; drop “Bun-centered” product identity)
+- **Amended**: 2026-07-23 (D8 performance assumptions; drop “Bun-centered” product identity; D7 static mode — Bun compile-only, App JS in WebView)
 - **Deciders**: Project maintainers
 
 ## Context
@@ -156,12 +156,22 @@ JS.
 | Use of Bun | Status |
 |------------|--------|
 | Workspace install, `bun test`, typecheck, bundling web assets | **Kept** — toolchain |
-| Desktop privileged host (reference) | **Default** for Phase 2+ desktop TS plugins |
-| Required in-process runtime on iOS/Android app packages | **Not required** |
+| Desktop privileged host (reference) | **Default for instant / Phase 2+ desktop plugin DX** — see [run modes](../run-modes.md) |
+| **Static / release packages** | Bun is **build-time only** (compile/bundle). App JS runs in the **system WebView**. No product requirement to ship Bun for App execution |
+| Required in-process runtime on iOS/Android app packages | **Not required** — and static mode is defined so desktop release validation matches that constraint |
 | Only way App TS can call system APIs | **False** — bridge is enough for App |
 | Product performance strategy | **Not Bun** — see D8 |
 
+**App JS placement (binding):** In every mode, App TypeScript executes in the
+**system WebView**, not under Bun. Instant mode may load App assets from a dev
+server; static mode loads **prebundled** assets. Bun may still run as a
+**separate privileged Host** on desktop for plugin DX; that process is not the
+App UI engine and is not required inside mobile packages.
+
 Docs and marketing should say **TypeScript-first full stack**, **WebView-first UI**, and **contracts-first Shell**. Prefer **“desktop reference Host: Bun”** over **“Bun-centered framework.”** If older prose says “Bun-centered,” read it as **desktop orchestration + repo tooling**, not “Bun binary inside every mobile app” and not “Bun runtime speed is the product bet.”
+
+Run-mode matrix (instant vs static assembly): **[run-modes.md](../run-modes.md)**.  
+App WebView load costs and prewarm/cache (no Bun on device to fix cold start): **[app-load-and-startup.md](../app-load-and-startup.md)**.
 
 ### D8 - Performance assumptions (engines vs native)
 
@@ -195,8 +205,9 @@ These are product assumptions, not microbenchmark claims:
 - Clear product north star: **TS speed on App and Host**, composition on Shell.
 - iOS/Android App authors keep one bridge mental model; system access is real and
   indirect.
-- Bun remains a practical desktop Host + toolchain without blocking mobile
-  architecture or overselling runtime performance.
+- Bun remains a practical desktop **instant** Host + toolchain without blocking
+  mobile architecture or overselling runtime performance; **static** packages
+  keep App JS in the WebView so iOS/Android ship shape is the release default.
 - Engine debates stay under “pluggable backend,” not under public app APIs.
 - Aligns capability tiers (ADR 0006) with cross-platform Shell (ADR 0004).
 

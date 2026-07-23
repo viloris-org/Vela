@@ -64,11 +64,13 @@ fn onBridgeMessage(userdata: ?*anyopaque, json: [*c]const u8, json_len: usize) c
         if (result.material_visible) |vis| {
             c.vela_gtk_set_material_visible(app, if (vis) 1 else 0);
         }
+        if (result.material_above_web) |above| {
+            c.vela_gtk_set_material_above_web(app, if (above) 1 else 0);
+        }
+        if (result.material_radius) |radius| {
+            c.vela_gtk_set_material_radius(app, radius);
+        }
         if (result.eval_js) |js| {
-            // js is a slice into reply_buf; need NUL for C
-            if (js.ptr[js.len] == 0 or js.len < ctx.state.reply_buf.len) {
-                // ensure NUL: reply_buf is larger; write terminator if possible
-            }
             var zbuf: [4096]u8 = undefined;
             if (js.len + 1 > zbuf.len) return;
             @memcpy(zbuf[0..js.len], js);
@@ -93,13 +95,17 @@ fn printUsage() void {
         \\  vela-linux-shell [--url URL] [--version] [--help] [--self-test]
         \\
         \\Options:
-        \\  --url URL     Navigate main WebView (default: http://127.0.0.1:5173)
+        \\  --url URL     Navigate main WebView (default: http://127.0.0.1:5174 clock)
         \\  --version     Print version and exit
         \\  --self-test   Run resolveHit fixtures (no GUI) and exit
         \\  --help        Show this help
         \\
-        \\Dogfood:
-        \\  bun run playground:serve   # other terminal
+        \\Host dogfood (clock — preferred minimal app):
+        \\  bun run example:clock                    # other terminal → :5174
+        \\  zig build run -- --url http://127.0.0.1:5174
+        \\
+        \\Playground (composition HUD):
+        \\  bun run playground:serve                 # → :5173
         \\  zig build run -- --url http://127.0.0.1:5173
         \\
         \\Deps: GTK4 + webkitgtk-6.0 (pkg-config). See README.md.
@@ -205,7 +211,8 @@ pub fn main(init: std.process.Init) !void {
     defer it.deinit();
     _ = it.skip(); // argv0
 
-    var url: []const u8 = "http://127.0.0.1:5173";
+    // Default: clock example (minimal host dogfood). Playground uses :5173.
+    var url: []const u8 = "http://127.0.0.1:5174";
     while (it.next()) |arg| {
         if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) {
             printUsage();
@@ -236,9 +243,11 @@ pub fn main(init: std.process.Init) !void {
     var ctx = AppCtx{
         .state = bridge.ShellState.init(gpa),
     };
-    try layers.bootstrapDogfood(&ctx.state.tree, .{ .x = 0, .y = 0, .width = 960, .height = 640 });
+    // Minimal stack: underlay + main-webview. Apps insert material via window.vela.
+    try layers.bootstrapMinimal(&ctx.state.tree, .{ .x = 0, .y = 0, .width = 960, .height = 640 });
 
     const probe = probeSession();
+    ctx.state.session_probe = probe;
     logSessionProbe(probe);
 
     const mat = materials.resolveMaterialLinux("apple.liquidGlass");
@@ -281,11 +290,10 @@ pub fn main(init: std.process.Init) !void {
     }
     ctx.gtk = app;
 
-    c.vela_gtk_set_material_visible(app, 1);
-    {
-        var rect = c.VelaGtkRect{ .x = 16, .y = 12, .width = 928, .height = 52 };
-        c.vela_gtk_set_material_bounds(app, &rect);
-    }
+    // Material host starts hidden; clock/playground layers.insert drives show + bounds.
+    c.vela_gtk_set_material_visible(app, 0);
+    // Underlay gradient stand-in (clock hides CSS underlay-sim when host is present).
+    c.vela_gtk_set_underlay_color(app, 0.12, 0.11, 0.29);
     c.vela_gtk_set_debug_hit_label(app, "lastHit: (waiting for click)");
 
     std.log.info("loading {s}", .{url});

@@ -12,7 +12,7 @@
 - **System materials** (for example Apple Liquid Glass via Swift) as first-class layers
 - **Capability** permissions for system APIs (default deny)
 - **iOS/Android**: App TS reaches OS features **indirectly** via the same bridge; device packages need not embed Bun
-- **Bun** is the **repo toolchain** and **desktop reference Host** — not a performance requirement and not required inside mobile app packages
+- **Bun** is the **repo toolchain** and **desktop instant-mode reference Host** — not a performance requirement; **static/release** uses Bun for compile/bundle only; App JS always runs in the system WebView (no Bun required in mobile packages)
 
 ## Positioning
 
@@ -39,6 +39,7 @@ New_Vela/
   hosts/linux-shell  Linux composition spike (GTK4 + WebKitGTK 6.0; Tier 2)
   apps/playground     Dogfood web content (mock window.vela in browser)
   example/clock       Minimal clock App TS sample (layers + hit + mock bridge)
+  tools/cli           Developer CLI (`bun run dev` — content + Shell)
   plugins/            (planned) camera, materials, …
 ```
 
@@ -51,17 +52,25 @@ cd /path/to/New_Vela
 bun install
 bun test
 bun run typecheck
-bun run playground:serve   # layout review with mock window.vela
-bun run example:clock      # minimal clock sample (http://localhost:5174)
+
+# One-terminal dogfood (Linux Shell + App content)
+bun run dev                       # clock on :5174 + vela-linux-shell
+bun run vela -- dev --app playground
+bun run vela -- dev --browser     # content only (browser mock)
+
+# Content-only (no Shell)
+bun run playground:serve   # layout review with mock window.vela (:5173)
+bun run example:clock      # minimal clock sample (:5174)
 
 # Zig interop skeleton (requires Zig 0.16.x)
 cd hosts/zig-shell && zig build && zig build test
 
-# Linux composition spike (requires GTK4 + webkitgtk-6.0 devel)
-cd hosts/linux-shell && zig build && zig build run -- --url http://127.0.0.1:5173
+# Manual two-terminal path (same as `bun run dev` under the hood)
+# terminal 1: bun run example:clock
+# terminal 2: cd hosts/linux-shell && zig build && zig build run -- --url http://127.0.0.1:5174
 ```
 
-Serve dogfood first in another terminal: `bun run playground:serve`.
+`bun run dev` starts the content server, waits until it is ready, builds `hosts/linux-shell` if the binary is missing, then launches the native window. Requires Zig 0.16.x, GTK4, and webkitgtk-6.0 devel. See [run modes](docs/run-modes.md).
 
 ## Core ideas
 
@@ -82,6 +91,8 @@ Style (mandatory): **[docs/writing-guidelines.md](docs/writing-guidelines.md)**.
 | Doc | Purpose |
 |-----|---------|
 | [Architecture](docs/architecture.md) | Split, principles, security spine |
+| [Run modes](docs/run-modes.md) | Instant (dev) vs static (release; Bun compile-only, App JS in WebView) |
+| [App load and startup](docs/app-load-and-startup.md) | WebView cold start: prewarm, code cache, shell snapshot (no Bun on device) |
 | [Composition and layers](docs/composition-and-layers.md) | Layer kinds, stack, insert/update |
 | [Input and hit testing](docs/input-and-hit-testing.md) | Two-level input model |
 | [Materials](docs/materials.md) | System materials and fallbacks |

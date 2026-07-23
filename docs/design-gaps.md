@@ -53,6 +53,8 @@ Update this file when ADRs land or `@vela/api` absorbs a rule.
 | G-P2-9 | Bun↔native middle language unrecorded | [ADR 0005](adr/0005-zig-interop-layer.md) | **closed** (Zig interop; C ABI to L4) |
 | G-P2-10 | Capability authoring language / TS-first model unrecorded | [ADR 0006](adr/0006-ts-first-capabilities.md) | **closed** (TS default; native optional T2) |
 | G-P2-11 | Full-stack TS goal, App vs Host, pluggable Host runtime, iOS indirect OS access unrecorded | [ADR 0007](adr/0007-typescript-full-stack-host.md) | **closed** (Accepted 2026-07-23) |
+| G-P2-14 | Instant vs static run modes; static = Bun compile-only, App JS in WebView | [run-modes.md](run-modes.md) + ADR 0007 D7 | **closed** (doc 2026-07-23; CLI/packaging still open) |
+| G-P2-15 | App WebView load model (prewarm, code cache, shell snapshot; no Bun-on-device) | [app-load-and-startup.md](app-load-and-startup.md) | **closed** (doc 2026-07-23; host prewarm + packaging cache keys still implement) |
 | G-P2-12 | Zig systems surface / anti-scatter for capabilities unrecorded | [ADR 0008](adr/0008-zig-systems-surface.md) | **closed** (Accepted 2026-07-23; impl still open) |
 | G-P1-13 | Shared `vela-sys` (or equivalent) layout + first domain (e.g. fs/clipboard) | ADR 0008 D6/D11; libs tree | open |
 | G-P1-11 | Host plugin registration ABI + sandboxed HostAPI surface | `@vela/api` + desktop Bun host; mobile backends | **partial** (`HostAPI` / `CapabilityHost` / `CallContext` in api; runtime dispatch in `@vela/host-core`; production sandbox + mobile backends still open) |

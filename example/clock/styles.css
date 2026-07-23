@@ -44,19 +44,46 @@ body {
   width: min(420px, calc(100% - 48px));
   padding: 28px 28px 22px;
   border-radius: 28px;
-  /* CSS stand-in; host inserts a real material layer behind this card. */
-  background: color-mix(in srgb, #f8fafc 78%, transparent);
-  border: 1px solid color-mix(in srgb, #fff 45%, transparent);
+  /*
+   * CSS glass stand-in for mock / pre-material. Tuned so browser mock and the
+   * host stack (native material + this card) land in a similar visual range:
+   * soft frosted plate, not a milky solid slab.
+   */
+  background: color-mix(in srgb, #f8fafc 52%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 48%, transparent);
   box-shadow:
-    0 24px 64px rgb(15 23 42 / 28%),
+    0 24px 64px rgb(15 23 42 / 26%),
     inset 0 1px 0 rgb(255 255 255 / 55%);
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(22px) saturate(1.15);
+  -webkit-backdrop-filter: blur(22px) saturate(1.15);
   text-align: center;
 }
 
 .clock-card[data-native-material="requested"] {
-  /* Soften CSS glass once a material layer was requested from the host. */
-  background: color-mix(in srgb, #f8fafc 42%, transparent);
+  /* Soften CSS glass once a material layer was requested (mock path still blurs). */
+  background: color-mix(in srgb, #f8fafc 36%, transparent);
+}
+
+/*
+ * Host: native .vela-material already paints glass + border under the WebView.
+ * Keep the web card nearly clear so we don't double the frosted plate /
+ * outline that reads as a misaligned second card.
+ */
+html[data-vela-host="1"] .clock-card {
+  background: color-mix(in srgb, #f8fafc 6%, transparent);
+  border-color: color-mix(in srgb, #fff 18%, transparent);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-vela-host="1"] .clock-card[data-native-material="requested"] {
+  background: transparent;
+  border-color: transparent;
+}
+
+html[data-vela-host="1"] #underlay-sim {
+  display: none;
 }
 
 .clock-eyebrow {
@@ -83,13 +110,37 @@ body {
   color: #475569;
 }
 
+.time-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.28em;
+  /* Keep 12h AM/PM on one line — never wrap "PM" into a second huge line. */
+  white-space: nowrap;
+  min-width: 0;
+}
+
 .time {
   font-variant-numeric: tabular-nums;
   font-weight: 620;
-  font-size: clamp(48px, 12vw, 72px);
+  font-size: clamp(40px, 10vw, 64px);
   letter-spacing: 0.02em;
   line-height: 1;
   color: #0f172a;
+}
+
+.ampm {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: clamp(16px, 3.2vw, 22px);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.ampm[hidden] {
+  display: none;
 }
 
 .date {

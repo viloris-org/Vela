@@ -183,12 +183,36 @@ privilege); treat the page as hostile dependency surface.
 
 IPC / typed RPC privilege boundaries: **[ADR 0002](adr/0002-ipc-privilege.md)** (Proposed). Plugin ABI and signing: planned **ADR 0003**. Cross-platform Shell shape: **[ADR 0004](adr/0004-cross-platform-abstraction.md)** (Accepted). Zig interop: **[ADR 0005](adr/0005-zig-interop-layer.md)** (Accepted). TS-first capabilities: **[ADR 0006](adr/0006-ts-first-capabilities.md)** (Accepted). TypeScript-first full stack / pluggable Host: **[ADR 0007](adr/0007-typescript-full-stack-host.md)** (Accepted).
 
-Phase 1 may run a **single Shell process** to prove composition; Phase 2 splits Bun host vs Shell over a socket. Executable macOS plan: [macOS spike architecture](macos-spike-architecture.md). Open design debt: [design gaps](design-gaps.md).
+Phase 1 may run a **single Shell process** to prove composition; Phase 2 splits
+privileged Host vs Shell over a socket. Executable macOS plan:
+[macOS spike architecture](macos-spike-architecture.md). Open design debt:
+[design gaps](design-gaps.md).
+
+## Run modes (instant vs static)
+
+Two **assembly** modes; one contract surface. Full matrix:
+[Run modes](run-modes.md).
+
+| Mode | Use | Bun | App JS |
+|------|-----|-----|--------|
+| **Instant** | Dev feedback, dogfood | Toolchain + optional desktop reference Host | System WebView (dev server / live load) |
+| **Static** | Pre-release verify, release | **Compile/bundle only** on build machines | System WebView **only** (packaged assets) |
+
+Static mode is the ship shape **iOS/Android already require** (no Bun in the app
+package for App execution). Prefer validating release gates on static trees so
+desktop does not lie about mobile.
+
+App **first load** still pays system WebView costs (process/context + script
+compile). Improve that with Shell **prewarm**, **code-cache-friendly** packaged
+assets, and optional **shell first-paint** HTML — not by embedding Bun. See
+[App load and startup](app-load-and-startup.md).
 
 ## Related documents
 
 | Doc | Purpose |
 |-----|---------|
+| [Run modes](run-modes.md) | Instant vs static assembly; Bun as toolchain in static |
+| [App load and startup](app-load-and-startup.md) | WebView load layers; prewarm, cache, shell snapshot |
 | [Composition and layers](composition-and-layers.md) | Layer kinds, stack, insert/update |
 | [Input and hit testing](input-and-hit-testing.md) | HitPolicy, WindowInputMode, web-shaped |
 | [Materials](materials.md) | MaterialId, fallback, backdrop sources |

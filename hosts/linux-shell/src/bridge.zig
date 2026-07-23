@@ -5,15 +5,33 @@ const geometry = @import("geometry.zig");
 const layers = @import("layers.zig");
 const materials = @import("materials.zig");
 
+const session = @import("session.zig");
+
 pub const ShellState = struct {
     tree: layers.LayerTree = .{},
     allocator: std.mem.Allocator,
     last_material: ?materials.ResolvedMaterial = null,
+    /// Display probe for honest material paint plans on insert.
+    session_probe: session.Probe = .{},
+    /// Active material layer id (single material host widget in Phase 1L).
+    material_layer_id: [layers.max_id_len]u8 = undefined,
+    material_layer_id_len: usize = 0,
     reply_buf: [4096]u8 = undefined,
     body_buf: [512]u8 = undefined,
+    event_buf: [1024]u8 = undefined,
 
     pub fn init(allocator: std.mem.Allocator) ShellState {
         return .{ .allocator = allocator };
+    }
+
+    pub fn materialId(self: *const ShellState) []const u8 {
+        return self.material_layer_id[0..self.material_layer_id_len];
+    }
+
+    pub fn setMaterialId(self: *ShellState, id: []const u8) void {
+        const n = @min(id.len, layers.max_id_len);
+        @memcpy(self.material_layer_id[0..n], id[0..n]);
+        self.material_layer_id_len = n;
     }
 };
 
@@ -21,6 +39,9 @@ pub const BridgeResult = struct {
     eval_js: ?[]const u8 = null,
     material_bounds: ?geometry.Rect = null,
     material_visible: ?bool = null,
+    /// true → material overlay above WebView (toolbar chrome); false → under WebView (card glass).
+    material_above_web: ?bool = null,
+    material_radius: ?f64 = null,
     log: ?[]const u8 = null,
 };
 
@@ -43,6 +64,48 @@ fn parseRect(obj: std.json.ObjectMap) ?geometry.Rect {
         .width = jsonFloat(w),
         .height = jsonFloat(h),
     };
+}
+
+fn parseHitPolicy(spec: std.json.ObjectMap) layers.HitPolicy {
+    const hp = spec.get("hitPolicy") orelse return .{ .mode = .solid };
+    const obj = switch (hp) {
+        .object => |o| o,
+        else => return .{ .mode = .solid },
+    };
+    const mode_v = obj.get("mode") orelse return .{ .mode = .solid };
+    const mode_s = switch (mode_v) {
+        .string => |s| s,
+        else => return .{ .mode = .solid },
+    };
+    if (std.mem.eql(u8, mode_s, "transparent")) return .{ .mode = .transparent };
+    if (std.mem.eql(u8, mode_s, "web-shaped") or std.mem.eql(u8, mode_s, "web_shaped")) {
+        return .{ .mode = .web_shaped };
+    }
+    if (std.mem.eql(u8, mode_s, "opaque") or std.mem.eql(u8, mode_s, "solid")) {
+        return .{ .mode = .solid };
+    }
+    return .{ .mode = .solid };
+}
+
+fn parseShapeRadius(spec: std.json.ObjectMap) ?f64 {
+    const shape = spec.get("shape") orelse return null;
+    const obj = switch (shape) {
+        .object => |o| o,
+        else => return null,
+    };
+    const type_v = obj.get("type") orelse return null;
+    const type_s = switch (type_v) {
+        .string => |s| s,
+        else => return null,
+    };
+    if (std.mem.eql(u8, type_s, "capsule")) return -1; // sentinel: full pill
+    if (obj.get("radius")) |rv| {
+        return switch (rv) {
+            .float, .integer => jsonFloat(rv),
+            else => null,
+        };
+    }
+    return null;
 }
 
 fn parseRegion(value: std.json.Value) geometry.Region {
@@ -99,6 +162,29 @@ fn makeReply(state: *ShellState, id: []const u8, ok: bool, body: []const u8) []c
     ) catch "void 0";
 }
 
+/// Reply + optional material.degraded event in one eval.
+fn makeReplyWithDegrade(
+    state: *ShellState,
+    id: []const u8,
+    body: []const u8,
+    paint: materials.PaintResult,
+) []const u8 {
+    const reply = makeReply(state, id, true, body);
+    if (!paint.degraded) return reply;
+
+    const reason = paint.reason orelse "no-backdrop-blur";
+    const event = std.fmt.bufPrint(
+        &state.event_buf,
+        ";window.__velaHostDispatch({{type:'event',channel:'material.degraded',payload:{{material:'{s}',degraded:true,reason:'{s}'}}}})",
+        .{ paint.effective, reason },
+    ) catch return reply;
+
+    // Append event after reply into reply_buf if space remains.
+    if (reply.len + event.len >= state.reply_buf.len) return reply;
+    @memcpy(state.reply_buf[reply.len .. reply.len + event.len], event);
+    return state.reply_buf[0 .. reply.len + event.len];
+}
+
 fn upsertLayer(tree: *layers.LayerTree, layer: layers.Layer) !void {
     if (tree.find(layer.id())) |existing| {
         existing.* = layer;
@@ -106,6 +192,11 @@ fn upsertLayer(tree: *layers.LayerTree, layer: layers.Layer) !void {
         return;
     }
     _ = try tree.insert(layer);
+}
+
+fn webZ(tree: *layers.LayerTree) i32 {
+    if (tree.find(layers.dogfood.main_webview)) |web| return web.z_index;
+    return 10;
 }
 
 pub fn handleMessage(state: *ShellState, json_text: []const u8) BridgeResult {
@@ -223,15 +314,32 @@ pub fn handleMessage(state: *ShellState, json_text: []const u8) BridgeResult {
         if (std.mem.eql(u8, kind_s, "material")) {
             layer.kind = .material;
             layer.z_index = 30;
-            layer.hit_policy = .{ .mode = .solid };
-            const paint = materials.paintPlanGtkBlur();
+            layer.hit_policy = parseHitPolicy(spec);
+            if (spec.get("zIndex")) |z| layer.z_index = @intFromFloat(jsonFloat(z));
+            // Prefer requested material id when present (maps foreign → gtk.blur on Linux).
+            const requested: []const u8 = if (spec.get("material")) |mv| switch (mv) {
+                .string => |s| s,
+                else => "gtk.blur",
+            } else "gtk.blur";
+            const paint = materials.planPaint(requested, state.session_probe);
             state.last_material = materials.toResolved(paint);
-            if (bounds) |r| {
-                layer.bounds = r;
-                result.material_bounds = r;
-            }
+            state.setMaterialId(lid);
+            if (bounds) |r| layer.bounds = r;
+            layer.visible = true;
+            result.material_bounds = layer.bounds;
             result.material_visible = true;
+            result.material_above_web = layer.z_index > webZ(&state.tree);
+            result.material_radius = parseShapeRadius(spec);
             result.log = "layers.insert material (paint plan applied)";
+
+            upsertLayer(&state.tree, layer) catch {
+                result.eval_js = makeReply(state, id, false, "{code:'capacity',message:'layer table full'}");
+                return result;
+            };
+
+            const body = std.fmt.bufPrint(&state.body_buf, "{{id:'{s}'}}", .{lid}) catch "{id:'layer'}";
+            result.eval_js = makeReplyWithDegrade(state, id, body, paint);
+            return result;
         } else if (std.mem.eql(u8, kind_s, "webview")) {
             layer.kind = .webview;
             layer.hit_policy = .{ .mode = .web_shaped };
@@ -258,7 +366,82 @@ pub fn handleMessage(state: *ShellState, json_text: []const u8) BridgeResult {
         return result;
     }
 
-    if (std.mem.eql(u8, method, "layers.update") or std.mem.eql(u8, method, "layers.remove")) {
+    if (std.mem.eql(u8, method, "layers.update")) {
+        const obj = switch (args orelse .null) {
+            .object => |o| o,
+            else => {
+                result.eval_js = makeReply(state, id, false, "{code:'invalid',message:'layers.update needs object'}");
+                return result;
+            },
+        };
+        const lid = switch (obj.get("id") orelse .null) {
+            .string => |s| s,
+            else => {
+                result.eval_js = makeReply(state, id, false, "{code:'invalid',message:'layers.update needs id'}");
+                return result;
+            },
+        };
+        const patch = switch (obj.get("patch") orelse .null) {
+            .object => |o| o,
+            else => {
+                result.eval_js = makeReply(state, id, true, "null");
+                return result;
+            },
+        };
+
+        if (state.tree.find(lid)) |layer| {
+            if (patch.get("bounds")) |b| {
+                if (switch (b) {
+                    .object => |o| parseRect(o),
+                    else => null,
+                }) |r| {
+                    layer.bounds = r;
+                    if (layer.kind == .material) {
+                        result.material_bounds = r;
+                        result.material_visible = layer.visible;
+                        result.material_above_web = layer.z_index > webZ(&state.tree);
+                    }
+                }
+            }
+            if (patch.get("zIndex")) |z| {
+                layer.z_index = @intFromFloat(jsonFloat(z));
+                if (layer.kind == .material) {
+                    result.material_above_web = layer.z_index > webZ(&state.tree);
+                }
+            }
+            if (patch.get("shape")) |_| {
+                // Re-parse shape from patch root: { shape: {...} }
+                result.material_radius = parseShapeRadius(patch);
+            }
+            if (patch.get("hitPolicy")) |_| {
+                // rebuild from a synthetic view: hitPolicy is on patch root
+                layer.hit_policy = parseHitPolicy(patch);
+            }
+            result.log = "layers.update ok";
+        } else {
+            result.log = "layers.update: unknown id";
+        }
+
+        result.eval_js = makeReply(state, id, true, "null");
+        return result;
+    }
+
+    if (std.mem.eql(u8, method, "layers.remove")) {
+        const lid = switch (args orelse .null) {
+            .string => |s| s,
+            .object => |o| switch (o.get("id") orelse .null) {
+                .string => |s| s,
+                else => "",
+            },
+            else => "",
+        };
+        if (lid.len > 0) {
+            _ = state.tree.remove(lid);
+            if (std.mem.eql(u8, lid, state.materialId())) {
+                result.material_visible = false;
+                state.material_layer_id_len = 0;
+            }
+        }
         result.eval_js = makeReply(state, id, true, "null");
         return result;
     }

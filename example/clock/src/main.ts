@@ -46,19 +46,23 @@ function pad2(n: number): string {
   return n.toString().padStart(2, "0");
 }
 
-function formatTime(now: Date, format: Format): string {
+/** Digits only; AM/PM lives in a separate smaller element so it never wraps. */
+function formatTimeDigits(now: Date, format: Format): string {
   let hours = now.getHours();
   const minutes = pad2(now.getMinutes());
   const seconds = pad2(now.getSeconds());
   if (format === "24h") {
     return `${pad2(hours)}:${minutes}:${seconds}`;
   }
-  const ampm = hours >= 12 ? "PM" : "AM";
   hours = hours % 12;
   if (hours === 0) {
     hours = 12;
   }
-  return `${hours}:${minutes}:${seconds} ${ampm}`;
+  return `${hours}:${minutes}:${seconds}`;
+}
+
+function formatAmPm(now: Date): "AM" | "PM" {
+  return now.getHours() >= 12 ? "PM" : "AM";
 }
 
 function formatDate(now: Date): string {
@@ -89,6 +93,11 @@ function collectOpaqueRegions(): Region {
   };
 }
 
+/**
+ * Push web-shaped opaque regions for the main WebView.
+ * Prefer the generation-bearing API only (docs: setMainOpaqueRegions is a
+ * convenience alias — calling both double-applies and confuses mock gen).
+ */
 function pushRegions(
   vela: VelaPreloadBridge,
   generation: { value: number },
@@ -102,9 +111,12 @@ function pushRegions(
     opaqueRegions: region,
     generation: generation.value,
   });
-  vela.hit.setMainOpaqueRegions(region);
 }
 
+/**
+ * Glass card sits *under* the WebView (z 8 < main-webview 10) so clock UI stays
+ * hittable via web-shaped regions. Host paints material behind a transparent WebView.
+ */
 async function ensureMaterialCard(vela: VelaPreloadBridge): Promise<void> {
   const card = requireEl("clock-card");
   const bounds = clientRect(card);
@@ -116,12 +128,14 @@ async function ensureMaterialCard(vela: VelaPreloadBridge): Promise<void> {
       kind: "material",
       material: "apple.liquidGlass",
       bounds,
-      zIndex: 20,
+      // Between underlay (5) and main-webview (10): backdrop glass, not chrome-on-top.
+      zIndex: 8,
       shape: { type: "roundedRect", radius: CARD_RADIUS },
       samples: { type: "layers-below" },
       variant: "regular",
-      interactive: true,
-      hitPolicy: { mode: "opaque" },
+      interactive: false,
+      // Web owns card hits (web-shaped). Material is visual only.
+      hitPolicy: { mode: "transparent" },
     });
     card.dataset["nativeMaterial"] = "requested";
     appendLog(logEl, `layers.insert material ok id=${result.id}`);
@@ -133,18 +147,48 @@ async function ensureMaterialCard(vela: VelaPreloadBridge): Promise<void> {
   }
 }
 
-function startClock(
-  format: { value: Format },
-  onTick?: () => void,
-): () => void {
-  const timeEl = requireEl("time");
-  const dateEl = requireEl("date");
+async function syncMaterialBounds(vela: VelaPreloadBridge): Promise<void> {
+  const card = requireEl("clock-card");
+  try {
+    await vela.layers.update(MATERIAL_LAYER_ID, {
+      bounds: clientRect(card),
+    });
+  } catch {
+    // Host may not support update yet; insert already set initial bounds.
+  }
+}
 
+/** After layout-affecting UI changes, re-push regions + material bounds. */
+function syncLayout(
+  vela: VelaPreloadBridge,
+  generation: { value: number },
+): void {
+  // Two rAFs: first applies DOM/text changes, second reads settled boxes.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      pushRegions(vela, generation);
+      void syncMaterialBounds(vela);
+    });
+  });
+}
+
+function paintClock(format: Format): void {
+  const now = new Date();
+  requireEl("time").textContent = formatTimeDigits(now, format);
+  const ampm = requireEl("ampm");
+  if (format === "12h") {
+    ampm.hidden = false;
+    ampm.textContent = formatAmPm(now);
+  } else {
+    ampm.hidden = true;
+    ampm.textContent = "";
+  }
+  requireEl("date").textContent = formatDate(now);
+}
+
+function startClock(format: { value: Format }): () => void {
   const tick = (): void => {
-    const now = new Date();
-    timeEl.textContent = formatTime(now, format.value);
-    dateEl.textContent = formatDate(now);
-    onTick?.();
+    paintClock(format.value);
   };
 
   tick();
@@ -164,6 +208,10 @@ function wireUi(
       "aria-pressed",
       state.format.value === "24h" ? "true" : "false",
     );
+    // Immediate repaint (don't wait up to 250ms for the interval).
+    paintClock(state.format.value);
+    // 12h↔24h can change card width slightly; keep material + hit in sync.
+    syncLayout(vela, state.generation);
     appendLog(
       requireEl("status-log"),
       `format → ${state.format.value}`,
@@ -172,23 +220,28 @@ function wireUi(
 
   requireEl("btn-push-regions").addEventListener("click", () => {
     pushRegions(vela, state.generation);
+    void syncMaterialBounds(vela);
     appendLog(requireEl("status-log"), "pushed opaque regions");
   });
 
   window.addEventListener("resize", () => {
-    pushRegions(vela, state.generation);
+    syncLayout(vela, state.generation);
   });
 }
 
 async function main(): Promise<void> {
   const modePill = requireEl("mode-pill");
   const logEl = requireEl("status-log");
+  // Host preload injects window.vela before document scripts run.
   const hostInjected = window.vela !== undefined;
 
   let vela: VelaPreloadBridge;
   if (hostInjected && window.vela) {
     vela = window.vela;
     modePill.textContent = `host ${vela.version}`;
+    // Native underlay is painted by the Shell; hide the CSS stand-in.
+    requireEl("underlay-sim").style.display = "none";
+    document.documentElement.dataset["velaHost"] = "1";
   } else {
     vela = installMockVela({
       onLog: (line) => appendLog(logEl, line),
@@ -213,14 +266,20 @@ async function main(): Promise<void> {
 
   wireUi(vela, state);
   startClock(state.format);
+
+  // Layout must settle once so card bounds match host logical coords.
+  await new Promise<void>((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+
   await ensureMaterialCard(vela);
   pushRegions(vela, state.generation);
 
   appendLog(
     logEl,
     hostInjected
-      ? "ready — using host window.vela"
-      : "ready — mock bridge; open in a Vela host for real material/hit",
+      ? "ready — host window.vela (material + web-shaped hit)"
+      : "ready — mock only; use linux-shell --url for host path",
   );
 }
 
