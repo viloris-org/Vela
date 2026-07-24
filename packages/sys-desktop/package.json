@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Desktop Host systems facades (notify + tray + dialog) for linux / macos / windows — T1 inject into HostAPI.sys",
+  "description": "Desktop Host systems facades (notify + tray + dialog + clipboard + fs) for linux / macos / windows — T1 inject into HostAPI.sys",
   "exports": {
     ".": {
       "types": "./src/index.ts",

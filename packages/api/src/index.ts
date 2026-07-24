@@ -181,6 +181,23 @@ export type {
 } from "./capability/dialog.ts";
 export { DialogMethods } from "./capability/dialog.ts";
 
+export type {
+  FsReadOptions,
+  FsReadResult,
+  FsWriteOptions,
+  FsWriteResult,
+  FsMethod,
+  NormalizeAppPathResult,
+} from "./capability/fs.ts";
+export { FsMethods, normalizeAppRelativePath } from "./capability/fs.ts";
+
+export type {
+  ClipboardWriteOptions,
+  ClipboardWriteResult,
+  ClipboardReadResult,
+  ClipboardMethod,
+} from "./capability/clipboard.ts";
+export { ClipboardMethods } from "./capability/clipboard.ts";
 
 export type {
   AppManifest,

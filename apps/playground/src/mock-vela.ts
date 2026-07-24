@@ -1,6 +1,7 @@
 /**
  * In-page mock when host preload has not injected window.vela.
  * Logs bridge calls and draws region overlays for layout review.
+ * Optional capability grants exercise allow/deny for clipboard + fs.
  */
 import type {
   InsertLayerSpec,
@@ -10,11 +11,25 @@ import type {
   VelaPreloadBridge,
   WebShapeUpdate,
 } from "@vela/api";
+import {
+  BuiltinPermissions,
+  ClipboardMethods,
+  FsMethods,
+  normalizeAppRelativePath,
+} from "@vela/api";
 
 export type MockHudSink = {
   onLog: (line: string) => void;
   onGeneration: (gen: number) => void;
   onHit: (text: string) => void;
+};
+
+export type MockCapabilityController = {
+  /** Current grant set (mutable for dogfood toggles). */
+  permissions: Set<string>;
+  grant(permission: string): void;
+  revoke(permission: string): void;
+  has(permission: string): boolean;
 };
 
 const MAIN_LAYER_ID = "main-webview";
@@ -66,19 +81,100 @@ function drawRegionOverlays(region: Region): void {
   }
 }
 
-export function installMockVela(hud: MockHudSink): VelaPreloadBridge {
+export function installMockVela(
+  hud: MockHudSink,
+  options?: {
+    /** Initial permissions (default: none — default-deny). */
+    readonly permissions?: readonly string[];
+  },
+): VelaPreloadBridge & { readonly mockCaps: MockCapabilityController } {
   let generation = 0;
   const layers = new Map<LayerId, InsertLayerSpec>();
+  const permissions = new Set(options?.permissions ?? []);
+  const files = new Map<string, string>();
+  let clipboardText = "";
+
+  const mockCaps: MockCapabilityController = {
+    permissions,
+    grant(permission) {
+      permissions.add(permission);
+    },
+    revoke(permission) {
+      permissions.delete(permission);
+    },
+    has(permission) {
+      return permissions.has(permission);
+    },
+  };
 
   const log = (msg: string): void => {
     console.info(`[vela mock] ${msg}`);
     hud.onLog(msg);
   };
 
-  const bridge: VelaPreloadBridge = {
+  function requirePerm(permission: string, method: string): void {
+    if (!permissions.has(permission)) {
+      throw new Error(`mock: capability denied: ${permission} (${method})`);
+    }
+  }
+
+  function asRecord(args: unknown): Record<string, unknown> {
+    if (args !== null && typeof args === "object" && !Array.isArray(args)) {
+      return args as Record<string, unknown>;
+    }
+    return {};
+  }
+
+  const bridge: VelaPreloadBridge & { mockCaps: MockCapabilityController } = {
     version: "0.0.1-mock",
+    mockCaps,
 
     async call(method: string, args?: unknown): Promise<unknown> {
+      const o = asRecord(args);
+
+      if (method === ClipboardMethods.write) {
+        requirePerm(BuiltinPermissions.ClipboardWrite, method);
+        if (typeof o.text !== "string") {
+          throw new Error("clipboard.write: text must be a string");
+        }
+        clipboardText = o.text;
+        log(`call(${method}) → ok`);
+        return { ok: true };
+      }
+      if (method === ClipboardMethods.read) {
+        requirePerm(BuiltinPermissions.ClipboardRead, method);
+        log(`call(${method}) → ok`);
+        return { text: clipboardText };
+      }
+      if (method === FsMethods.read) {
+        if (typeof o.path !== "string") {
+          throw new Error("fs.read: path must be a string");
+        }
+        const norm = normalizeAppRelativePath(o.path);
+        if (!norm.ok) throw new Error(`fs.read: ${norm.reason}`);
+        requirePerm(BuiltinPermissions.FsAppRead, method);
+        const data = files.get(norm.path);
+        if (data === undefined) {
+          throw new Error(`fs.read: not found: ${norm.path}`);
+        }
+        log(`call(${method}, ${norm.path}) → ok`);
+        return { data };
+      }
+      if (method === FsMethods.write) {
+        if (typeof o.path !== "string") {
+          throw new Error("fs.write: path must be a string");
+        }
+        if (typeof o.data !== "string") {
+          throw new Error("fs.write: data must be a string");
+        }
+        const norm = normalizeAppRelativePath(o.path);
+        if (!norm.ok) throw new Error(`fs.write: ${norm.reason}`);
+        requirePerm(BuiltinPermissions.FsAppWrite, method);
+        files.set(norm.path, o.data);
+        log(`call(${method}, ${norm.path}) → ok`);
+        return { ok: true };
+      }
+
       log(`call(${method}, ${JSON.stringify(args ?? null)}) → deny-all stub`);
       throw new Error(`mock: capability denied: ${method}`);
     },

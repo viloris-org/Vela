@@ -36,6 +36,11 @@ Package: `packages/api/` Entry: `packages/api/src/index.ts`
 | `capability/match-scope.ts` | path/url scope patterns (`*`, `**`) |
 | `capability/layer-gates.ts` | insert-layer permission requirements |
 | `capability/host.ts` | `CapabilityHost`, `HostAPI`, `CallContext`, `CapabilityDeniedError` |
+| `capability/notify.ts` | `NotifyMethods`, show/close options + events |
+| `capability/tray.ts` | `TrayMethods`, tray create/update/remove + events |
+| `capability/dialog.ts` | `DialogMethods`, open/save options + results |
+| `capability/clipboard.ts` | `ClipboardMethods`, read/write text |
+| `capability/fs.ts` | `FsMethods`, `normalizeAppRelativePath`, read/write |
 | `manifest/types.ts` | `AppManifest` + `parseAppManifest` (JSON schema v1) |
 | `project/package.ts` | `VelaPackage` + `parseVelaPackage` / `VELA_PACKAGE_MARKER` (`vela.json`) |
 | `project/workspace.ts` | `VelaWorkspace` + `parseVelaWorkspace` / monorepo scan parents |

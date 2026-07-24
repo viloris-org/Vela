@@ -73,8 +73,32 @@
         "typescript": "^5.8.0",
       },
     },
+    "plugins/clipboard": {
+      "name": "@vela/plugin-clipboard",
+      "version": "0.0.1",
+      "dependencies": {
+        "@vela/api": "workspace:*",
+        "@vela/host-core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.8.0",
+      },
+    },
     "plugins/dialog": {
       "name": "@vela/plugin-dialog",
+      "version": "0.0.1",
+      "dependencies": {
+        "@vela/api": "workspace:*",
+        "@vela/host-core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.8.0",
+      },
+    },
+    "plugins/fs": {
+      "name": "@vela/plugin-fs",
       "version": "0.0.1",
       "dependencies": {
         "@vela/api": "workspace:*",
@@ -123,7 +147,11 @@
 
     "@vela/playground": ["@vela/playground@workspace:apps/playground"],
 
+    "@vela/plugin-clipboard": ["@vela/plugin-clipboard@workspace:plugins/clipboard"],
+
     "@vela/plugin-dialog": ["@vela/plugin-dialog@workspace:plugins/dialog"],
+
+    "@vela/plugin-fs": ["@vela/plugin-fs@workspace:plugins/fs"],
 
     "@vela/plugin-notify": ["@vela/plugin-notify@workspace:plugins/notify"],
 

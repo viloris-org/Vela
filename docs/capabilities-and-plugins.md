@@ -121,6 +121,8 @@ First-party samples in-repo:
 | `@vela/plugin-notify` | `notify.show`, `notify.close` | `notify:show` | inject `sys.notify` |
 | `@vela/plugin-tray` | `tray.create`, `tray.update`, `tray.remove` | `tray:manage` | inject `sys.tray` |
 | `@vela/plugin-dialog` | `dialog.open`, `dialog.save` | `dialog:open`, `dialog:save` | inject `sys.dialog` |
+| `@vela/plugin-clipboard` | `clipboard.read`, `clipboard.write` | `clipboard:read`, `clipboard:write` | inject `sys.clipboard` |
+| `@vela/plugin-fs` | `fs.read`, `fs.write` | `fs:app-read`, `fs:app-write` | inject `sys.fs` (sandboxed root) |
 | `@vela/sys-desktop` | — (Host inject) | — | **linux / macos / windows** real facades |
 
 Desktop Host wiring:
@@ -128,12 +130,17 @@ Desktop Host wiring:
 ```ts
 import { createDesktopSystems } from "@vela/sys-desktop";
 
-const desktop = createDesktopSystems({ platform: "auto", events });
-// desktop.sys → HostAPI.sys (notify + tray + dialog); trayMode: "memory" for headless CI
+const desktop = createDesktopSystems({
+  platform: "auto",
+  events,
+  fs: { root: appDataDir }, // optional; omit → sys.fs undefined
+});
+// desktop.sys → HostAPI.sys (notify + tray + dialog + clipboard [+ fs]);
+// trayMode: "memory" for headless CI
 ```
 
 ```text
-plugins/notify/   # or clipboard/, tray/, dialog/, …
+plugins/notify/   # or clipboard/, fs/, tray/, dialog/, …
   package.json
   src/
     permissions.ts   # defineCapability catalog entries
@@ -416,7 +423,7 @@ plugin code without policy ([ADR 0007 D5](adr/0007-typescript-full-stack-host.md
 - [ ] Unsigned module load blocked by default
 - [ ] `call` with serializable args only; host rejects non-serializable abuse
 - [ ] Profile A cannot use permissions granted only to profile B on another WebView
-- [~] First-party non-UI plugins (notify/tray/dialog landed; clipboard/fs still open) implementable in TS without L4 code
+- [x] First-party non-UI plugins (notify/tray/dialog/clipboard/fs) implementable in TS without L4 code; playground allow/deny UI still open
 - [ ] T2 native feature still uses the same `call` / layer names from app TS
 - [ ] T1.5 perf plugin: page still only `vela.call`; Bun enforces caps before Zig ABI
 - [ ] Perf Zig modules are not required for ordinary T0 plugins

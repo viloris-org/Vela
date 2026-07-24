@@ -6,7 +6,16 @@
  * @see docs/macos-spike-architecture.md — Dogfood content (minimum)
  */
 import type { Region, Rect, VelaPreloadBridge } from "@vela/api";
-import { installMockVela, MAIN_LAYER_ID } from "./mock-vela.ts";
+import {
+  BuiltinPermissions,
+  ClipboardMethods,
+  FsMethods,
+} from "@vela/api";
+import {
+  installMockVela,
+  MAIN_LAYER_ID,
+  type MockCapabilityController,
+} from "./mock-vela.ts";
 
 const TOOLBAR_LAYER_ID = "toolbar-material";
 
@@ -123,9 +132,114 @@ function pushRegions(
   vela.hit.setMainOpaqueRegions(region);
 }
 
+function setCapsResult(text: string, ok: boolean): void {
+  const el = requireEl("caps-result");
+  el.textContent = text;
+  el.classList.toggle("is-ok", ok);
+  el.classList.toggle("is-error", !ok);
+}
+
+function wireCapabilityToggles(caps: MockCapabilityController | undefined): void {
+  const pairs: Array<{ id: string; permission: string }> = [
+    { id: "cap-clipboard-write", permission: BuiltinPermissions.ClipboardWrite },
+    { id: "cap-clipboard-read", permission: BuiltinPermissions.ClipboardRead },
+    { id: "cap-fs-write", permission: BuiltinPermissions.FsAppWrite },
+    { id: "cap-fs-read", permission: BuiltinPermissions.FsAppRead },
+  ];
+
+  for (const { id, permission } of pairs) {
+    const input = document.getElementById(id) as HTMLInputElement | null;
+    if (!input) continue;
+    if (caps === undefined) {
+      input.disabled = true;
+      input.title = "Host preload: grant via app manifest, not mock toggles";
+      continue;
+    }
+    input.checked = caps.has(permission);
+    input.addEventListener("change", () => {
+      if (input.checked) caps.grant(permission);
+      else caps.revoke(permission);
+      appendLog(
+        requireEl("hud-log"),
+        `${input.checked ? "grant" : "revoke"} ${permission}`,
+      );
+    });
+  }
+}
+
+function wireCapabilityCalls(vela: VelaPreloadBridge): void {
+  const note = () =>
+    (document.getElementById("note-input") as HTMLInputElement | null)?.value ??
+    "";
+
+  requireEl("btn-clip-write").addEventListener("click", () => {
+    void (async () => {
+      try {
+        const text = note() || "playground clipboard";
+        await vela.call(ClipboardMethods.write, { text });
+        setCapsResult(`clipboard.write ok: ${JSON.stringify(text)}`, true);
+        appendLog(requireEl("hud-log"), "clipboard.write ok");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setCapsResult(msg, false);
+        appendLog(requireEl("hud-log"), `clipboard.write deny: ${msg}`);
+      }
+    })();
+  });
+
+  requireEl("btn-clip-read").addEventListener("click", () => {
+    void (async () => {
+      try {
+        const result = await vela.call(ClipboardMethods.read);
+        setCapsResult(`clipboard.read → ${JSON.stringify(result)}`, true);
+        appendLog(requireEl("hud-log"), "clipboard.read ok");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setCapsResult(msg, false);
+        appendLog(requireEl("hud-log"), `clipboard.read deny: ${msg}`);
+      }
+    })();
+  });
+
+  requireEl("btn-fs-write").addEventListener("click", () => {
+    void (async () => {
+      try {
+        const data = note() || "hello from playground";
+        await vela.call(FsMethods.write, {
+          path: "notes/playground.txt",
+          data,
+        });
+        setCapsResult(`fs.write notes/playground.txt ok`, true);
+        appendLog(requireEl("hud-log"), "fs.write ok");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setCapsResult(msg, false);
+        appendLog(requireEl("hud-log"), `fs.write deny: ${msg}`);
+      }
+    })();
+  });
+
+  requireEl("btn-fs-read").addEventListener("click", () => {
+    void (async () => {
+      try {
+        const result = await vela.call(FsMethods.read, {
+          path: "notes/playground.txt",
+        });
+        setCapsResult(`fs.read → ${JSON.stringify(result)}`, true);
+        appendLog(requireEl("hud-log"), "fs.read ok");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setCapsResult(msg, false);
+        appendLog(requireEl("hud-log"), `fs.read deny: ${msg}`);
+      }
+    })();
+  });
+}
+
 function wireUi(
   vela: VelaPreloadBridge,
   state: { panelVisible: boolean; generation: { value: number } },
+  mockCaps: MockCapabilityController | undefined,
 ): void {
   requireEl("btn-refresh-regions").addEventListener("click", () => {
     pushRegions(vela, state.panelVisible, state.generation);
@@ -141,6 +255,9 @@ function wireUi(
   requireEl("btn-panel-action").addEventListener("click", () => {
     appendLog(requireEl("hud-log"), "panel action click (web opaque region)");
   });
+
+  wireCapabilityToggles(mockCaps);
+  wireCapabilityCalls(vela);
 
   window.addEventListener("resize", () => {
     pushRegions(vela, state.panelVisible, state.generation);
@@ -166,12 +283,13 @@ async function main(): Promise<void> {
 
   const hostInjected = window.vela !== undefined;
   let vela: VelaPreloadBridge;
+  let mockCaps: MockCapabilityController | undefined;
 
   if (hostInjected && window.vela) {
     vela = window.vela;
     hud.mode.textContent = `mode: host preload (vela ${vela.version})`;
   } else {
-    vela = installMockVela({
+    const mock = installMockVela({
       onLog: (line) => appendLog(hud.log, line),
       onGeneration: (gen) => {
         hud.gen.textContent = `generation: ${gen}`;
@@ -180,6 +298,8 @@ async function main(): Promise<void> {
         hud.hit.textContent = `last hit: ${text}`;
       },
     });
+    vela = mock;
+    mockCaps = mock.mockCaps;
     hud.mode.textContent = `mode: mock (${vela.version})`;
   }
 
@@ -189,7 +309,7 @@ async function main(): Promise<void> {
   };
 
   subscribeDebug(vela, hud);
-  wireUi(vela, state);
+  wireUi(vela, state, mockCaps);
   await ensureMaterialToolbar(vela);
   pushRegions(vela, state.panelVisible, state.generation);
 
@@ -197,7 +317,7 @@ async function main(): Promise<void> {
     hud.log,
     hostInjected
       ? "ready — using host window.vela"
-      : "ready — mock bridge; open in desktop-shell for real hit/material",
+      : "ready — mock bridge; toggle caps for allow/deny dogfood",
   );
 }
 

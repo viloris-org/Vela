@@ -268,7 +268,7 @@ Manual L1–L6 notes (or short demo): underlay + WebView + material toolbar + ho
 
 ## Phase 3 — Capability plugins (desktop)
 
-**Status:** `[~]` contracts + Host TS plugins for notify/tray/dialog (mock sys); real OS notify/dialog facades in `@vela/sys-desktop`; fs/clipboard + playground still open.
+**Status:** `[~]` contracts + Host TS plugins for notify/tray/dialog/clipboard/fs (mock sys); real OS facades in `@vela/sys-desktop` for notify/tray/dialog/clipboard + sandboxed fs; playground allow/deny UI + `shell:open-external` still open.
 
 **Goal:** First-party desktop permissions that match the security spine and force allow/deny dogfood.
 
@@ -279,14 +279,15 @@ Manual L1–L6 notes (or short demo): underlay + WebView + material toolbar + ho
 - [x] `notify` plugin (`@vela/plugin-notify`: show/close + mock sys + allow/deny tests)
 - [x] `tray` plugin (`@vela/plugin-tray`: create/update/remove + mock sys + allow/deny tests)
 - [x] `dialog` plugin (`@vela/plugin-dialog`: open/save + mock sys + allow/deny tests)
-- [x] Contracts: `Notify*` / `Tray*` / `Dialog*` types, `tray:manage`, `HostAPI.events`, richer `sys.notify` / `sys.tray` / `sys.dialog`
-- [x] Real OS `sys.notify` + `sys.dialog` facades (`@vela/sys-desktop`: linux/macos/windows CLI backends)
-- [ ] `fs` (app sandbox scope), `clipboard`
-- [ ] Real OS `sys.tray` / remaining facades (desktop Host / Zig systems surface)
+- [x] `clipboard` plugin (`@vela/plugin-clipboard`: read/write + mock sys + allow/deny tests)
+- [x] `fs` plugin (`@vela/plugin-fs`: app-sandbox read/write + path normalize + scope + mock sys + tests)
+- [x] Contracts: `Notify*` / `Tray*` / `Dialog*` / `Clipboard*` / `Fs*` types, `normalizeAppRelativePath`, `HostAPI.events`, richer `sys.*` facades
+- [x] Real OS `sys.notify` + `sys.dialog` + `sys.clipboard` + sandboxed `sys.fs` facades (`@vela/sys-desktop`)
+- [x] Real OS `sys.tray` helper backends (`@vela/sys-desktop`; memory mode for headless CI)
 - [ ] `shell:open-external`
 - [ ] Material insert permission enforcement (`window:material` or successor)
 - [ ] Camera / native-sensitive insert permission paths (even if camera is stub)
-- [ ] Playground exercises **each** permission path (allow **and** deny)
+- [~] Playground exercises clipboard/fs allow **and** deny (mock toggles); notify/tray/dialog UI still open
 - [ ] Event / diagnostics catalog start: material degraded, deny reasons ([G-P1-3](design-gaps.md))
 
 ### Exit criteria
@@ -430,7 +431,7 @@ Use this as the default work queue until Phase 2 exit.
 5b. [~] **Phase 1L (Linux, this machine):** host + compositor blur apply landed; next: manual L1–L6 + optional snapshot-blur
 6. [ ] Accept ADR 0002 after Phase 1 / 1L channel feedback
 7. [~] **Phase 2 contracts:** `@vela/host-core` + capability/manifest pure helpers; next: Bun process + Zig UDS + typed RPC / preload bridge
-8. [ ] **Phase 3:** Capability plugins (fs, dialog, clipboard, notify) + allow/deny playground
+8. [~] **Phase 3:** notify/tray/dialog/clipboard/fs plugins + sys-desktop facades; playground mock allow/deny for clipboard/fs; next: `shell:open-external`, material/camera insert gates, full permission matrix UI
 9. [ ] **Phase 4:** Windows WebView2 + Mica/Acrylic + hit parity
 10. [ ] **Phase 5–7:** as dependency spine allows; mobile shares contracts without blocking desktop
 

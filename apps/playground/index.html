@@ -47,6 +47,44 @@
         <button type="button" id="btn-panel-action" class="primary">
           Panel action
         </button>
+
+        <div class="caps-demo" data-hit="panel">
+          <h2>Capabilities (mock)</h2>
+          <p class="caps-hint">
+            Toggle grants, then call. Default deny when unchecked.
+          </p>
+          <label class="caps-check">
+            <input type="checkbox" id="cap-clipboard-write" />
+            <span>clipboard:write</span>
+          </label>
+          <label class="caps-check">
+            <input type="checkbox" id="cap-clipboard-read" />
+            <span>clipboard:read</span>
+          </label>
+          <label class="caps-check">
+            <input type="checkbox" id="cap-fs-write" />
+            <span>fs:app-write</span>
+          </label>
+          <label class="caps-check">
+            <input type="checkbox" id="cap-fs-read" />
+            <span>fs:app-read</span>
+          </label>
+          <div class="caps-actions">
+            <button type="button" id="btn-clip-write" class="chip">
+              clipboard.write
+            </button>
+            <button type="button" id="btn-clip-read" class="chip">
+              clipboard.read
+            </button>
+            <button type="button" id="btn-fs-write" class="chip">
+              fs.write
+            </button>
+            <button type="button" id="btn-fs-read" class="chip">
+              fs.read
+            </button>
+          </div>
+          <div id="caps-result" class="caps-result" aria-live="polite"></div>
+        </div>
       </aside>
 
       <div id="hud" class="hud" data-hit="hud" aria-live="polite">

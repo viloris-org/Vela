@@ -17,6 +17,14 @@ import {
   createDesktopDialogSys,
   type CreateDesktopDialogSysOptions,
 } from "./dialog/index.ts";
+import {
+  createDesktopClipboardSys,
+  type CreateDesktopClipboardSysOptions,
+} from "./clipboard/index.ts";
+import {
+  createDesktopFsSys,
+  type CreateDesktopFsSysOptions,
+} from "./fs/index.ts";
 import type { RunCommand } from "./run.ts";
 
 export type CreateDesktopSystemsOptions = {
@@ -27,6 +35,12 @@ export type CreateDesktopSystemsOptions = {
   readonly notify?: CreateDesktopNotifySysOptions;
   readonly tray?: CreateDesktopTraySysOptions;
   readonly dialog?: CreateDesktopDialogSysOptions;
+  readonly clipboard?: CreateDesktopClipboardSysOptions;
+  /**
+   * When set, inject sandboxed `sys.fs` under this app-data root.
+   * Omit to leave `sys.fs` undefined (plugin fails closed until configured).
+   */
+  readonly fs?: CreateDesktopFsSysOptions;
   /**
    * Default tray mode. Use `memory` in CI/headless; `helper` for real icons.
    * @default "helper"
@@ -36,14 +50,17 @@ export type CreateDesktopSystemsOptions = {
 
 export type DesktopSystems = {
   readonly platform: DesktopPlatform;
-  readonly sys: Pick<HostSystemsFacade, "notify" | "tray" | "dialog">;
+  readonly sys: Pick<
+    HostSystemsFacade,
+    "notify" | "tray" | "dialog" | "clipboard" | "fs"
+  >;
   readonly tray: DesktopTraySys;
   dispose(): Promise<void>;
 };
 
 /**
  * Build HostAPI.sys pieces for the three desktop platforms
- * (notify + tray + dialog).
+ * (notify + tray + dialog + clipboard; optional sandboxed fs).
  */
 export function createDesktopSystems(
   options: CreateDesktopSystemsOptions = {},
@@ -86,9 +103,24 @@ export function createDesktopSystems(
     ...options.dialog,
   });
 
+  const clipboard = createDesktopClipboardSys({
+    platform,
+    ...(run !== undefined ? { run } : {}),
+    ...options.clipboard,
+  });
+
+  const fs =
+    options.fs !== undefined ? createDesktopFsSys(options.fs) : undefined;
+
   return {
     platform,
-    sys: { notify, tray, dialog },
+    sys: {
+      notify,
+      tray,
+      dialog,
+      clipboard,
+      ...(fs !== undefined ? { fs } : {}),
+    },
     tray,
     async dispose() {
       await tray.dispose();
