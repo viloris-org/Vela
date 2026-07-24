@@ -22,10 +22,29 @@ export function layerNotFound(id: string): ShellCoreError {
   );
 }
 
-export function capabilityDenied(method: string): ShellCoreError {
+export function capabilityDenied(
+  method: string,
+  details?: {
+    readonly permission?: string;
+    readonly resource?: string;
+  },
+): ShellCoreError {
   return new ShellCoreError(
     VelaRpcErrorCodes.capabilityDenied,
-    `capability denied: ${method}`,
-    { method },
+    details?.permission !== undefined
+      ? `capability denied: ${details.permission} (${method})`
+      : `capability denied: ${method}`,
+    { method, ...details },
+  );
+}
+
+export function insertPermissionDenied(
+  permissions: readonly string[],
+  kind: string,
+): ShellCoreError {
+  return new ShellCoreError(
+    VelaRpcErrorCodes.capabilityDenied,
+    `capability denied: insert kind=${kind} requires ${permissions.join(", ")}`,
+    { method: "layers.insert", permissions, kind },
   );
 }

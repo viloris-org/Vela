@@ -2,7 +2,7 @@
  * @vela/sys-desktop — desktop Host systems facades for HostAPI.sys injection.
  * Prefer injecting these from the privileged desktop Host, not from App TS.
  *
- * Surfaces: notify, tray, dialog, clipboard, fs (+ createDesktopSystems convenience).
+ * Surfaces: notify, tray, dialog, clipboard, shell, fs (+ createDesktopSystems convenience).
  * CLI backends are show/close (or open/save) only — action click events require
  * a richer long-lived helper (tray already provides that for menu/icon clicks).
  */
@@ -75,6 +75,15 @@ export {
   joinAppPath,
   type CreateDesktopFsSysOptions,
 } from "./fs/index.ts";
+
+export {
+  createDesktopShellSys,
+  type CreateDesktopShellSysOptions,
+  type ShellBackend,
+  createLinuxShellBackend,
+  createMacosShellBackend,
+  createWindowsShellBackend,
+} from "./shell/index.ts";
 
 export {
   createDesktopSystems,

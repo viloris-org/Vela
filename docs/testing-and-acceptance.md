@@ -97,7 +97,7 @@ From [Capabilities and plugins](capabilities-and-plugins.md):
 
 - [ ] Missing permission → structured deny, no silent success
 - [ ] Camera layer insert without grant fails
-- [ ] `window:material` required for material layers
+- [x] `window:material` required for material layers (`@vela/shell-core` insert gates + tests; host L4 still wires profile)
 - [ ] Preload cannot access Node / `fs` / `child_process`
 - [ ] Unsigned module load blocked by default
 

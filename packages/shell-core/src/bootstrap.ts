@@ -56,8 +56,9 @@ export function applyDogfoodBootstrap(
   core: ShellCore,
   contentBounds: Rect,
 ): void {
+  // Host-owned stack: privileged insert (material toolbar is not page-granted).
   for (const spec of dogfoodBootstrapSpecs(contentBounds)) {
-    core.insertLayer(spec);
+    core.insertLayerPrivileged(spec);
   }
   // Resolve material path for diagnostics (degrade on non-glass platforms).
   core.resolveToolbarMaterial("apple.liquidGlass");

@@ -25,6 +25,10 @@ import {
   createDesktopFsSys,
   type CreateDesktopFsSysOptions,
 } from "./fs/index.ts";
+import {
+  createDesktopShellSys,
+  type CreateDesktopShellSysOptions,
+} from "./shell/index.ts";
 import type { RunCommand } from "./run.ts";
 
 export type CreateDesktopSystemsOptions = {
@@ -36,6 +40,7 @@ export type CreateDesktopSystemsOptions = {
   readonly tray?: CreateDesktopTraySysOptions;
   readonly dialog?: CreateDesktopDialogSysOptions;
   readonly clipboard?: CreateDesktopClipboardSysOptions;
+  readonly shell?: CreateDesktopShellSysOptions;
   /**
    * When set, inject sandboxed `sys.fs` under this app-data root.
    * Omit to leave `sys.fs` undefined (plugin fails closed until configured).
@@ -52,7 +57,7 @@ export type DesktopSystems = {
   readonly platform: DesktopPlatform;
   readonly sys: Pick<
     HostSystemsFacade,
-    "notify" | "tray" | "dialog" | "clipboard" | "fs"
+    "notify" | "tray" | "dialog" | "clipboard" | "fs" | "shell"
   >;
   readonly tray: DesktopTraySys;
   dispose(): Promise<void>;
@@ -60,7 +65,7 @@ export type DesktopSystems = {
 
 /**
  * Build HostAPI.sys pieces for the three desktop platforms
- * (notify + tray + dialog + clipboard; optional sandboxed fs).
+ * (notify + tray + dialog + clipboard + shell; optional sandboxed fs).
  */
 export function createDesktopSystems(
   options: CreateDesktopSystemsOptions = {},
@@ -109,6 +114,12 @@ export function createDesktopSystems(
     ...options.clipboard,
   });
 
+  const shell = createDesktopShellSys({
+    platform,
+    ...(run !== undefined ? { run } : {}),
+    ...options.shell,
+  });
+
   const fs =
     options.fs !== undefined ? createDesktopFsSys(options.fs) : undefined;
 
@@ -119,6 +130,7 @@ export function createDesktopSystems(
       tray,
       dialog,
       clipboard,
+      shell,
       ...(fs !== undefined ? { fs } : {}),
     },
     tray,

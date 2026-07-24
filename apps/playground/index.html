@@ -69,6 +69,18 @@
             <input type="checkbox" id="cap-fs-read" />
             <span>fs:app-read</span>
           </label>
+          <label class="caps-check">
+            <input type="checkbox" id="cap-shell-open" />
+            <span>shell:open-external</span>
+          </label>
+          <label class="caps-check">
+            <input type="checkbox" id="cap-notify-show" />
+            <span>notify:show</span>
+          </label>
+          <label class="caps-check">
+            <input type="checkbox" id="cap-window-material" />
+            <span>window:material</span>
+          </label>
           <div class="caps-actions">
             <button type="button" id="btn-clip-write" class="chip">
               clipboard.write
@@ -81,6 +93,15 @@
             </button>
             <button type="button" id="btn-fs-read" class="chip">
               fs.read
+            </button>
+            <button type="button" id="btn-shell-open" class="chip">
+              shell.openExternal
+            </button>
+            <button type="button" id="btn-notify-show" class="chip">
+              notify.show
+            </button>
+            <button type="button" id="btn-material-insert" class="chip">
+              layers.insert material
             </button>
           </div>
           <div id="caps-result" class="caps-result" aria-live="polite"></div>

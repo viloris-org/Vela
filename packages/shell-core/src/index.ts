@@ -4,7 +4,12 @@
  */
 
 export { DOGFOOD_LAYER_IDS, PLAYGROUND_DOGFOOD_ID_LITERALS } from "./ids.ts";
-export { ShellCoreError, layerNotFound, capabilityDenied } from "./errors.ts";
+export {
+  ShellCoreError,
+  layerNotFound,
+  capabilityDenied,
+  insertPermissionDenied,
+} from "./errors.ts";
 export {
   createShellCore,
   type ShellCore,

@@ -53,12 +53,18 @@ export class TrayHelperProcess {
 
   private async start(): Promise<void> {
     try {
-      this.proc = Bun.spawn([this.spec.cmd, ...this.spec.args], {
-        cwd: this.spec.cwd,
+      const spawnOpts: {
+        cwd?: string;
+        stdin: "pipe";
+        stdout: "pipe";
+        stderr: "pipe";
+      } = {
         stdin: "pipe",
         stdout: "pipe",
         stderr: "pipe",
-      });
+      };
+      if (this.spec.cwd !== undefined) spawnOpts.cwd = this.spec.cwd;
+      this.proc = Bun.spawn([this.spec.cmd, ...this.spec.args], spawnOpts);
     } catch (err) {
       throw new SystemsError(
         "spawn_failed",
@@ -92,8 +98,9 @@ export class TrayHelperProcess {
 
     // also surface stderr for debugging
     void (async () => {
-      if (!this.proc?.stderr) return;
-      const text = await new Response(this.proc.stderr).text();
+      const stderr = this.proc?.stderr;
+      if (stderr === undefined || typeof stderr === "number") return;
+      const text = await new Response(stderr).text();
       if (text.trim()) {
         // keep silent in production paths; tests can still pass
         console.error(`[vela-tray-${this.platform}] ${text.trim()}`);
@@ -108,7 +115,7 @@ export class TrayHelperProcess {
     onFatal: (err: Error) => void,
   ): Promise<void> {
     const stdout = this.proc?.stdout;
-    if (!stdout) {
+    if (stdout === undefined || typeof stdout === "number") {
       onFatal(
         new SystemsError("spawn_failed", "tray helper has no stdout", {
           platform: this.platform,
@@ -238,7 +245,7 @@ export class TrayHelperProcess {
 
       const line = JSON.stringify(msg) + "\n";
       const stdin = this.proc?.stdin;
-      if (!stdin) {
+      if (stdin === undefined || typeof stdin === "number") {
         clearTimeout(timer);
         this.pending.delete(id);
         reject(

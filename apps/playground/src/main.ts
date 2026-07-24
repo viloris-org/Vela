@@ -10,6 +10,8 @@ import {
   BuiltinPermissions,
   ClipboardMethods,
   FsMethods,
+  NotifyMethods,
+  ShellMethods,
 } from "@vela/api";
 import {
   installMockVela,
@@ -18,6 +20,7 @@ import {
 } from "./mock-vela.ts";
 
 const TOOLBAR_LAYER_ID = "toolbar-material";
+const DOGFOOD_MATERIAL_LAYER_ID = "dogfood-material-cap";
 
 type HudEls = {
   mode: HTMLElement;
@@ -78,6 +81,12 @@ function appendLog(logEl: HTMLElement, line: string): void {
   );
 }
 
+/**
+ * Auto toolbar material insert on load.
+ * Host bootstrap often owns the real toolbar; page insert requires
+ * `window:material` (mock starts default-deny — expect CSS stand-in until
+ * the user grants the toggle and re-inserts via the caps panel).
+ */
 async function ensureMaterialToolbar(vela: VelaPreloadBridge): Promise<void> {
   const toolbar = requireEl("toolbar-chrome");
   const bounds = clientRect(toolbar);
@@ -105,7 +114,7 @@ async function ensureMaterialToolbar(vela: VelaPreloadBridge): Promise<void> {
     const note = document.createElement("div");
     note.className = "material-fallback-note";
     note.textContent =
-      "Material layer insert unavailable — CSS toolbar stand-in";
+      "Material layer insert denied or unavailable — CSS toolbar stand-in (grant window:material to dogfood insert)";
     document.body.appendChild(note);
     appendLog(
       requireEl("hud-log"),
@@ -145,6 +154,15 @@ function wireCapabilityToggles(caps: MockCapabilityController | undefined): void
     { id: "cap-clipboard-read", permission: BuiltinPermissions.ClipboardRead },
     { id: "cap-fs-write", permission: BuiltinPermissions.FsAppWrite },
     { id: "cap-fs-read", permission: BuiltinPermissions.FsAppRead },
+    {
+      id: "cap-shell-open",
+      permission: BuiltinPermissions.ShellOpenExternal,
+    },
+    { id: "cap-notify-show", permission: BuiltinPermissions.NotifyShow },
+    {
+      id: "cap-window-material",
+      permission: BuiltinPermissions.WindowMaterial,
+    },
   ];
 
   for (const { id, permission } of pairs) {
@@ -231,6 +249,64 @@ function wireCapabilityCalls(vela: VelaPreloadBridge): void {
         const msg = err instanceof Error ? err.message : String(err);
         setCapsResult(msg, false);
         appendLog(requireEl("hud-log"), `fs.read deny: ${msg}`);
+      }
+    })();
+  });
+
+  requireEl("btn-shell-open").addEventListener("click", () => {
+    void (async () => {
+      try {
+        const url = note() || "https://example.com";
+        await vela.call(ShellMethods.openExternal, { url });
+        setCapsResult(`shell.openExternal ok: ${url}`, true);
+        appendLog(requireEl("hud-log"), `shell.openExternal ok ${url}`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setCapsResult(msg, false);
+        appendLog(requireEl("hud-log"), `shell.openExternal deny: ${msg}`);
+      }
+    })();
+  });
+
+  requireEl("btn-notify-show").addEventListener("click", () => {
+    void (async () => {
+      try {
+        const body = note() || "playground notify";
+        const result = await vela.call(NotifyMethods.show, {
+          title: "Vela playground",
+          body,
+        });
+        setCapsResult(`notify.show → ${JSON.stringify(result)}`, true);
+        appendLog(requireEl("hud-log"), "notify.show ok");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setCapsResult(msg, false);
+        appendLog(requireEl("hud-log"), `notify.show deny: ${msg}`);
+      }
+    })();
+  });
+
+  requireEl("btn-material-insert").addEventListener("click", () => {
+    void (async () => {
+      try {
+        const result = await vela.layers.insert({
+          id: DOGFOOD_MATERIAL_LAYER_ID,
+          kind: "material",
+          material: "apple.liquidGlass",
+          bounds: { x: 16, y: 12, width: 200, height: 48 },
+          zIndex: 31,
+          shape: { type: "capsule" },
+          samples: { type: "layers-below" },
+          variant: "regular",
+          interactive: true,
+          hitPolicy: { mode: "opaque" },
+        });
+        setCapsResult(`layers.insert material ok id=${result.id}`, true);
+        appendLog(requireEl("hud-log"), `material insert ok id=${result.id}`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setCapsResult(msg, false);
+        appendLog(requireEl("hud-log"), `material insert deny: ${msg}`);
       }
     })();
   });

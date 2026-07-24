@@ -1,7 +1,8 @@
 /**
  * In-page mock when host preload has not injected window.vela.
  * Logs bridge calls and draws region overlays for layout review.
- * Optional capability grants exercise allow/deny for clipboard + fs.
+ * Optional capability grants exercise allow/deny for clipboard, fs, shell,
+ * notify, and material insert gates.
  */
 import type {
   InsertLayerSpec,
@@ -15,7 +16,12 @@ import {
   BuiltinPermissions,
   ClipboardMethods,
   FsMethods,
+  NotifyMethods,
+  ShellMethods,
+  insertLayerPermissionsGranted,
   normalizeAppRelativePath,
+  parseExternalUrl,
+  permissionsForInsertLayer,
 } from "@vela/api";
 
 export type MockHudSink = {
@@ -93,6 +99,8 @@ export function installMockVela(
   const permissions = new Set(options?.permissions ?? []);
   const files = new Map<string, string>();
   let clipboardText = "";
+  const openedUrls: string[] = [];
+  let notifySeq = 0;
 
   const mockCaps: MockCapabilityController = {
     permissions,
@@ -174,6 +182,32 @@ export function installMockVela(
         log(`call(${method}, ${norm.path}) → ok`);
         return { ok: true };
       }
+      if (method === ShellMethods.openExternal) {
+        if (typeof o.url !== "string") {
+          throw new Error("shell.openExternal: url must be a string");
+        }
+        const parsed = parseExternalUrl(o.url);
+        if (!parsed.ok) {
+          throw new Error(`shell.openExternal: ${parsed.reason}`);
+        }
+        requirePerm(BuiltinPermissions.ShellOpenExternal, method);
+        openedUrls.push(parsed.href);
+        log(`call(${method}, ${parsed.href}) → ok (mock, not OS)`);
+        return { ok: true };
+      }
+      if (method === NotifyMethods.show) {
+        requirePerm(BuiltinPermissions.NotifyShow, method);
+        if (typeof o.title !== "string" || o.title.length === 0) {
+          throw new Error("notify.show: title must be a non-empty string");
+        }
+        notifySeq += 1;
+        const id =
+          typeof o.id === "string" && o.id.length > 0
+            ? o.id
+            : `mock-notify-${notifySeq}`;
+        log(`call(${method}, title=${o.title}) → id=${id}`);
+        return { id };
+      }
 
       log(`call(${method}, ${JSON.stringify(args ?? null)}) → deny-all stub`);
       throw new Error(`mock: capability denied: ${method}`);
@@ -181,6 +215,13 @@ export function installMockVela(
 
     layers: {
       async insert(spec: InsertLayerSpec): Promise<{ readonly id: LayerId }> {
+        const required = permissionsForInsertLayer(spec);
+        const granted = [...permissions];
+        if (!insertLayerPermissionsGranted(granted, required)) {
+          throw new Error(
+            `mock: capability denied: insert kind=${spec.kind} requires ${required.join(", ") || "(none)"}`,
+          );
+        }
         const id = spec.id ?? `layer-${layers.size + 1}`;
         layers.set(id, spec);
         log(`layers.insert kind=${spec.kind} id=${id}`);
@@ -242,7 +283,11 @@ export function installMockVela(
             const kind = target?.dataset["hit"] ?? "hole/underlay";
             const text = `kind=webview-mock hit=${kind} @(${ev.clientX | 0},${ev.clientY | 0})`;
             hud.onHit(text);
-            handler({ kind: "webview", localPoint: { x: ev.clientX, y: ev.clientY }, mockHit: kind });
+            handler({
+              kind: "webview",
+              localPoint: { x: ev.clientX, y: ev.clientY },
+              mockHit: kind,
+            });
           };
           window.addEventListener("pointerdown", onPointer);
           return () => window.removeEventListener("pointerdown", onPointer);

@@ -23,25 +23,40 @@ export type RunCommand = (
 
 /** Default: Bun.spawn (desktop Host reference runtime). */
 export const defaultRunCommand: RunCommand = async (request) => {
-  const proc = Bun.spawn([request.cmd, ...(request.args ?? [])], {
-    cwd: request.cwd,
-    env: request.env !== undefined ? { ...process.env, ...request.env } : undefined,
+  const spawnOpts: {
+    cwd?: string;
+    env?: Record<string, string | undefined>;
+    stdin: "ignore" | "pipe";
+    stdout: "pipe";
+    stderr: "pipe";
+  } = {
     stdin: request.stdin !== undefined ? "pipe" : "ignore",
     stdout: "pipe",
     stderr: "pipe",
-  });
+  };
+  if (request.cwd !== undefined) spawnOpts.cwd = request.cwd;
+  if (request.env !== undefined) {
+    spawnOpts.env = { ...process.env, ...request.env };
+  }
 
-  if (request.stdin !== undefined && proc.stdin) {
+  const proc = Bun.spawn([request.cmd, ...(request.args ?? [])], spawnOpts);
+
+  if (request.stdin !== undefined && proc.stdin && typeof proc.stdin !== "number") {
     proc.stdin.write(request.stdin);
     proc.stdin.end();
   }
 
   // `timeoutMs: 0` (or negative) disables the timer — needed for interactive dialogs.
   const timeoutMs = request.timeoutMs === undefined ? 15_000 : request.timeoutMs;
+  const stdout = proc.stdout;
+  const stderr = proc.stderr;
+  if (typeof stdout === "number" || typeof stderr === "number") {
+    throw new Error("runCommand: expected piped stdout/stderr streams");
+  }
   const collect = Promise.all([
     proc.exited,
-    new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
+    new Response(stdout).text(),
+    new Response(stderr).text(),
   ]);
 
   if (timeoutMs <= 0) {

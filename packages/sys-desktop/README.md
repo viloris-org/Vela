@@ -10,6 +10,7 @@ Inject into `HostAPI.sys` after capability checks (T1). Does **not** run in the 
 | **tray** | Python3 + AppIndicator/Ayatana + GTK3 helper | Swift `NSStatusItem` helper | PowerShell `NotifyIcon` helper |
 | **dialog** | `zenity` / `kdialog` | `osascript` choose file | PowerShell WinForms |
 | **clipboard** | `wl-copy`/`wl-paste`, `xclip`, or `xsel` | `pbcopy` / `pbpaste` | PowerShell `Get/Set-Clipboard` |
+| **shell** | `xdg-open` | `open` | `cmd /c start` |
 | **fs** | Sandboxed Host FS under configured `root` (all desktops) | same | same |
 
 ## Usage
@@ -22,6 +23,7 @@ import { registerTrayPlugin } from "@vela/plugin-tray";
 import { registerDialogPlugin } from "@vela/plugin-dialog";
 import { registerClipboardPlugin } from "@vela/plugin-clipboard";
 import { registerFsPlugin } from "@vela/plugin-fs";
+import { registerShellPlugin } from "@vela/plugin-shell";
 import { BuiltinPermissions } from "@vela/api";
 
 const events = createHostEventBus();
@@ -36,7 +38,7 @@ const desktop = createDesktopSystems({
 const host = createCapabilityHost({
   api: {
     platform: desktop.platform,
-    sys: desktop.sys, // notify + tray + dialog + clipboard (+ fs when configured)
+    sys: desktop.sys, // notify + tray + dialog + clipboard + shell (+ fs when configured)
     events,
   },
   capabilities: {
@@ -50,6 +52,7 @@ const host = createCapabilityHost({
         BuiltinPermissions.ClipboardWrite,
         BuiltinPermissions.FsAppRead,
         BuiltinPermissions.FsAppWrite,
+        BuiltinPermissions.ShellOpenExternal,
       ],
     },
   },
@@ -59,6 +62,7 @@ registerTrayPlugin(host);
 registerDialogPlugin(host);
 registerClipboardPlugin(host);
 registerFsPlugin(host);
+registerShellPlugin(host);
 
 // … later
 await desktop.dispose();

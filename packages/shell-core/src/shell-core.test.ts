@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Region } from "@vela/api";
-import { VelaRpcErrorCodes } from "@vela/api";
+import { BuiltinPermissions, VelaRpcErrorCodes } from "@vela/api";
 import {
   DOGFOOD_LAYER_IDS,
   PLAYGROUND_DOGFOOD_ID_LITERALS,
@@ -39,6 +39,7 @@ describe("DOGFOOD_LAYER_IDS", () => {
 describe("layer tree CRUD", () => {
   test("insert assigns id, update, reorder, remove, list", () => {
     const core = createShellCore();
+    // Ungated kinds (webview / unknown native) need no profile grant.
     const a = core.insertLayer({
       kind: "native",
       component: "test.a",
@@ -82,6 +83,116 @@ describe("layer tree CRUD", () => {
       expect(err).toBeInstanceOf(ShellCoreError);
       expect((err as ShellCoreError).code).toBe(VelaRpcErrorCodes.layerNotFound);
     }
+  });
+});
+
+describe("insert capability gates", () => {
+  test("material insert denied without window:material", () => {
+    const core = createShellCore();
+    try {
+      core.insertLayer({
+        kind: "material",
+        material: "apple.liquidGlass",
+        bounds: { x: 0, y: 0, width: 100, height: 40 },
+        zIndex: 30,
+      });
+      expect.unreachable();
+    } catch (err) {
+      expect(err).toBeInstanceOf(ShellCoreError);
+      expect((err as ShellCoreError).code).toBe(
+        VelaRpcErrorCodes.capabilityDenied,
+      );
+      expect((err as ShellCoreError).message).toMatch(/window:material/);
+    }
+  });
+
+  test("material insert allowed with window:material grant", () => {
+    const core = createShellCore({
+      profilePermissions: [BuiltinPermissions.WindowMaterial],
+    });
+    const layer = core.insertLayer({
+      id: "glass",
+      kind: "material",
+      material: "apple.liquidGlass",
+      bounds: { x: 0, y: 0, width: 100, height: 40 },
+      zIndex: 30,
+    });
+    expect(layer.id).toBe("glass");
+    expect(layer.kind).toBe("material");
+  });
+
+  test("camera.preview denied without camera:preview", () => {
+    const core = createShellCore();
+    try {
+      core.insertLayer({
+        kind: "native",
+        component: "camera.preview",
+        bounds: { x: 0, y: 0, width: 320, height: 180 },
+        zIndex: 20,
+      });
+      expect.unreachable();
+    } catch (err) {
+      expect(err).toBeInstanceOf(ShellCoreError);
+      expect((err as ShellCoreError).code).toBe(
+        VelaRpcErrorCodes.capabilityDenied,
+      );
+      expect((err as ShellCoreError).message).toMatch(/camera:preview/);
+    }
+  });
+
+  test("camera.preview allowed with grant; setProfilePermissions updates", () => {
+    const core = createShellCore();
+    core.setProfilePermissions([BuiltinPermissions.CameraPreview]);
+    const layer = core.insertLayer({
+      id: "cam",
+      kind: "native",
+      component: "camera.preview",
+      bounds: { x: 0, y: 0, width: 320, height: 180 },
+      zIndex: 20,
+    });
+    expect(layer.id).toBe("cam");
+    expect(core.getProfilePermissions()).toEqual([
+      BuiltinPermissions.CameraPreview,
+    ]);
+  });
+
+  test("privileged insert bypasses gates for host bootstrap", () => {
+    const core = createShellCore();
+    const layer = core.insertLayerPrivileged({
+      kind: "material",
+      material: "apple.liquidGlass",
+      bounds: { x: 0, y: 0, width: 100, height: 40 },
+      zIndex: 30,
+    });
+    expect(layer.kind).toBe("material");
+  });
+
+  test("bridge layers.insert enforces material gate", async () => {
+    const core = createShellCore();
+    const vela = createPreloadBridge(core);
+    try {
+      await vela.layers.insert({
+        kind: "material",
+        material: "apple.liquidGlass",
+        bounds: { x: 0, y: 0, width: 100, height: 40 },
+        zIndex: 30,
+      });
+      expect.unreachable();
+    } catch (err) {
+      expect(err).toBeInstanceOf(ShellCoreError);
+      expect((err as ShellCoreError).code).toBe(
+        VelaRpcErrorCodes.capabilityDenied,
+      );
+    }
+
+    core.setProfilePermissions([BuiltinPermissions.WindowMaterial]);
+    const inserted = await vela.layers.insert({
+      kind: "material",
+      material: "apple.liquidGlass",
+      bounds: { x: 0, y: 0, width: 100, height: 40 },
+      zIndex: 30,
+    });
+    expect(inserted.id).toBeDefined();
   });
 });
 

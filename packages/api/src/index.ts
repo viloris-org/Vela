@@ -200,6 +200,18 @@ export type {
 export { ClipboardMethods } from "./capability/clipboard.ts";
 
 export type {
+  ShellOpenExternalOptions,
+  ShellOpenExternalResult,
+  ShellMethod,
+  ParseExternalUrlResult,
+} from "./capability/shell.ts";
+export {
+  ShellMethods,
+  DEFAULT_OPEN_EXTERNAL_SCHEMES,
+  parseExternalUrl,
+} from "./capability/shell.ts";
+
+export type {
   AppManifest,
   AppManifestEntry,
   AppManifestWindow,

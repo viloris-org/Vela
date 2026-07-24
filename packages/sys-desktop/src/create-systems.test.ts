@@ -11,11 +11,12 @@ describe("package entry", () => {
     expect(typeof mod.createDesktopNotifySys).toBe("function");
     expect(typeof mod.createDesktopClipboardSys).toBe("function");
     expect(typeof mod.createDesktopFsSys).toBe("function");
+    expect(typeof mod.createDesktopShellSys).toBe("function");
   });
 });
 
 describe("createDesktopSystems", () => {
-  test("wires notify + tray + dialog + clipboard for linux with injectable run + memory tray", async () => {
+  test("wires notify + tray + dialog + clipboard + shell for linux with injectable run + memory tray", async () => {
     const calls: RunCommandRequest[] = [];
     const desktop = createDesktopSystems({
       platform: "linux",
@@ -40,6 +41,9 @@ describe("createDesktopSystems", () => {
           }
           return { code: 0, stdout: "", stderr: "" };
         }
+        if (req.cmd === "xdg-open") {
+          return { code: 0, stdout: "", stderr: "" };
+        }
         return { code: 0, stdout: "", stderr: "" };
       },
     });
@@ -49,6 +53,7 @@ describe("createDesktopSystems", () => {
     expect(desktop.sys.tray).toBeDefined();
     expect(desktop.sys.dialog).toBeDefined();
     expect(desktop.sys.clipboard).toBeDefined();
+    expect(desktop.sys.shell).toBeDefined();
     expect(desktop.sys.fs).toBeUndefined();
 
     await desktop.sys.notify!.show({ title: "Hi", body: "there" });
@@ -62,6 +67,9 @@ describe("createDesktopSystems", () => {
 
     await desktop.sys.clipboard!.writeText("hi");
     expect(await desktop.sys.clipboard!.readText()).toBe("clip");
+
+    await desktop.sys.shell!.openExternal("https://example.com");
+    expect(calls.some((c) => c.cmd === "xdg-open")).toBe(true);
 
     await desktop.dispose();
   });

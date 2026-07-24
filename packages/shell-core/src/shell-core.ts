@@ -6,6 +6,7 @@ import type {
   LayerId,
   LayerPatch,
   LayerTreeSnapshot,
+  PermissionId,
   PlatformId,
   Point,
   Rect,
@@ -16,9 +17,15 @@ import type {
   WindowId,
   WindowInputMode,
 } from "@vela/api";
-import { resolveHit, resolveMaterial } from "@vela/api";
+import {
+  insertLayerPermissionsGranted,
+  permissionsForInsertLayer,
+  resolveHit,
+  resolveMaterial,
+} from "@vela/api";
 import { DOGFOOD_LAYER_IDS } from "./ids.ts";
 import { createEventBus, type ShellEventHandler } from "./events.ts";
+import { insertPermissionDenied } from "./errors.ts";
 import { createLayerTree } from "./layer-tree.ts";
 import { createWebShapeStore } from "./web-shape-store.ts";
 
@@ -27,14 +34,32 @@ export type ShellCoreOptions = {
   readonly platform?: PlatformId;
   readonly initialWindowMode?: WindowInputMode;
   readonly supportsLiquidGlass?: boolean;
+  /**
+   * Active profile permissions for page-facing layer inserts (`insertLayer`).
+   * Default `[]` — default-deny for material / camera / other gated kinds.
+   * Host-owned bootstrap should use `insertLayerPrivileged`.
+   */
+  readonly profilePermissions?: readonly PermissionId[];
 };
 
 export type ShellCore = {
+  /**
+   * Page / bridge insert path: enforces `permissionsForInsertLayer`
+   * against the active profile grant.
+   */
   insertLayer(spec: InsertLayerSpec): Layer;
+  /**
+   * Host / bootstrap insert path: skips capability gates
+   * (dogfood stack, L4-owned underlays, chrome).
+   */
+  insertLayerPrivileged(spec: InsertLayerSpec): Layer;
   updateLayer(id: LayerId, patch: LayerPatch): Layer;
   removeLayer(id: LayerId): void;
   listLayers(): readonly Layer[];
   reorderLayer(id: LayerId, zIndex: number): Layer;
+
+  setProfilePermissions(permissions: readonly PermissionId[]): void;
+  getProfilePermissions(): readonly PermissionId[];
 
   setInputMode(mode: WindowInputMode): void;
   getInputMode(): WindowInputMode;
@@ -72,9 +97,22 @@ export function createShellCore(options: ShellCoreOptions = {}): ShellCore {
   };
   let lastHitTarget: HitTarget | undefined;
   let snapshotGeneration = 0;
+  let profilePermissions: readonly PermissionId[] =
+    options.profilePermissions ?? [];
+
+  function assertInsertAllowed(spec: InsertLayerSpec): void {
+    const required = permissionsForInsertLayer(spec);
+    if (!insertLayerPermissionsGranted(profilePermissions, required)) {
+      throw insertPermissionDenied(required, spec.kind);
+    }
+  }
 
   const core: ShellCore = {
     insertLayer(spec) {
+      assertInsertAllowed(spec);
+      return tree.insert(spec);
+    },
+    insertLayerPrivileged(spec) {
       return tree.insert(spec);
     },
     updateLayer(id, patch) {
@@ -88,6 +126,13 @@ export function createShellCore(options: ShellCoreOptions = {}): ShellCore {
     },
     reorderLayer(id, zIndex) {
       return tree.reorder(id, zIndex);
+    },
+
+    setProfilePermissions(permissions) {
+      profilePermissions = [...permissions];
+    },
+    getProfilePermissions() {
+      return profilePermissions;
     },
 
     setInputMode(mode) {

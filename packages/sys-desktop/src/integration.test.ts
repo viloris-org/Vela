@@ -11,6 +11,7 @@ import {
   DialogMethods,
   FsMethods,
   NotifyMethods,
+  ShellMethods,
   TrayMethods,
 } from "@vela/api";
 import { createCapabilityHost, createHostEventBus } from "@vela/host-core";
@@ -19,12 +20,13 @@ import { registerTrayPlugin } from "../../../plugins/tray/src/host.ts";
 import { registerDialogPlugin } from "../../../plugins/dialog/src/host.ts";
 import { registerClipboardPlugin } from "../../../plugins/clipboard/src/host.ts";
 import { registerFsPlugin } from "../../../plugins/fs/src/host.ts";
+import { registerShellPlugin } from "../../../plugins/shell/src/host.ts";
 import { createDesktopSystems } from "./create-systems.ts";
 
 // Note: relative imports into plugins/ for monorepo integration test only.
 
 describe("plugins + sys-desktop integration", () => {
-  test("notify + tray + dialog + clipboard + fs through capability host", async () => {
+  test("notify + tray + dialog + clipboard + fs + shell through capability host", async () => {
     const events = createHostEventBus();
     const root = await mkdtemp(join(tmpdir(), "vela-int-fs-"));
     try {
@@ -51,6 +53,9 @@ describe("plugins + sys-desktop integration", () => {
             }
             return { code: 0, stdout: "", stderr: "" };
           }
+          if (req.cmd === "xdg-open") {
+            return { code: 0, stdout: "", stderr: "" };
+          }
           return { code: 0, stdout: "", stderr: "" };
         },
       });
@@ -71,6 +76,7 @@ describe("plugins + sys-desktop integration", () => {
               BuiltinPermissions.ClipboardWrite,
               BuiltinPermissions.FsAppRead,
               BuiltinPermissions.FsAppWrite,
+              BuiltinPermissions.ShellOpenExternal,
             ],
           },
         },
@@ -80,6 +86,7 @@ describe("plugins + sys-desktop integration", () => {
       registerDialogPlugin(host);
       registerClipboardPlugin(host);
       registerFsPlugin(host);
+      registerShellPlugin(host);
 
       const n = await host.invoke({
         method: NotifyMethods.show,
@@ -126,6 +133,12 @@ describe("plugins + sys-desktop integration", () => {
         args: { path: "notes/a.txt" },
       });
       expect(file).toEqual({ data: "sandbox" });
+
+      const ext = await host.invoke({
+        method: ShellMethods.openExternal,
+        args: { url: "https://example.com/from-plugin" },
+      });
+      expect(ext).toEqual({ ok: true });
 
       await desktop.dispose();
     } finally {

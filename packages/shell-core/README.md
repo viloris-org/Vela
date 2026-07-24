@@ -9,7 +9,7 @@ Portable **in-process Shell policy** for Phase 1: layer tree, web-shaped region 
 
 | This package | Host L4 (Swift / Win / …) |
 |--------------|---------------------------|
-| Mutable layer tree + insert/update/remove | Map layers to NSView / HWND siblings |
+| Mutable layer tree + gated `insertLayer` / privileged host insert | Map layers to NSView / HWND siblings; re-check material/camera grants |
 | Opaque region store + generation drop | Same rules at event boundary |
 | `resolvePointer` / `pointerDown` + `lastHit` | `VelaHitRootView.hitTest` mirrors `resolveHit` |
 | `createPreloadBridge` | Inject into WebView as `window.vela` |
@@ -25,9 +25,16 @@ import {
   DOGFOOD_LAYER_IDS,
 } from "@vela/shell-core";
 
-const core = createShellCore({ platform: "macos", supportsLiquidGlass: false });
+const core = createShellCore({
+  platform: "macos",
+  supportsLiquidGlass: false,
+  // optional: page profile for material / camera inserts
+  // profilePermissions: ["window:material"],
+});
+// Host-owned stack (bypasses insert gates)
 applyDogfoodBootstrap(core, { x: 0, y: 0, width: 800, height: 600 });
 const vela = createPreloadBridge(core);
+// Page `layers.insert` for material requires `window:material` on the profile
 ```
 
 ## Dogfood layer ids
@@ -46,7 +53,7 @@ Playground **does not** depend on this package (web content stays host-free). Te
 
 - Real AppKit / WebView2 / GTK paint
 - Bun process split / Zig RPC (Phase 2)
-- Full capability engine
+- Full capability engine / plugin host (use `@vela/host-core` for `call`)
 - Claiming S1–S7 host acceptance without a native Shell
 
 ## Swift interface map
@@ -59,4 +66,4 @@ See `hosts/desktop-shell/Sources/VelaShell/README.md` for how L4 modules should 
 bun test packages/shell-core
 ```
 
-S-class coverage: S2 hole→underlay, S6 single `lastHit`, S7 stale generation, opacity≠hit, material resolve degrade, window region-through lite, bridge deny-all `call`.
+S-class coverage: S2 hole→underlay, S6 single `lastHit`, S7 stale generation, opacity≠hit, material resolve degrade, window region-through lite, bridge deny-all `call`, material/camera insert gates.

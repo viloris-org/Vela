@@ -417,13 +417,13 @@ plugin code without policy ([ADR 0007 D5](adr/0007-typescript-full-stack-host.md
 ## Acceptance checklist
 
 - [ ] Missing permission → structured deny, no silent success
-- [ ] Camera layer insert without grant fails
-- [ ] `window:material` required for material layers
+- [x] Camera layer insert without grant fails (`@vela/shell-core` + layer-gates tests)
+- [x] `window:material` required for material layers (`insertLayer` / bridge; privileged bootstrap separate)
 - [ ] Preload cannot access Node/`fs`/`child_process`
 - [ ] Unsigned module load blocked by default
 - [ ] `call` with serializable args only; host rejects non-serializable abuse
 - [ ] Profile A cannot use permissions granted only to profile B on another WebView
-- [x] First-party non-UI plugins (notify/tray/dialog/clipboard/fs) implementable in TS without L4 code; playground allow/deny UI still open
+- [x] First-party non-UI plugins (notify/tray/dialog/clipboard/fs/shell) implementable in TS without L4 code; playground allow/deny for clipboard/fs/shell/notify/material
 - [ ] T2 native feature still uses the same `call` / layer names from app TS
 - [ ] T1.5 perf plugin: page still only `vela.call`; Bun enforces caps before Zig ABI
 - [ ] Perf Zig modules are not required for ordinary T0 plugins

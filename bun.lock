@@ -121,6 +121,18 @@
         "typescript": "^5.8.0",
       },
     },
+    "plugins/shell": {
+      "name": "@vela/plugin-shell",
+      "version": "0.0.1",
+      "dependencies": {
+        "@vela/api": "workspace:*",
+        "@vela/host-core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "typescript": "^5.8.0",
+      },
+    },
     "plugins/tray": {
       "name": "@vela/plugin-tray",
       "version": "0.0.1",
@@ -154,6 +166,8 @@
     "@vela/plugin-fs": ["@vela/plugin-fs@workspace:plugins/fs"],
 
     "@vela/plugin-notify": ["@vela/plugin-notify@workspace:plugins/notify"],
+
+    "@vela/plugin-shell": ["@vela/plugin-shell@workspace:plugins/shell"],
 
     "@vela/plugin-tray": ["@vela/plugin-tray@workspace:plugins/tray"],
 

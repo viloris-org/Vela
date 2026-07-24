@@ -41,6 +41,7 @@ Package: `packages/api/` Entry: `packages/api/src/index.ts`
 | `capability/dialog.ts` | `DialogMethods`, open/save options + results |
 | `capability/clipboard.ts` | `ClipboardMethods`, read/write text |
 | `capability/fs.ts` | `FsMethods`, `normalizeAppRelativePath`, read/write |
+| `capability/shell.ts` | `ShellMethods`, `parseExternalUrl`, open-external |
 | `manifest/types.ts` | `AppManifest` + `parseAppManifest` (JSON schema v1) |
 | `project/package.ts` | `VelaPackage` + `parseVelaPackage` / `VELA_PACKAGE_MARKER` (`vela.json`) |
 | `project/workspace.ts` | `VelaWorkspace` + `parseVelaWorkspace` / monorepo scan parents |
