@@ -1,5 +1,7 @@
 export type TopCommand = "dev";
 
+export type ShellPlatformOption = "auto" | "linux" | "macos" | "windows";
+
 export type DevOptions = {
   /**
    * Workspace demo selector (`--app <id|package|number>`).
@@ -24,15 +26,20 @@ export type DevOptions = {
   list: boolean;
   /** Serve only (browser mock). Do not launch native Shell. */
   browser: boolean;
-  /** Skip `zig build` when the shell binary already exists. */
+  /** Skip host build when the shell binary already exists. */
   noBuild: boolean;
-  /** Force `zig build` even if binary exists. Default true when binary missing. */
+  /** Force host build even if binary exists. Default: build only when missing. */
   build: boolean;
   port?: number;
   /** Override content URL (implies do not start local serve). */
   url?: string;
   /** Shell binary path override. */
   shell?: string;
+  /**
+   * Which composition Shell to launch.
+   * `auto` maps process.platform → linux | macos | windows.
+   */
+  platform: ShellPlatformOption;
 };
 
 export type ParsedArgs = {
@@ -49,6 +56,7 @@ const DEFAULT_DEV: DevOptions = {
   noBuild: false,
   /** false = auto: build only when binary is missing */
   build: false,
+  platform: "auto",
 };
 
 export function parseArgs(argv: string[]): ParsedArgs {
@@ -204,6 +212,18 @@ export function parseArgs(argv: string[]): ParsedArgs {
       i += 1;
       continue;
     }
+    if (a === "--platform") {
+      const v = argv[++i];
+      if (!v) throw new Error("--platform expects auto|linux|macos|windows");
+      out.dev.platform = parsePlatformFlag(v);
+      i += 1;
+      continue;
+    }
+    if (a.startsWith("--platform=")) {
+      out.dev.platform = parsePlatformFlag(a.slice("--platform=".length));
+      i += 1;
+      continue;
+    }
     throw new Error(`Unknown flag: ${a}`);
   }
 
@@ -220,11 +240,19 @@ export function parseArgs(argv: string[]): ParsedArgs {
   return out;
 }
 
+function parsePlatformFlag(value: string): ShellPlatformOption {
+  const v = value.toLowerCase();
+  if (v === "auto" || v === "linux" || v === "macos" || v === "windows") {
+    return v;
+  }
+  throw new Error(`--platform expects auto|linux|macos|windows, got ${value}`);
+}
+
 export function printHelp(command?: TopCommand): void {
   if (command === "dev") {
     console.log(`Usage: vela dev [options]
 
-One-terminal instant dogfood: App content server + native Linux Shell.
+One-terminal instant dogfood: App content server + native composition Shell.
 
 Content (pick one style — first match wins):
   (default)                1) nearest vela.json walking up from cwd
@@ -235,13 +263,18 @@ Content (pick one style — first match wins):
   --script <name>          With --dir: override vela.json dev.script
   --url <url>              Skip local serve; open Shell at this URL
 
-Other options:
+Shell / platform:
+  --platform auto|linux|macos|windows
+                           Composition host (default: auto from OS)
+                           linux  → hosts/linux-shell (Zig + GTK4)
+                           macos  → hosts/desktop-shell (Swift + WKWebView)
+                           windows→ hosts/windows-shell (C++/WinRT; scaffold)
+  --shell <path>           Path to Shell binary (overrides default for platform)
   --browser                Serve only; do not launch Shell (browser mock)
   --port <n>               Content server port (default: vela.json dev.port)
-  --no-build               Never run zig build (fail if binary missing)
-  --build                  Always run zig build before launch
+  --no-build               Never run host build (fail if binary missing)
+  --build                  Always run host build before launch
                            (default: build only when binary is missing)
-  --shell <path>           Path to vela-linux-shell binary
   -h, --help               Show this help
 
 Package standard (docs/app-package-layout.md):
@@ -256,8 +289,7 @@ Examples:
   bun run dev                              # monorepo shortcut → example/clock
   bun run dev:pick                         # monorepo menu / discover
   bun run vela -- dev --dir example/clock
-  bun run vela -- dev --dir ../Zepyyr
-  bun run vela -- dev --list
+  bun run vela -- dev --platform macos
   bun run vela -- dev --app playground --browser
   bun run vela -- dev --url http://127.0.0.1:5180
   bun run vela -- dev --no-build
@@ -271,13 +303,13 @@ Usage:
   vela <command> [options]
 
 Commands:
-  dev     Start App content + native Shell (Linux) in one terminal
+  dev     Start App content + native Shell (platform auto / --platform)
   help    Show this help
 
 Examples:
   cd example/clock && bun run dev          # real package-root flow
   bun run dev                              # → --dir example/clock
-  bun run vela -- dev --dir ../Zepyyr
+  bun run vela -- dev --platform linux
   bun run vela -- dev --list
   bun run vela -- dev --browser
 

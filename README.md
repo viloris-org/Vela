@@ -35,7 +35,8 @@ Vela/
   packages/shell-core @vela/shell-core - portable Shell policy + hit/layer state (tests on Linux)
   packages/host-core  @vela/host-core - portable Host call router + capability enforce
   hosts/zig-shell     Desktop Zig interop (L2.5): C ABI + mock L4 + RPC codec skeleton
-  hosts/desktop-shell Phase 1 macOS Shell scaffold (Swift on macOS; README only until Xcode)
+  hosts/desktop-shell Phase 1 macOS Shell MVP (Swift + WKWebView; build on macOS)
+  hosts/windows-shell Phase 4 Windows Shell scaffold (C++/WinRT + WebView2)
   hosts/linux-shell  Linux composition spike (GTK4 + WebKitGTK 6.0; Tier 2)
   apps/playground     Dogfood web content (mock window.vela in browser)
   example/clock       Minimal clock App TS sample (layers + hit + mock bridge)
@@ -57,10 +58,10 @@ Bun is the **repo toolchain** and desktop instant-mode reference Host. It is not
 | Contracts, packages, plugins, unit tests | Bun | Bun | Bun |
 | Content-only dogfood (browser mock `window.vela`) | Bun | Bun | Bun |
 | Zig interop skeleton (`hosts/zig-shell`) | Zig **0.16.x** | Zig **0.16.x** | Zig **0.16.x** (best-effort) |
-| Native Shell dogfood | `hosts/linux-shell`: Zig + GTK4 + WebKitGTK 6.0 | `hosts/desktop-shell`: **scaffold only** (Xcode; no compilable app yet) | **Not shipped** (Phase 4; WebView2 planned) |
+| Native Shell dogfood | `hosts/linux-shell`: Zig + GTK4 + WebKitGTK 6.0 | `hosts/desktop-shell`: Swift + WKWebView MVP (Xcode) | `hosts/windows-shell`: **scaffold** (C++/WinRT + WebView2; no runnable MVP yet) |
 | Host systems facades (`@vela/sys-desktop` notify/tray/dialog) | `notify-send`, Python3 + AppIndicator (tray), `zenity`/`kdialog` | Xcode CLI tools (`swift`), GUI login session | PowerShell (WinRT toast / WinForms); standard desktop |
 
-**Honest status today:** `bun run dev` launches the **Linux** Shell. On macOS and Windows you can develop contracts, run tests, and dogfood App content in a normal browser; a native composition window is not available yet.
+**Honest status today:** `bun run dev --platform auto` launches the host for the current OS when a binary exists (Linux Shell is the mature path). macOS has a compilable **window + WebView MVP** under `hosts/desktop-shell` (build on a Mac). Windows composition host is scaffolded only — use `--browser` for mock dogfood.
 
 ### 1. Install Bun
 
@@ -137,13 +138,13 @@ sudo dnf install libnotify python3-gobject libappindicator-gtk3 zenity
 | Bun | Step 1 above | Required for this monorepo |
 | Zig 0.16.x | Step 2 above | Optional; for `hosts/zig-shell` |
 | Xcode or Command Line Tools | App Store **Xcode**, or `xcode-select --install` | Needed for `swift` tray helper and for the future Shell |
-| macOS Shell (`hosts/desktop-shell`) | — | **Scaffold only** — no compilable Swift app is checked in yet. See [hosts/desktop-shell/README.md](hosts/desktop-shell/README.md) and [macOS spike architecture](docs/macos-spike-architecture.md) |
+| macOS Shell (`hosts/desktop-shell`) | Xcode / Swift 5.9+ | **MVP** — window + WKWebView + preload. Full S1–S7 still open. See [hosts/desktop-shell/README.md](hosts/desktop-shell/README.md) |
 
 ```bash
 # CLI tools (enough for swift helpers / zig)
 xcode-select --install
 
-# Full Xcode (needed once a real macOS app target lands under hosts/desktop-shell)
+# Full Xcode recommended for AppKit + WebKit:
 # Install from the App Store, then:
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 xcodebuild -version
@@ -159,10 +160,13 @@ bun run typecheck
 bun run playground:serve    # browser mock
 bun run example:clock
 bun run vela -- dev --browser
+cd hosts/desktop-shell && swift build -c release --product vela-desktop-shell
+.build/release/vela-desktop-shell --url http://127.0.0.1:5174
+# or: bun run vela -- dev --platform macos --dir example/clock
 cd hosts/zig-shell && zig build && zig build test   # if Zig is installed
 ```
 
-What does **not** work yet: `bun run dev` native window (that path targets `hosts/linux-shell`), and building `hosts/desktop-shell` as an app.
+What does **not** work yet: full Qt-class hit/material acceptance (S1–S7), Liquid Glass sampling, Bun↔Zig process split.
 
 #### Windows
 
@@ -172,8 +176,8 @@ What does **not** work yet: `bun run dev` native window (that path targets `host
 | Git | [git-scm.com](https://git-scm.com/) or `winget install Git.Git` | Clone / line endings |
 | Zig 0.16.x | Step 2 above | Optional; interop skeleton best-effort |
 | PowerShell 5+ / 7 | Ships with Windows; PowerShell 7 recommended | `@vela/sys-desktop` notify / tray / dialog helpers |
-| Windows Shell (WebView2 + composition) | — | **Not in tree** — planned Phase 4 ([platform support](docs/platform-support.md), [roadmap](docs/roadmap.md)) |
-| WebView2 Runtime | Evergreen runtime (most Win10/11 already have it) | Required only when a Windows Shell ships |
+| Windows Shell (WebView2 + composition) | VS 2022 + CMake + WebView2 SDK | **Scaffold** in `hosts/windows-shell` (C++/WinRT); no runnable MVP yet ([roadmap](docs/roadmap.md) Phase 4) |
+| WebView2 Runtime | Evergreen runtime (most Win10/11 already have it) | Required when the Windows Shell MVP links WebView2 |
 
 ```powershell
 # Example with winget (optional)
@@ -194,7 +198,7 @@ bun run vela -- dev --browser
 # optional: hosts\zig-shell  →  zig build ; zig build test
 ```
 
-What does **not** work yet: a native Vela window, `bun run dev` Shell orchestration (Linux-only today), and WebView2 composition host.
+What does **not** work yet: a native Vela composition window (scaffold only — use `--browser`), and automated `vela dev` build for `windows-shell`.
 
 ### 4. Clone and install workspace dependencies
 

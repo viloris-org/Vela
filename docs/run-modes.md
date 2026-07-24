@@ -46,7 +46,9 @@ vela build                       # (planned) static: bundle App + Shell/Host
 vela run --release               # (planned) run the static tree
 ```
 
-**Shipped today:** `tools/cli` `dev` orchestrates App serve + `hosts/linux-shell`
+**Shipped today:** `tools/cli` `dev` orchestrates App serve + composition Shell by
+`--platform auto|linux|macos|windows` (Linux host is the mature path; macOS MVP
+under `hosts/desktop-shell`; Windows scaffold under `hosts/windows-shell`)
 (auto `zig build` when the binary is missing). Packages follow the **App package
 layout** ([app-package-layout.md](app-package-layout.md)). **Preferred dogfood**
 is an independent package root (nearest `vela.json` from cwd, or `--dir`) —

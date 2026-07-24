@@ -1,13 +1,10 @@
 // swift-tools-version: 5.9
 //
-// STUB — not a buildable package yet.
-// Real VelaShell targets will be added on macOS with Xcode.
-// Do not expect `swift build` to succeed from this file alone.
-//
-// Planned (Phase 1 spike):
-//   .executableTarget / .library name: "VelaShell"
-//   path: "Sources/VelaShell"
-//   platforms: [.macOS(.v14)] or higher for Liquid Glass paths
+// Phase 1 macOS composition Shell MVP — AppKit + WKWebView.
+// Build on macOS with Xcode / Swift 5.9+:
+//   cd hosts/desktop-shell
+//   swift build -c release --product vela-desktop-shell
+//   .build/release/vela-desktop-shell --url http://127.0.0.1:5174
 //
 // See README.md and docs/macos-spike-architecture.md.
 
@@ -19,10 +16,18 @@ let package = Package(
     .macOS(.v14),
   ],
   products: [
-    // Placeholder product name only — no targets until Swift sources land.
-    // .library(name: "VelaShell", targets: ["VelaShell"]),
+    .executable(name: "vela-desktop-shell", targets: ["VelaShell"]),
   ],
   targets: [
-    // .target(name: "VelaShell", path: "Sources/VelaShell"),
+    .executableTarget(
+      name: "VelaShell",
+      path: "Sources/VelaShell",
+      exclude: [
+        "README.md",
+      ],
+      resources: [
+        .copy("Resources/preload.js"),
+      ]
+    ),
   ]
 )

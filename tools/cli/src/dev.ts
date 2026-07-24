@@ -10,7 +10,14 @@ import {
   workspaceTargetFromDemo,
   type ContentTarget,
 } from "./discover";
-import { defaultShellBinary, linuxShellDir, shellBinaryExists } from "./paths";
+import {
+  defaultShellBinary,
+  resolveShellPlatform,
+  shellBinaryExists,
+  shellDir,
+  shellMissingHint,
+  type ShellPlatform,
+} from "./paths";
 import { installSignalHandlers, killAll, runForeground, track, waitForHttp } from "./process";
 
 function contentUrl(
@@ -31,31 +38,51 @@ function contentUrl(
   };
 }
 
-async function ensureShellBinary(opts: DevOptions): Promise<string> {
-  const bin = opts.shell ?? defaultShellBinary();
+async function buildShell(platform: ShellPlatform, dir: string): Promise<number> {
+  switch (platform) {
+    case "linux":
+      console.log(`[vela] building linux-shell (zig build)…`);
+      return runForeground("zig-build", ["zig", "build"], { cwd: dir });
+    case "macos":
+      console.log(
+        `[vela] building desktop-shell (swift build -c release --product vela-desktop-shell)…`,
+      );
+      return runForeground(
+        "swift-build",
+        ["swift", "build", "-c", "release", "--product", "vela-desktop-shell"],
+        { cwd: dir },
+      );
+    case "windows":
+      // Scaffold only until CMake target is real on Windows machines.
+      console.log(
+        `[vela] windows-shell has no automated build in CLI yet (see hosts/windows-shell/README.md)`,
+      );
+      return 1;
+  }
+}
+
+async function ensureShellBinary(
+  opts: DevOptions,
+  platform: ShellPlatform,
+): Promise<{ bin: string; platform: ShellPlatform }> {
+  const bin = opts.shell ?? defaultShellBinary(platform);
+  const dir = shellDir(platform);
   const needBuild = !opts.noBuild && (opts.build || !shellBinaryExists(bin));
 
   if (needBuild) {
-    const shellDir = linuxShellDir();
-    if (!existsSync(shellDir)) {
-      throw new Error(`Linux shell tree missing: ${shellDir}`);
+    if (!existsSync(dir)) {
+      throw new Error(`Shell tree missing: ${dir}`);
     }
-    console.log(`[vela] building linux-shell (zig build)…`);
-    const code = await runForeground("zig-build", ["zig", "build"], { cwd: shellDir });
+    const code = await buildShell(platform, dir);
     if (code !== 0) {
-      throw new Error(`zig build failed with exit ${code}`);
+      throw new Error(shellMissingHint(platform, bin));
     }
   }
 
   if (!shellBinaryExists(bin)) {
-    throw new Error(
-      `Shell binary not found: ${bin}\n` +
-        `  Install Zig 0.16.x + gtk4-devel + webkitgtk6.0-devel, then:\n` +
-        `  cd hosts/linux-shell && zig build\n` +
-        `  Or omit --no-build so \`vela dev\` builds automatically.`,
-    );
+    throw new Error(shellMissingHint(platform, bin));
   }
-  return bin;
+  return { bin, platform };
 }
 
 async function startContentServer(target: ContentTarget, port: number): Promise<void> {
@@ -176,10 +203,13 @@ export async function runDev(opts: DevOptions): Promise<number> {
       return 0;
     }
 
-    const bin = await ensureShellBinary(opts);
-    console.log(`[vela] launching Shell → ${url}`);
-    const code = await runForeground("linux-shell", [bin, "--url", url.replace(/\/$/, "")], {
-      cwd: linuxShellDir(),
+    const platform = resolveShellPlatform(opts.platform);
+    console.log(`[vela] shell platform: ${platform}`);
+
+    const { bin } = await ensureShellBinary(opts, platform);
+    console.log(`[vela] launching Shell (${platform}) → ${url}`);
+    const code = await runForeground(`${platform}-shell`, [bin, "--url", url.replace(/\/$/, "")], {
+      cwd: shellDir(platform),
     });
 
     await killAll();

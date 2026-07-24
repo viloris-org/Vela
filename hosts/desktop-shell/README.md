@@ -1,123 +1,126 @@
 # hosts/desktop-shell
 
-**Phase 1 macOS spike** — native Shell process (Swift / AppKit + WKWebView).
+**Phase 1 macOS composition Shell MVP** — native process (Swift / AppKit + WKWebView).
 
-> **Status**: scaffold only. No compilable Swift app is checked in yet.  
-> **Machine note**: this monorepo is often edited on Linux; Xcode and macOS are required to build and run the Shell.  
-> **Portable policy**: layer/hit state machine lives in `@vela/shell-core` (`packages/shell-core`) with S-class tests — mirror that behavior in AppKit, do not re-derive hit rules.
+> **Status**: MVP sources landed (window + WKWebView + preload + layer/hit store + material host degrade). Full S1–S7 hit ownership still open.  
+> **Machine note**: build and run require **macOS + Xcode / Swift 5.9+**. This monorepo is often edited on Linux.  
+> **Portable policy**: layer/hit semantics mirror `@vela/shell-core` / `@vela/api`; this tree paints and delivers events.
 
-Product contracts: `@vela/api`. Executable design: [docs/macos-spike-architecture.md](../../docs/macos-spike-architecture.md). Cross-host Shell role: [docs/cross-platform-abstraction.md](../../docs/cross-platform-abstraction.md) / [ADR 0004](../../docs/adr/0004-cross-platform-abstraction.md). Phase 2 Bun path: Zig interop ([ADR 0005](../../docs/adr/0005-zig-interop-layer.md)); this tree is the macOS **L4** backend.
+Product contracts: `@vela/api`. Design: [docs/macos-spike-architecture.md](../../docs/macos-spike-architecture.md). Cross-host role: [docs/cross-platform-abstraction.md](../../docs/cross-platform-abstraction.md) / [ADR 0004](../../docs/adr/0004-cross-platform-abstraction.md).
 
-## Goals (Phase 1)
+## Goals (MVP)
 
-Prove Qt-class composition on macOS:
+1. Open a native window and load dogfood content via `--url`.
+2. Inject `window.vela` subset (`version`, `layers`, `hit`, `call` deny-all, `events`).
+3. Sibling underlay + WKWebView + optional material host under a flipped content root.
+4. Store web-shaped regions + generation; log `resolveHit` on pointer-down.
+5. Material insert uses `NSVisualEffectView` and emits **`material.degraded`** (`mvp-visual-effect-only`).
 
-1. Multi-kind layers: underlay + webview + material (+ optional chrome).
-2. Shell-owned hit router: **one** `HitTarget` per pointer down.
-3. `web-shaped` holes via `vela.hit` from dogfood content.
-4. True system material toolbar (`apple.liquidGlass` or degraded `apple.material`).
-5. Preload injects subset of `window.vela` (`version`, `layers`, `hit`; `call`/`events` stub ok).
+Non-goals (this MVP): sole `hitTest` dual-delivery proof, Liquid Glass sampling, Bun/Zig process split, Windows host (see `hosts/windows-shell`).
 
-Non-goals: Bun host process split, full capability engine, Windows/Linux hosts, CSS faking of Liquid Glass for the material layer.
+## Build & run (macOS)
+
+```bash
+cd hosts/desktop-shell
+swift build -c release --product vela-desktop-shell
+
+# Terminal A
+bun run example:clock          # http://127.0.0.1:5174
+
+# Terminal B
+.build/release/vela-desktop-shell --url http://127.0.0.1:5174
+```
+
+Or via CLI (on macOS, once binary exists):
+
+```bash
+bun run vela -- dev --platform macos --dir example/clock
+```
+
+### CLI flags
+
+| Flag | Meaning |
+|------|---------|
+| `--url URL` | Main WebView URL (default `http://127.0.0.1:5174`) |
+| `--version` | Print version |
+| `--help` | Usage |
+
+Binary path used by `vela dev`: `hosts/desktop-shell/.build/release/vela-desktop-shell`.
 
 ## View tree (AppKit)
 
-From the spike architecture — **siblings** under a single hit root:
-
 ```text
 NSWindow
-└── contentView = VelaHitRootView ← sole hitTest override
-    ├── UnderlayNativeView                 zIndex 0..9   (map / video / color stub)
-    ├── MainWKWebView                      zIndex 10     (primary web)
-    ├── NativeSlotView?                    zIndex 20     (optional camera stub)
-    ├── MaterialHostView                   zIndex 30     (NSHostingView + glass)
-    └── ChromeHitViews                     zIndex 40     (drag-region / system-buttons)
+└── contentView = HitRootView (isFlipped = true; logical top-left)
+    ├── UnderlayNativeView      z ~5
+    ├── MaterialHostView        (hidden until layers.insert material)
+    ├── MainWKWebView           z ~10
+    └── debug hit label
 ```
 
-Hard rules:
+Coordinate space at the bridge: **logical content**, origin top-left, y down.
 
-- Only `VelaHitRootView` owns policy `hitTest`.
-- WKWebView is a **sibling** of material/native, not a child of a canvas that returns `self`.
-- Opacity never implies hit policy.
-- Coordinate space at the bridge: logical content, origin top-left, y down (convert from AppKit once).
+## Preload contract
 
-## Dogfood content
+`Sources/VelaShell/Resources/preload.js` — keep in sync with `hosts/linux-shell/scripts/preload.js`.
 
-Web content lives in **`apps/playground`** (`@vela/playground`).
-
-| Approach | Notes |
-|----------|--------|
-| Load path | Point WKWebView at `apps/playground/index.html` (repo-relative or copy into app bundle later). |
-| Symlink (optional) | `DogfoodContent` → `../../apps/playground` for Xcode resource groups. |
-| Browser | `bun run playground:serve` for layout-only review with mock `window.vela`. |
-
-Do not invent APIs beyond `VelaPreloadBridge` in `@vela/api`.
+| Surface | Behavior |
+|---------|----------|
+| `version` | `0.0.1-macos-shell` (not `*-mock`) |
+| `layers.*` | Message-pass → host layer tree + material host |
+| `hit.*` | Opaque region store + generation drop |
+| `call` | Deny-all |
+| `events.subscribe` | Page-side; host may emit `material.degraded` |
 
 ## Implementation checklist
 
-Copy of spike doc — track progress here as work lands:
-
 - [x] Portable Shell policy in `@vela/shell-core` (TS; Linux-testable)
-- [ ] Xcode macOS target; Swift package / app under this tree
-- [ ] `VelaHitRootView` + layer → NSView map
-- [ ] WKWebView creation, navigation, preload script injection (`window.vela`)
-- [ ] Material host (`glassEffect` / `GlassEffectContainer` or `NSVisualEffectView` + `degraded`)
-- [ ] web-shaped region store + generation (drop stale updates; same rules as shell-core)
-- [ ] Keep pure `resolveHit` tests in `@vela/api` as the algorithm SoT; mirror in Swift
-- [ ] Manual acceptance S1–S6 ([testing-and-acceptance.md](../../docs/testing-and-acceptance.md)); S7 if generation used
-- [ ] Wire dogfood: underlay + main web + capsule toolbar; verify single delivery
+- [x] Swift package / executable `vela-desktop-shell`
+- [x] NSWindow + sibling underlay + WKWebView
+- [x] Preload inject `window.vela` + JSON bridge
+- [x] Layer tree + web-shaped store (generation drop)
+- [x] Material host + loud degrade path
+- [x] Pointer-down `resolveHit` debug label (coarse; not sole hitTest yet)
+- [ ] `VelaHitRootView` sole hit policy (no dual delivery) — S6
+- [ ] Liquid Glass / true system material path — S1
+- [ ] Manual acceptance S1–S7
+- [ ] Wire full dogfood toolbar bootstrap on host if app does not insert
 
-## Swift ↔ `@vela/shell-core` interface map
+## Module map
 
-When adding real Swift sources, mirror modules by responsibility (not one giant file):
+| Swift area | Responsibility |
+|------------|----------------|
+| `main.swift` | CLI + `NSApplication` |
+| `App/ShellController.swift` | Window, views, lifecycle |
+| `Hit/*` | Root view + `ResolveHit` mirror |
+| `Layers/LayerTree.swift` | Layer + shape store |
+| `WebView/MainWebViewFactory.swift` | WKWebView + user script |
+| `Bridge/MessageHandler.swift` | JSON req/hit handlers |
+| `Materials/MaterialHostView.swift` | Degraded visual effect |
+| `Resources/preload.js` | `window.vela` inject |
 
-| Swift area (illustrative) | `@vela/shell-core` / `@vela/api` |
-|---------------------------|----------------------------------|
-| Layer tree apply | `ShellCore.insertLayer` / `updateLayer` / `removeLayer` / `listLayers` |
-| Opaque region store | `setOpaqueRegions` / `setMainOpaqueRegions` → `applyWebShapeUpdate` |
-| `VelaHitRootView.hitTest` | `resolvePointer` / `pointerDown` → pure `resolveHit` |
-| Last hit HUD | `lastHit` + `debug.hit` event |
-| Preload `window.vela` | `createPreloadBridge` shape (`VelaPreloadBridge`) |
-| Bootstrap dogfood stack | `applyDogfoodBootstrap` / `DOGFOOD_LAYER_IDS` |
-| Material resolve | `resolveToolbarMaterial` → `resolveMaterial` |
-
-Dogfood layer ids (must match playground):
+## Dogfood layer ids
 
 | Id | Role |
 |----|------|
-| `underlay-native` | Native underlay (z 5) |
-| `main-webview` | Primary WKWebView (z 10, web-shaped) |
-| `toolbar-material` | Capsule material toolbar (z 30) |
-
-## Folder layout (scaffold)
-
-```text
-hosts/desktop-shell/
-  README.md                 ← this file
-  Package.swift             ← stub comment only (not a buildable package yet)
-  Sources/
-    VelaShell/
-      README.md             ← placeholder for future Swift sources
-  DogfoodContent/
-    README.md               ← how to attach apps/playground
-```
-
-**Do not** add fake Swift that cannot compile on CI/Linux. Real sources land when building on macOS with Xcode.
+| `underlay-native` | Native underlay |
+| `main-webview` | Primary WKWebView (web-shaped) |
+| `toolbar-material` | Material toolbar (app insert) |
 
 ## Process shape
 
 | Mode | Shape |
 |------|--------|
-| Spike default | Single native process: Shell + thin local preload bridge |
-| Phase 2 | Bun orchestration + Shell process, Unix socket RPC ([ADR 0002](../../docs/adr/0002-ipc-privilege.md)) |
+| Spike / MVP | Single native process + thin local preload |
+| Phase 2 | Bun + Zig UDS + C ABI ([ADR 0002](../../docs/adr/0002-ipc-privilege.md), [ADR 0005](../../docs/adr/0005-zig-interop-layer.md)) |
 
-## Exit criteria
+## Exit criteria (Phase 1 full)
 
-Phase 1 is **not** complete until the spike architecture exit criteria are met (demo/video S1–S6, no dual delivery, real or explicitly degraded material, `InsertLayerSpec`-shaped ops). This folder alone does not claim that.
+Not complete until [testing-and-acceptance](../../docs/testing-and-acceptance.md) **S1–S7** pass. This MVP only unlocks window + WebView dogfood on macOS.
 
 ## References
 
 - [macos-spike-architecture.md](../../docs/macos-spike-architecture.md)
-- [ADR 0001](../../docs/adr/0001-composition-hit-material.md)
-- [packages/api](../../packages/api) — `VelaPreloadBridge`, layers, hit
-- Apple: Applying Liquid Glass to custom views; `NSView.hitTest(_:)`
+- [linux-shell](../linux-shell) — reference L4 + preload protocol
+- [windows-shell](../windows-shell) — Windows scaffold (C++/WinRT + WebView2)
+- [packages/shell-core](../../packages/shell-core)

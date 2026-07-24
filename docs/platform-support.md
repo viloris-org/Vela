@@ -76,7 +76,7 @@ Shared surface: `@vela/api` Layer / Capability / bridge protocol. Host plugin **
 | Window region-through to OS | yes | yes | partial (`window.input-region` on Wayland) | limited | limited |
 | Capability plugins (App via `vela.call`) | yes | yes | yes | yes | yes |
 | Host TS plugin runtime (reference) | Bun | Bun | planned | pluggable / interim native | pluggable / interim native |
-| Composition host tree (intent) | `hosts/desktop-shell` | Phase 4 | `hosts/linux-shell` | planned | planned |
+| Composition host tree | `hosts/desktop-shell` (MVP sources; S1–S7 open) | `hosts/windows-shell` (scaffold; C++/WinRT + WebView2) | `hosts/linux-shell` (working spike) | planned | planned |
 
 ## Abstraction expectations
 

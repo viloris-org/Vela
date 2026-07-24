@@ -66,11 +66,11 @@ Parallel work that may start early without blocking Phase 1:
 |-------|------|--------|-----------------|
 | 0 | Project skeleton | `[x]` | Monorepo + `@vela/api` + ADR 0001 + core docs |
 | 0.5 | Contract hardening | `[~]` | Pure hit + RPC envelopes + coords + snapshot; host wire still open |
-| 1 | macOS composition spike | `[ ]` | S1–S7 pass; demo: glass toolbar + underlay + holes |
+| 1 | macOS composition spike | `[~]` | S1–S7 pass; demo: glass toolbar + underlay + holes |
 | 1L | Linux composition spike (parallel) | `[~]` | L1–L6 on GTK4 + WebKitGTK 6.0; Tier 2 materials |
 | 2 | Bun host + typed RPC | `[~]` | Host contracts + `@vela/host-core` router landed; Bun process / UDS still open |
 | 3 | Capability plugins (desktop) | `[~]` | notify + tray + dialog plugins + contracts; real OS notify/dialog facades; fs/clipboard + playground still open |
-| 4 | Windows materials + parity | `[ ]` | WebView2 path; W1–W3; behavioral hit parity with macOS |
+| 4 | Windows materials + parity | `[~]` | WebView2 path; W1–W3; behavioral hit parity with macOS |
 | 5 | Plugin ABI + signing | `[ ]` | ADR 0003 Accepted; unsigned load blocked by default |
 | 6 | Mobile hosts | `[ ]` | iOS + Android subset; shared dogfood content |
 | 7 | Phase-2 composition | `[ ]` | Scroll-linked slots; safer hitching; optional scaled web-shaped |
@@ -144,7 +144,7 @@ Parallel work that may start early without blocking Phase 1:
 
 ## Phase 1 — macOS composition spike
 
-**Status:** `[~]` scaffold + portable Shell policy (`@vela/shell-core` tests on Linux); architecture design `[x]`; dogfood web + shell folder; no Swift binary.
+**Status:** `[~]` window + WKWebView + preload **MVP** in `hosts/desktop-shell`; portable Shell policy (`@vela/shell-core`); architecture design `[x]`; full S1–S7 acceptance still open.
 
 **Goal:** Prove Qt-class composition on one Tier 1 platform: multi-kind layers, regional hit-through, system material, single event delivery.
 
@@ -154,16 +154,16 @@ Parallel work that may start early without blocking Phase 1:
 
 ### Work items
 
-- [ ] Native Shell prototype (window + WKWebView) per spike view tree
+- [x] Native Shell prototype (window + WKWebView) per spike view tree (MVP)
 - [ ] `VelaHitRootView` sole hit policy; WebView **sibling** of material/native (not starved parent)
-- [ ] Layer tree: web + native + material (+ optional chrome)
-- [ ] Liquid Glass (or system material) toolbar layer with degrade path
-- [ ] Regional hit-through: web-shaped hole to underlay
+- [x] Layer tree: web + native + material (+ optional chrome) — store + material host; full paint parity open
+- [~] Liquid Glass (or system material) toolbar layer with degrade path (MVP: `NSVisualEffectView` + `material.degraded`)
+- [ ] Regional hit-through: web-shaped hole to underlay (store lands; sole routing open)
 - [ ] No double event delivery WebView ↔ NSView
-- [ ] Preload inject `window.vela` subset: `layers` + `hit` (`call` / `events` stub OK)
-- [ ] Debug instrumentation: last `HitTarget` per pointer down
+- [x] Preload inject `window.vela` subset: `layers` + `hit` (`call` / `events` stub OK)
+- [x] Debug instrumentation: last `HitTarget` per pointer down (label + log)
 - [x] Dogfood content: glass toolbar + map/video (or color) underlay + click holes (`apps/playground`; mock without host)
-- [x] Shell scaffold tree + checklist (`hosts/desktop-shell`; Swift sources not yet)
+- [x] Shell package + sources (`hosts/desktop-shell` / `vela-desktop-shell`)
 - [x] Prefer pure `resolveHit` from Phase 0.5 when available; if spike lands first, port Swift logic back into `@vela/api` before Phase 2
 - [x] Portable Shell state machine (`packages/shell-core`): layer tree, web-shaped store, dogfood bootstrap, preload bridge adapter, S2/S6/S7-class tests (no toolkit paint)
 
@@ -305,7 +305,7 @@ Manual L1–L6 notes (or short demo): underlay + WebView + material toolbar + ho
 
 ## Phase 4 — Windows materials + parity
 
-**Status:** `[ ]` not started.
+**Status:** `[~]` scaffold only (`hosts/windows-shell`, C++/WinRT + WebView2 stack locked); no runnable MVP.
 
 **Goal:** Second Tier 1 desktop host with behavioral hit/material parity (not pixel parity).
 
@@ -313,10 +313,12 @@ Manual L1–L6 notes (or short demo): underlay + WebView + material toolbar + ho
 
 ### Work items
 
-- [ ] WebView2 host path
+- [x] Host folder + CMake skeleton + CLI platform path (`--platform windows`)
+- [x] Stack lock: C++/WinRT + WebView2 (README)
+- [ ] WebView2 host path (real environment + navigate + inject)
 - [ ] Mica / Acrylic material layers + degrade diagnostics
 - [ ] Hit parity with macOS spike scenarios (S2–S6 class behavior)
-- [ ] Loud diagnostic when WebView2 runtime missing (no silent blank window)
+- [~] Loud diagnostic when WebView2 runtime missing (scaffold prints W3-style errors; no real probe yet)
 - [ ] Acceptance **W1–W3** in [testing-and-acceptance.md](testing-and-acceptance.md)
 
 ### Exit criteria

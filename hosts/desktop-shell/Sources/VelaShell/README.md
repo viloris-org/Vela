@@ -1,20 +1,23 @@
 # Sources/VelaShell
 
-Placeholder for Phase 1 Swift sources (macOS only).
+macOS Phase 1 MVP sources (AppKit + WKWebView).
 
-Portable policy reference: **`@vela/shell-core`** (`packages/shell-core`). Do not reimplement hit algorithms — mirror pure `resolveHit` / shell-core behavior at the AppKit boundary.
+Portable policy reference: **`@vela/shell-core`**. Hit algorithm SoT: **`@vela/api` `resolveHit`** (Swift mirror in `Hit/ResolveHit.swift`).
 
-## Module map (Swift ↔ TS)
+## Layout
 
-| Swift area | Responsibility | TS counterpart |
-|------------|----------------|----------------|
-| App / window bootstrap | `NSWindow`, content view = `VelaHitRootView` | `createShellCore` + window options |
-| Hit root | Sole `hitTest` policy | `ShellCore.resolvePointer` / `pointerDown` → `@vela/api` `resolveHit` |
-| Layer map | `LayerId` → `NSView` / hosting view | `layer-tree` insert/update/remove |
-| WKWebView | Main web layer; inject preload for `window.vela` | `createPreloadBridge` / `VelaPreloadBridge` |
-| Material host | Capsule toolbar; Liquid Glass or degraded material | `resolveToolbarMaterial` + `resolveMaterial` |
-| Region store | `opaqueRegions` + generation for `web-shaped` | `web-shape-store` / `applyWebShapeUpdate` |
-| Dogfood bootstrap | underlay + main web + glass toolbar | `applyDogfoodBootstrap`, `DOGFOOD_LAYER_IDS` |
+```text
+main.swift
+App/ShellController.swift
+Hit/HitRootView.swift
+Hit/ResolveHit.swift
+Layers/LayerTree.swift
+WebView/MainWebViewFactory.swift
+Bridge/MessageHandler.swift
+Materials/MaterialHostView.swift
+Geometry.swift
+Resources/preload.js
+```
 
 ## Dogfood layer ids
 
@@ -22,8 +25,6 @@ Portable policy reference: **`@vela/shell-core`** (`packages/shell-core`). Do no
 |----|------|--------|
 | `underlay-native` | native underlay | 5 |
 | `main-webview` | webview (web-shaped) | 10 |
-| `toolbar-material` | material toolbar | 30 |
+| `toolbar-material` | material (app insert) | 30 |
 
-Add real `.swift` files only when building on a Mac with Xcode. Prefer not to commit non-compiling code.
-
-Dogfood HTML: `apps/playground` (see `../../DogfoodContent/README.md`).
+Build: see `../../README.md`.

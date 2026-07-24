@@ -60,6 +60,40 @@ describe("parseArgs", () => {
   test("rejects --script without --dir", () => {
     expect(() => parseArgs(["dev", "--script", "dev"])).toThrow(/--script requires --dir/);
   });
+
+  test("platform flag defaults to auto", () => {
+    const p = parseArgs(["dev"]);
+    expect(p.dev.platform).toBe("auto");
+  });
+
+  test("platform flag parses", () => {
+    expect(parseArgs(["dev", "--platform", "macos"]).dev.platform).toBe("macos");
+    expect(parseArgs(["dev", "--platform=windows"]).dev.platform).toBe("windows");
+  });
+
+  test("rejects bad platform", () => {
+    expect(() => parseArgs(["dev", "--platform", "amiga"])).toThrow(/platform/);
+  });
+});
+
+describe("shell paths", () => {
+  test("detectShellPlatform maps node platforms", async () => {
+    const {
+      detectShellPlatform,
+      resolveShellPlatform,
+      defaultShellBinary,
+      shellDir,
+    } = await import("./paths");
+    expect(detectShellPlatform("linux")).toBe("linux");
+    expect(detectShellPlatform("darwin")).toBe("macos");
+    expect(detectShellPlatform("win32")).toBe("windows");
+    expect(resolveShellPlatform("auto", "darwin")).toBe("macos");
+    expect(resolveShellPlatform("linux", "darwin")).toBe("linux");
+    expect(shellDir("macos")).toMatch(/hosts\/desktop-shell$/);
+    expect(defaultShellBinary("linux")).toMatch(/vela-linux-shell$/);
+    expect(defaultShellBinary("macos")).toMatch(/vela-desktop-shell$/);
+    expect(defaultShellBinary("windows")).toMatch(/vela-windows-shell\.exe$/);
+  });
 });
 
 describe("workspace + package layout (repo)", () => {
